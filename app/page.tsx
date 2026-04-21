@@ -44,7 +44,7 @@ export default async function HomePage() {
             <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "16px" }}>OUR STORY</h4>
             <h2 style={{ fontSize: "48px", marginBottom: "24px" }}>Authentic Island Living</h2>
             <p style={{ color: "var(--text-light)", marginBottom: "24px" }}>
-              Nestled in the heart of a local Maldivian island, Serene Guest House offers a unique blend of traditional island charm and modern comfort. 
+              Nestled in the heart of the lush island of AA. Thoddoo, Serene Seaview offers a unique blend of traditional island charm and modern comfort. 
               Our mission is to provide an immersive experience that connects you with the vibrant culture and natural beauty of the Maldives.
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
@@ -142,11 +142,11 @@ export default async function HomePage() {
                 <a href="#booking" style={{ color: "#fff", opacity: 0.7, textDecoration: "none" }}>Book Now</a>
               </nav>
             </div>
-            <div>
+             <div>
                <h4 style={{ marginBottom: "24px", fontSize: "16px" }}>Contact</h4>
                <p style={{ fontSize: "14px", opacity: 0.7, lineHeight: "1.8" }}>
-                 Male' Atoll, Maldives<br/>
-                 info@sereneguesthouse.com<br/>
+                 AA. Thoddoo, Maldives<br/>
+                 info@sereneseaview.com<br/>
                  +960 777 0000
                </p>
             </div>
@@ -161,7 +161,7 @@ export default async function HomePage() {
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "30px", textAlign: "center", fontSize: "12px", opacity: 0.5 }}>
-            &copy; {new Date().getFullYear()} Serene Guest House. Design inspired by Travlla. All rights reserved.
+            &copy; {new Date().getFullYear()} Serene Seaview. Design inspired by Travlla. All rights reserved.
           </div>
         </div>
       </footer>

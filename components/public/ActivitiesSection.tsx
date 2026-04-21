@@ -5,13 +5,15 @@ interface ActivitiesProps {
 }
 
 export default function ActivitiesSection({ activities }: ActivitiesProps) {
+  if (!activities || activities.length === 0) return null; // Hide if empty
+
   return (
     <section id="activities" className="section" style={{ background: "#fff" }}>
       <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", marginBottom: "64px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", marginBottom: "64px", flexWrap: "wrap", gap: "24px" }}>
           <div className="reveal">
             <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "16px" }}>EXPERIENCES</h4>
-            <h2 style={{ fontSize: "48px" }}>Island Activities</h2>
+            <h2 style={{ fontSize: "clamp(32px, 5vw, 48px)" }}>Island Activities</h2>
           </div>
           <p className="reveal" style={{ maxWidth: "400px", color: "var(--text-light)", paddingBottom: "8px" }}>
             Unforgettable adventures await. From diving with mantas to sunset dinner on a private sandbank.

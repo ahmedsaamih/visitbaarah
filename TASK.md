@@ -77,8 +77,19 @@
 ## Phase 14: Seed Data & Testing — ❌ NOT STARTED
 - [ ] Seed script
 
-## Phase 15: Final QA & Polish — ❌ NOT STARTED
-- [ ] Responsive testing
+## Phase 15: Deployment & QA — ✅ DONE
+- [x] Vercel Environment Variables:
+    - [x] `DATABASE_URL`: Full Neon connection string.
+    - [x] `ADMIN_PASSWORD_HASH`: Bcrypt hash of admin password.
+    - [x] `ADMIN_SESSION_SECRET`: Random 32+ char string for cookie signing.
+    - [x] `PLUNK_API_KEY`: From Plunk Settings > API Keys.
+    - [x] `BLOB_READ_WRITE_TOKEN`: Link Vercel Blob in 'Storage' tab.
+    - [x] `NEXT_PUBLIC_BASE_URL`: Your Vercel domain (e.g., https://serene.vercel.app).
+- [x] Responsive uniformity pass
+- [x] Empty state handling (QA)
+- [x] Post-deployment instructions added
+
+## Phase 16: Final Polish — ❌ NOT STARTED
 - [ ] Form validation
 - [ ] Error handling
 - [ ] Accessibility

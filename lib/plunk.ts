@@ -40,7 +40,7 @@ async function sendEmail({ to, subject, body }: EmailParams): Promise<boolean> {
 /**
  * Wrap content in the branded email layout.
  */
-function emailLayout(content: string, propertyName = "Serene Guest House"): string {
+function emailLayout(content: string, propertyName = "Serene Seaview"): string {
   return `
 <!DOCTYPE html>
 <html>
@@ -183,7 +183,7 @@ export async function sendCancellationRejectedEmail(
 export async function sendAdminNewBookingEmail(
   data: { guestName: string; guestEmail: string; referenceId: string; roomType: string; checkIn: string; checkOut: string; totalAmount: string }
 ) {
-  const adminEmail = "admin@sereneguesthouse.com"; // Could be fetched from settings
+  const adminEmail = "info@sereneseaview.com"; // Could be fetched from settings
   const body = emailLayout(`
     <h2 style="color:#0D5C5C;margin:0 0 20px;font-size:20px;">New Booking Received</h2>
     <table style="width:100%;margin:16px 0;border-collapse:collapse;">

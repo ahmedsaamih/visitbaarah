@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Serene Guest House | Maldives Island Bliss",
-  description: "Experience the ultimate island getaway at Serene Guest House. Affordable luxury in the heart of the Maldives.",
+  title: "Serene Seaview | Thoddoo Island Bliss",
+  description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
 };
 
 export default function RootLayout({

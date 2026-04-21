@@ -96,8 +96,8 @@ export default function Hero({ imageUrl }: HeroProps) {
           opacity: 0.9,
           fontWeight: "400"
         }}>
-          Discover the true essence of Maldivian hospitality at Serene Guest House. 
-          Pristine beaches, turquoise lagoons, and memories to last a lifetime.
+          Discover the true essence of Maldivian hospitality at Serene Seaview. 
+          Pristine beaches of Thoddoo, turquoise lagoons, and memories to last a lifetime.
         </p>
         <div style={{ display: "flex", justifyContent: "center", gap: "24px" }}>
           <a href="#booking" className="btn-luxury">Plan Your Escape</a>

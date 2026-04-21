@@ -24,7 +24,7 @@ export default function Navbar() {
           color: scrolled ? "var(--teal)" : "var(--teal)",
           fontFamily: "var(--font-serif)"
         }}>
-          SERENE
+          SERENE SEAVIEW
         </Link>
         <div style={{ display: "flex", alignItems: "center" }}>
           <Link href="#about" className="nav-link-public">About</Link>
