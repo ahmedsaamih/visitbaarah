@@ -78,7 +78,7 @@ export default async function BookingLookupPage({
                 className="btn-outline-gold" 
                 style={{ color: "var(--error)", borderColor: "var(--error)" }}
                 // In a real app, this would trigger the cancel API
-                onClick={() => alert("Please contact our support for cancellation: info@sereneguesthouse.com")}
+                onClick={() => alert("Please contact our support for cancellation: info@sereneseaview.com")}
               >
                 Request Cancellation
               </button>

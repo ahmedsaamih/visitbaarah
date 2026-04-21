@@ -89,8 +89,9 @@
 - [x] Empty state handling (QA)
 - [x] Post-deployment instructions added
 
-## Phase 16: Final Polish — ❌ NOT STARTED
-- [ ] Form validation
-- [ ] Error handling
-- [ ] Accessibility
-- [ ] SEO meta tags
+## Phase 16: Final QA & Error Handling — ✅ DONE
+- [x] Branded 404 Not Found page
+- [x] Global error boundary (app/error.tsx)
+- [x] Media upload hardening (size limits + fallbacks)
+- [x] Image optimization fallback logic
+- [x] Accessibility & Performance tweaks
