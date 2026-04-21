@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+:root {
+  --teal: #0d5c5c;
+  --teal-dark: #083d3d;
+  --gold: #c9a96e;
+  --cream: #faf8f3;
+  --text: #2c3e50;
+  --text-light: #7f8c8d;
+  --border: #e9ecef;
+  
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'DM Sans', sans-serif;
+  --font-cursive: 'Cormorant Garamond', serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--cream);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ─── Typography ────────────────────────────────────────── */
+
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.font-cursive {
+  font-family: var(--font-cursive);
+}
+
+.text-gold { color: var(--gold); }
+.text-teal { color: var(--teal); }
+
+/* ─── Layout ────────────────────────────────────────────── */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.section {
+  padding: 100px 0;
+  position: relative;
+}
+
+/* ─── Buttons ───────────────────────────────────────────── */
+
+.btn-luxury {
+  display: inline-block;
+  padding: 16px 32px;
+  background: var(--teal);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.3s;
+  letter-spacing: 1px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-luxury:hover {
+  background: var(--teal-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 92, 92, 0.2);
+}
+
+.btn-outline-gold {
+  display: inline-block;
+  padding: 14px 28px;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.btn-outline-gold:hover {
+  background: var(--gold);
+  color: #fff;
+}
+
+/* ─── Cards ─────────────────────────────────────────────── */
+
+.card-island {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  transition: transform 0.3s;
+}
+
+.card-island:hover {
+  transform: translateY(-10px);
+}
+
+/* ─── Animations ────────────────────────────────────────── */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* ─── Nav ───────────────────────────────────────────────── */
+
+.nav-public {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 24px 0;
+  z-index: 1000;
+  transition: all 0.3s;
+}
+
+.nav-public.scrolled {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 16px 0;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-link-public {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 32px;
+  transition: color 0.3s;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nav-link-public:hover {
+  color: var(--teal);
+}
