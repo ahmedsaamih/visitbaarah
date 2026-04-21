@@ -25,7 +25,7 @@ export default async function HomePage() {
     db.query.tours.findMany({ where: (t, { eq }) => eq(t.isActive, true) }),
     db.query.menuItems.findMany({ where: (t, { eq }) => eq(t.isAvailable, true) }),
     db.query.services.findMany({ where: (t, { eq }) => eq(t.isActive, true) }),
-    db.query.gallery.findMany({ limit: 12 }),
+    db.query.media.findMany({ limit: 12 }),
     db.query.testimonials.findMany({ where: (t, { eq }) => eq(t.isPublished, true) }),
     db.query.settings.findMany()
   ]);

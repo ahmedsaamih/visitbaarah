@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import crypto from "crypto";
 
 const SESSION_COOKIE = "admin_session";
 const SESSION_EXPIRY_HOURS = 24;
@@ -15,19 +14,36 @@ export async function verifyPassword(password: string): Promise<boolean> {
 }
 
 /**
- * Create a signed session token using HMAC.
+ * Hash a password using bcrypt.
  */
-function signToken(payload: string): string {
-  const secret = process.env.ADMIN_SESSION_SECRET!;
-  const hmac = crypto.createHmac("sha256", secret);
-  hmac.update(payload);
-  return `${payload}.${hmac.digest("hex")}`;
+export async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, 10);
 }
 
 /**
- * Verify a signed session token.
+ * Create a signed session token using HMAC (Web Crypto API).
  */
-function verifyToken(token: string): string | null {
+async function signToken(payload: string): Promise<string> {
+  const secret = process.env.ADMIN_SESSION_SECRET!;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  const hexSignature = Array.from(new Uint8Array(signature))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return `${payload}.${hexSignature}`;
+}
+
+/**
+ * Verify a signed session token (Web Crypto API).
+ */
+async function verifyToken(token: string): Promise<string | null> {
   const secret = process.env.ADMIN_SESSION_SECRET;
   if (!secret || !token) return null;
 
@@ -35,21 +51,32 @@ function verifyToken(token: string): string | null {
   if (lastDot === -1) return null;
 
   const payload = token.substring(0, lastDot);
-  const signature = token.substring(lastDot + 1);
+  const signatureHex = token.substring(lastDot + 1);
 
-  const hmac = crypto.createHmac("sha256", secret);
-  hmac.update(payload);
-  const expected = hmac.digest("hex");
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["verify"]
+  );
 
-  // Timing-safe comparison
-  if (
-    signature.length !== expected.length ||
-    !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-  ) {
+  try {
+    const sigBytes = new Uint8Array(
+      signatureHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+    );
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      sigBytes,
+      encoder.encode(payload)
+    );
+
+    return isValid ? payload : null;
+  } catch {
     return null;
   }
-
-  return payload;
 }
 
 /**
@@ -63,7 +90,7 @@ export async function createSession(): Promise<void> {
     exp: expiresAt,
     iat: Date.now(),
   });
-  const token = signToken(payload);
+  const token = await signToken(payload);
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
@@ -84,7 +111,7 @@ export async function verifySession(): Promise<boolean> {
   const sessionCookie = cookieStore.get(SESSION_COOKIE);
   if (!sessionCookie?.value) return false;
 
-  const payload = verifyToken(sessionCookie.value);
+  const payload = await verifyToken(sessionCookie.value);
   if (!payload) return false;
 
   try {
@@ -101,8 +128,8 @@ export async function verifySession(): Promise<boolean> {
  * Verify a session token string directly (for middleware use).
  * Does not read from cookies — pass the token value.
  */
-export function verifySessionToken(token: string): boolean {
-  const payload = verifyToken(token);
+export async function verifySessionToken(token: string): Promise<boolean> {
+  const payload = await verifyToken(token);
   if (!payload) return false;
 
   try {

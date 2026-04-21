@@ -9,7 +9,7 @@ const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const ip = request.ip || "anonymous";
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "anonymous";
 
   // 1. Rate Limiting for sensitive routes
   if (pathname.startsWith("/api/admin/login") || pathname.startsWith("/api/admin/auth/otp")) {
@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
 async function handleAdminAuth(request: NextRequest) {
   const sessionCookie = request.cookies.get(SESSION_COOKIE);
 
-  if (!sessionCookie?.value || !verifySessionToken(sessionCookie.value)) {
+  if (!sessionCookie?.value || !(await verifySessionToken(sessionCookie.value))) {
     const loginUrl = new URL("/admin/login", request.url);
     const response = NextResponse.redirect(loginUrl);
     // Clear invalid cookie

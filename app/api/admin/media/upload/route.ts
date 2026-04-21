@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `File too large. Max ${type === "image" ? "10MB" : "50MB"}` }, { status: 400 });
     }
 
-    let buffer = Buffer.from(await file.arrayBuffer());
+    let buffer: any = Buffer.from(await file.arrayBuffer());
     let filename = file.name || "upload";
 
     // 2. Image Optimization with Sharp

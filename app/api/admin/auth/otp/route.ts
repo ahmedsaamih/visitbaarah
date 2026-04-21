@@ -43,20 +43,7 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    // Note: I'll export sendEmail from lib/plunk.ts if not already exported
-    // For now I'll assume it is or I will fix it.
-    
-    // Using a dynamic import for plunk to avoid export issues if I haven't fixed it yet
-    const { sendBookingReceivedEmail } = await import("@/lib/plunk");
-    // Actually, I'll just use a direct Plunk API call here to be safe and specific
-    const apiKey = process.env.PLUNK_API_KEY;
-    if (apiKey) {
-      await fetch("https://api.useplunk.com/v1/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ to: email, subject, body }),
-      });
-    }
+    await sendEmail({ to: email, subject, body });
 
     return NextResponse.json({ success: true, message: "OTP sent successfully" });
   } catch (error) {
