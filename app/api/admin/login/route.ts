@@ -12,9 +12,11 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("[Login API] Attempting login. Hash configured:", !!process.env.ADMIN_PASSWORD_HASH);
     const isValid = await verifyPassword(password);
 
     if (!isValid) {
+      console.warn("[Login API] Invalid password attempt");
       return NextResponse.json(
         { error: "Invalid password" },
         { status: 401 }
