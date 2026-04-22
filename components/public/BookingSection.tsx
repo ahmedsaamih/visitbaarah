@@ -127,6 +127,9 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                     const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
                     
                     try {
+                      const calculatedTotal = (parseFloat(roomTypes.find(rt => rt.id == formData.roomTypeId)?.basePrice || "0") * 
+                        Math.max(1, Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24)))).toString();
+
                       const res = await fetch("/api/bookings", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -134,8 +137,8 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                           ...formData,
                           guestName: name,
                           guestEmail: email,
-                          totalAmount: (parseFloat(roomTypes.find(rt => rt.id == formData.roomTypeId)?.basePrice || "0") * 
-                            Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24))).toString()
+                          totalAmount: calculatedTotal,
+                          roomTotal: calculatedTotal
                         })
                       });
                       if (res.ok) {
