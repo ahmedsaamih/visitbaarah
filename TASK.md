@@ -97,3 +97,32 @@
 - [x] Accessibility & Performance tweaks
 - [x] Admin Logout page (fixed 404 error)
 - [x] Email delivery fix (configured "From" address)
+
+## Phase 17: Premium Animations & UX — ✅ DONE
+- [x] Horizontal GSAP carousels (Rooms & Activities)
+- [x] GSAP-animated Menu Modal (Dining)
+- [x] Staggered overlapping gallery reel
+- [x] Auto-playing testimonials
+- [x] Scroll retriggering logic for reliable reveals
+
+## Phase 18: Mobile Responsiveness Polish — ✅ DONE
+- [x] Luxury brand breakpoints in `globals.css`
+- [x] Fluid typography using `clamp()`
+- [x] Adaptive stacking grids for room and activity cards
+- [x] Mobile-aware GSAP horizontal scrolling
+- [x] Responsive Menu Modal padding and height logic
+
+## Phase 19: Integration & Dependency Hardening — ✅ DONE
+- [x] Full homepage booking submission flow
+- [x] Branded OTP/Verification email templates
+- [x] Polymorphic media schema hardening (cascading deletes)
+- [x] Availability engine state persistence
+- [x] Error-aware API communication (400/500 handling)
+
+## Phase 20: Performance & Cost Optimization — ✅ DONE
+- [x] Client-side image compression (Browser Canvas)
+- [x] Server-side Sharp removal (Zero-CPU uploads)
+- [x] Neon Database performance indexing
+- [x] Homepage Edge Caching (unstable_cache)
+- [x] Instant Admin-driven Cache Invalidation
+- [x] Metadata-only database selection (Lean queries)

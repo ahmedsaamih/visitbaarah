@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { put } from "@vercel/blob";
 import { db } from "@/db";
 import { media } from "@/db/schema";
 import { verifySession } from "@/lib/auth";
-import sharp from "sharp";
 
 export async function POST(request: Request) {
   const isAdmin = await verifySession();
@@ -31,42 +31,35 @@ export async function POST(request: Request) {
     let buffer: any = Buffer.from(await file.arrayBuffer());
     let filename = file.name || "upload";
 
-    // 2. Image Optimization with Sharp
-    if (type === "image" && file.type.startsWith("image/")) {
-      try {
-        console.log(`[Media Upload] Optimizing image: ${filename}`);
-        const optimized = await sharp(buffer)
-          .rotate() // Auto-rotate based on EXIF
-          .resize({ width: 1920, withoutEnlargement: true })
-          .jpeg({ quality: 85, mozjpeg: true, progressive: true })
-          .toBuffer();
-        
-        buffer = optimized;
-        filename = filename.replace(/\.[^/.]+$/, "") + ".jpg";
-      } catch (err) {
-        console.warn("[Media Upload] Sharp failed, using raw buffer:", err);
-        // Continue with original buffer if sharp fails (fallback)
-      }
-    }
-
     // 3. Upload to Vercel Blob
     const blob = await put(filename, buffer, {
       access: "public",
       contentType: type === "image" ? "image/jpeg" : file.type,
     });
 
-    // 4. Save to Media table
+    // 4. Save to Media table with specific relations
+    const mediaValues: any = {
+      url: blob.url,
+      entityType: entityType || "general",
+      entityId: entityId ? parseInt(entityId) : 0,
+      type,
+      alt: filename,
+    };
+
+    const id = entityId ? parseInt(entityId) : 0;
+    if (id > 0) {
+      if (entityType === "room_type") mediaValues.roomTypeId = id;
+      else if (entityType === "activity") mediaValues.activityId = id;
+      else if (entityType === "tour") mediaValues.tourId = id;
+      else if (entityType === "service") mediaValues.serviceId = id;
+    }
+
     const [newMedia] = await db
       .insert(media)
-      .values({
-        url: blob.url,
-        entityType: entityType || "general",
-        entityId: entityId ? parseInt(entityId) : 0,
-        type,
-        alt: filename,
-      })
+      .values(mediaValues)
       .returning();
 
+    revalidateTag("homepage");
     return NextResponse.json(newMedia);
   } catch (error) {
     console.error("[Media Upload API] Error:", error);

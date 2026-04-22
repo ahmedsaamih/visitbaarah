@@ -5,12 +5,63 @@ import RoomTypesSection from "@/components/public/RoomTypesSection";
 import ActivitiesSection from "@/components/public/ActivitiesSection";
 import ExperienceSection from "@/components/public/ExperienceSection";
 import BookingSection from "@/components/public/BookingSection";
+import GsapCarousel from "@/components/public/GsapCarousel";
 
-export const dynamic = "force-dynamic";
+import { unstable_cache } from "next/cache";
+
+const getHomepageData = unstable_cache(
+  async () => {
+    console.log("[Data Cache] Fetching fresh homepage data from Neon...");
+    const [
+      roomTypes,
+      activities,
+      tours,
+      menuItems,
+      services,
+      gallery,
+      testimonials,
+      settings
+    ] = await Promise.all([
+      db.query.roomTypes.findMany({ with: { media: true } }),
+      db.query.activities.findMany({ 
+        where: (t, { eq }) => eq(t.isActive, true),
+        with: { media: true }
+      }),
+      db.query.tours.findMany({ 
+        where: (t, { eq }) => eq(t.isActive, true),
+        with: { media: true }
+      }),
+      db.query.menuItems.findMany({ where: (t, { eq }) => eq(t.isAvailable, true) }),
+      db.query.services.findMany({ 
+        where: (t, { eq }) => eq(t.isActive, true),
+        with: { media: true }
+      }),
+      db.query.media.findMany({ 
+        where: (t, { eq }) => eq(t.entityType, "gallery"),
+        limit: 20 
+      }),
+      db.query.testimonials.findMany({ where: (t, { eq }) => eq(t.isPublished, true) }),
+      db.query.settings.findMany()
+    ]);
+
+    return {
+      roomTypes,
+      activities,
+      tours,
+      menuItems,
+      services,
+      gallery,
+      testimonials,
+      settings
+    };
+  },
+  ["homepage-data"],
+  { tags: ["homepage"], revalidate: 3600 } // fallback revalidate 1 hour
+);
 
 export default async function HomePage() {
-  // SSR Data Fetching
-  const [
+  // SSR Data Fetching with Cache
+  const {
     roomTypes,
     activities,
     tours,
@@ -19,16 +70,7 @@ export default async function HomePage() {
     gallery,
     testimonials,
     settings
-  ] = await Promise.all([
-    db.query.roomTypes.findMany(),
-    db.query.activities.findMany({ where: (t, { eq }) => eq(t.isActive, true) }),
-    db.query.tours.findMany({ where: (t, { eq }) => eq(t.isActive, true) }),
-    db.query.menuItems.findMany({ where: (t, { eq }) => eq(t.isAvailable, true) }),
-    db.query.services.findMany({ where: (t, { eq }) => eq(t.isActive, true) }),
-    db.query.media.findMany({ limit: 12 }),
-    db.query.testimonials.findMany({ where: (t, { eq }) => eq(t.isPublished, true) }),
-    db.query.settings.findMany()
-  ]);
+  } = await getHomepageData();
 
   const heroImage = settings.find(s => s.key === "hero_image_url")?.value;
 
@@ -93,32 +135,43 @@ export default async function HomePage() {
       />
 
       {/* Testimonials */}
-      <section id="reviews" className="section" style={{ background: "#fff" }}>
+      <section id="reviews" className="section" style={{ background: "#fff", overflow: "hidden" }}>
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "64px" }} className="reveal">
             <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "16px" }}>GUEST REVIEWS</h4>
             <h2 style={{ fontSize: "48px" }}>What Our Guests Say</h2>
           </div>
           
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "32px" }}>
+          <GsapCarousel autoPlay={true} interval={7000} showArrows={true} showDots={true}>
             {testimonials.map(item => (
-              <div key={item.id} className="card-island reveal" style={{ padding: "40px" }}>
-                <div style={{ color: "var(--gold)", fontSize: "24px", marginBottom: "20px" }}>
-                  {"★".repeat(item.rating)}{"☆".repeat(5-item.rating)}
-                </div>
-                <p style={{ fontStyle: "italic", marginBottom: "32px", color: "var(--text)" }}>"{item.content}"</p>
-                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                   <div style={{ width: "50px", height: "50px", background: "var(--teal)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "700" }}>
-                     {item.guestName.charAt(0)}
-                   </div>
-                   <div>
-                     <div style={{ fontWeight: "700" }}>{item.guestName}</div>
-                     <div style={{ fontSize: "12px", color: "var(--text-light)" }}>{item.guestCountry}</div>
-                   </div>
+              <div key={item.id} style={{ padding: "20px" }}>
+                <div className="card-island" style={{ padding: "60px", maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
+                  <div style={{ color: "var(--gold)", fontSize: "28px", marginBottom: "32px" }}>
+                    {"★".repeat(item.rating)}{"☆".repeat(5-item.rating)}
+                  </div>
+                  <p style={{ 
+                    fontSize: "clamp(18px, 3vw, 24px)", 
+                    fontStyle: "italic", 
+                    marginBottom: "48px", 
+                    color: "var(--text)",
+                    lineHeight: "1.6",
+                    fontFamily: "var(--font-serif)" 
+                  }}>
+                    "{item.content}"
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
+                     <div style={{ width: "64px", height: "64px", background: "var(--teal)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "700", fontSize: "20px" }}>
+                       {item.guestName.charAt(0)}
+                     </div>
+                     <div>
+                       <div style={{ fontWeight: "700", fontSize: "18px" }}>{item.guestName}</div>
+                       <div style={{ fontSize: "14px", color: "var(--text-light)", letterSpacing: "1px" }}>{item.guestCountry?.toUpperCase()}</div>
+                     </div>
+                  </div>
                 </div>
               </div>
             ))}
-          </div>
+          </GsapCarousel>
         </div>
       </section>
 

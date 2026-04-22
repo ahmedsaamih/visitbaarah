@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { settings } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
       where: eq(settings.key, data.key),
     });
 
+    revalidateTag("homepage");
     if (existing) {
       const [updated] = await db
         .update(settings)

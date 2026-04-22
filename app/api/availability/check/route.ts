@@ -6,8 +6,8 @@ import { eq, and, gte, lte, ne, or } from "drizzle-orm";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const roomTypeId = searchParams.get("roomTypeId");
-  const checkIn = searchParams.get("checkIn"); // YYYY-MM-DD
-  const checkOut = searchParams.get("checkOut"); // YYYY-MM-DD
+  const checkIn = searchParams.get("checkIn") || searchParams.get("startDate"); // YYYY-MM-DD
+  const checkOut = searchParams.get("checkOut") || searchParams.get("endDate"); // YYYY-MM-DD
 
   if (!roomTypeId || !checkIn || !checkOut) {
     return NextResponse.json(

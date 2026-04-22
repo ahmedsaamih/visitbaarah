@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache"; 
 import { db } from "@/db";
 import { activities } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -60,6 +61,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    revalidateTag("homepage");
     return NextResponse.json(updatedItem);
   } catch (error) {
     console.error("[Activities ID API] PATCH Error:", error);
@@ -89,6 +91,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    revalidateTag("homepage");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Activities ID API] DELETE Error:", error);

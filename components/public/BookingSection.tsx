@@ -26,10 +26,17 @@ export default function BookingSection({ roomTypes }: BookingProps) {
     }
     
     setLoading(true);
+    setAvailable(null);
     try {
       const res = await fetch(`/api/availability/check?roomTypeId=${formData.roomTypeId}&startDate=${formData.checkIn}&endDate=${formData.checkOut}`);
-      const data = await res.ok ? await res.json() : [];
-      setAvailable(data);
+      if (res.ok) {
+        const data = await res.json();
+        setAvailable(data);
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Failed to check availability");
+        setAvailable(null);
+      }
     } catch (err) {
       alert("Error checking availability. Please try again later.");
     } finally {
@@ -102,25 +109,76 @@ export default function BookingSection({ roomTypes }: BookingProps) {
               </button>
             </form>
 
-            {available && available.length > 0 && (
-              <div style={{ marginTop: "24px", padding: "20px", background: "#f0fdf4", border: "1px solid #bcf0da", borderRadius: "8px", color: "#065f46" }}>
-                <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            {available?.available && (
+              <div style={{ marginTop: "24px", padding: "clamp(20px, 4vw, 32px)", background: "#f0fdf4", border: "1px solid #bcf0da", borderRadius: "12px", color: "#065f46" }}>
+                <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "20px" }}>
                    <span style={{ fontSize: "24px" }}>✨</span>
                    <div>
-                     <strong>Great news!</strong>
-                     <p style={{ fontSize: "13px", opacity: 0.8 }}>This room is available for your selected dates.</p>
+                     <strong>Room Available!</strong>
+                     <p style={{ fontSize: "14px", opacity: 0.9 }}>Secure your stay by entering your details below.</p>
                    </div>
                 </div>
-                <button className="btn-luxury" style={{ width: "100%", marginTop: "16px" }}>Complete Booking</button>
+
+                {!available.booked ? (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    const name = (e.currentTarget.elements.namedItem("name") as HTMLInputElement).value;
+                    const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
+                    
+                    try {
+                      const res = await fetch("/api/bookings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          ...formData,
+                          guestName: name,
+                          guestEmail: email,
+                          totalAmount: (parseFloat(roomTypes.find(rt => rt.id == formData.roomTypeId)?.basePrice || "0") * 
+                            Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24))).toString()
+                        })
+                      });
+                      if (res.ok) {
+                        const resData = await res.json();
+                        setAvailable({ ...available, booked: true, ref: resData.referenceId });
+                      } else {
+                        alert("Booking failed. Please try again.");
+                      }
+                    } catch (err) {
+                      alert("Network error.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}>
+                    <div style={{ marginBottom: "16px" }}>
+                      <label style={{ fontSize: "13px", color: "#065f46", marginBottom: "4px", display: "block" }}>Full Name</label>
+                      <input name="name" required style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #bcf0da" }} />
+                    </div>
+                    <div style={{ marginBottom: "20px" }}>
+                      <label style={{ fontSize: "13px", color: "#065f46", marginBottom: "4px", display: "block" }}>Email Address</label>
+                      <input name="email" type="email" required style={{ width: "100%", padding: "12px", borderRadius: "8px", border: "1px solid #bcf0da" }} />
+                    </div>
+                    <button type="submit" className="btn-luxury" style={{ width: "100%" }} disabled={loading}>
+                      {loading ? "Confirming..." : "Confirm My Booking"}
+                    </button>
+                  </form>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "10px 0" }}>
+                    <div style={{ fontSize: "16px", fontWeight: "700", marginBottom: "8px" }}>Booking Confirmed!</div>
+                    <p style={{ fontSize: "14px", marginBottom: "16px" }}>Your reference is <strong>{available.ref}</strong>. Check your email for details.</p>
+                    <button onClick={() => setAvailable(null)} className="btn-outline-gold" style={{ width: "100%" }}>Done</button>
+                  </div>
+                )}
               </div>
             )}
-            {available && available.length === 0 && (
+            
+            {available && !available.available && (
               <div style={{ marginTop: "24px", padding: "20px", background: "#fdf2f2", border: "1px solid #fbd5d5", borderRadius: "8px", color: "#9b1c1c" }}>
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                    <span style={{ fontSize: "24px" }}>📅</span>
                    <div>
                      <strong>Fully Booked</strong>
-                     <p style={{ fontSize: "13px", opacity: 0.8 }}>No rooms available for these dates.</p>
+                     <p style={{ fontSize: "13px", opacity: 0.8 }}>No rooms available for these dates. Try another room type or different dates.</p>
                    </div>
                 </div>
               </div>

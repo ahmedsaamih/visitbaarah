@@ -50,12 +50,50 @@ h1, h2, h3, h4 {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 32px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 20px;
+  }
 }
 
 .section {
   padding: 100px 0;
   position: relative;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 60px 0;
+  }
+}
+
+/* ─── Responsive Utilities ────────────────────────────── */
+
+.hide-mobile {
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+}
+
+.show-mobile {
+  @media (min-width: 769px) {
+    display: none !important;
+  }
+}
+
+.text-center-mobile {
+  @media (max-width: 768px) {
+    text-align: center !important;
+  }
+}
+
+.grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--min-width, 300px), 1fr));
+  gap: var(--gap, 24px);
 }
 
 /* ─── Buttons ───────────────────────────────────────────── */

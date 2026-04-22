@@ -10,6 +10,7 @@ import {
   date,
   pgEnum,
   json,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -73,7 +74,10 @@ export const roomTypes = pgTable("room_types", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("rt_slug_idx").on(table.slug),
+  index("rt_active_idx").on(table.isActive),
+]);
 
 // ─── Rooms ───────────────────────────────────────────────
 
@@ -118,7 +122,10 @@ export const activities = pgTable("activities", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("act_active_idx").on(table.isActive),
+  index("act_slug_idx").on(table.slug),
+]);
 
 // ─── Tours ───────────────────────────────────────────────
 
@@ -177,11 +184,22 @@ export const media = pgTable("media", {
   alt: varchar("alt", { length: 255 }),
   caption: varchar("caption", { length: 255 }),
   type: mediaTypeEnum("type").notNull().default("image"),
-  entityType: varchar("entity_type", { length: 50 }).notNull(),
-  entityId: integer("entity_id").notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(), // kept for backward compat/general queries
+  entityId: integer("entity_id").notNull(), // kept for backward compat
+  
+  // Specific IDs for robust relations & cascades
+  roomTypeId: integer("room_type_id").references(() => roomTypes.id, { onDelete: "cascade" }),
+  activityId: integer("activity_id").references(() => activities.id, { onDelete: "cascade" }),
+  tourId: integer("tour_id").references(() => tours.id, { onDelete: "cascade" }),
+  serviceId: integer("service_id").references(() => services.id, { onDelete: "cascade" }),
+
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("media_entity_idx").on(table.entityType, table.entityId),
+  index("media_room_type_idx").on(table.roomTypeId),
+  index("media_activity_idx").on(table.activityId),
+]);
 
 // ─── Bookings ────────────────────────────────────────────
 
@@ -255,7 +273,9 @@ export const testimonials = pgTable("testimonials", {
   isPublished: boolean("is_published").notNull().default(false),
   stayDate: date("stay_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("test_published_idx").on(table.isPublished),
+]);
 
 // ─── Settings ────────────────────────────────────────────
 
@@ -265,7 +285,9 @@ export const settings = pgTable("settings", {
   value: text("value").notNull(),
   group: varchar("group", { length: 50 }).notNull().default("general"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("settings_key_idx").on(table.key),
+]);
 
 // ─── OTPs ───────────────────────────────────────────────
 
@@ -283,6 +305,50 @@ export const otps = pgTable("otps", {
 export const roomTypesRelations = relations(roomTypes, ({ many }) => ({
   rooms: many(rooms),
   bookings: many(bookings),
+  media: many(media, {
+    relationName: "roomTypeMedia",
+  }),
+}));
+
+export const activitiesRelations = relations(activities, ({ many }) => ({
+  media: many(media, {
+    relationName: "activityMedia",
+  }),
+}));
+
+export const toursRelations = relations(tours, ({ many }) => ({
+  media: many(media, {
+    relationName: "tourMedia",
+  }),
+}));
+
+export const servicesRelations = relations(services, ({ many }) => ({
+  media: many(media, {
+    relationName: "serviceMedia",
+  }),
+}));
+
+export const mediaRelations = relations(media, ({ one }) => ({
+  roomType: one(roomTypes, {
+    fields: [media.roomTypeId],
+    references: [roomTypes.id],
+    relationName: "roomTypeMedia",
+  }),
+  activity: one(activities, {
+    fields: [media.activityId],
+    references: [activities.id],
+    relationName: "activityMedia",
+  }),
+  tour: one(tours, {
+    fields: [media.tourId],
+    references: [tours.id],
+    relationName: "tourMedia",
+  }),
+  service: one(services, {
+    fields: [media.serviceId],
+    references: [services.id],
+    relationName: "serviceMedia",
+  }),
 }));
 
 export const roomsRelations = relations(rooms, ({ one, many }) => ({

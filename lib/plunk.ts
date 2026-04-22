@@ -188,7 +188,7 @@ export async function sendCancellationRejectedEmail(
 export async function sendAdminNewBookingEmail(
   data: { guestName: string; guestEmail: string; referenceId: string; roomType: string; checkIn: string; checkOut: string; totalAmount: string }
 ) {
-  const adminEmail = "info@sereneseaview.com"; // Could be fetched from settings
+  const adminEmail = process.env.ADMIN_EMAIL || "info@sereneseaview.com";
   const body = emailLayout(`
     <h2 style="color:#0D5C5C;margin:0 0 20px;font-size:20px;">New Booking Received</h2>
     <table style="width:100%;margin:16px 0;border-collapse:collapse;">
@@ -201,4 +201,23 @@ export async function sendAdminNewBookingEmail(
     <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin/dashboard" style="display:inline-block;background:#0D5C5C;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;margin-top:16px;font-size:14px;">Go to Admin Panel</a>
   `);
   return sendEmail({ to: adminEmail, subject: `New Booking — ${data.referenceId}`, body });
+}
+
+/**
+ * 8. Verification OTP — sent to admin for login/email-change.
+ */
+export async function sendOTPEmail(
+  to: string,
+  data: { code: string; type: string }
+) {
+  const subject = data.type === "forgot_password" ? "Admin Password Reset OTP" : "Admin Email Change OTP";
+  const body = emailLayout(`
+    <h2 style="color:#0D5C5C;margin:0 0 20px;font-size:20px;">Admin Verification</h2>
+    <p style="color:#333;line-height:1.6;">Your verification code is below. This code will expire in 15 minutes.</p>
+    <div style="background:#f5f3ee;padding:32px;text-align:center;border-radius:8px;margin:24px 0;">
+      <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#0D5C5C;">${data.code}</span>
+    </div>
+    <p style="color:#999;font-size:13px;">If you did not request this code, please secure your account immediately.</p>
+  `);
+  return sendEmail({ to, subject, body });
 }

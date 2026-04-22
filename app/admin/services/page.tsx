@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import MediaManager from "@/components/admin/MediaManager";
 
 export default function AdminServices() {
   const [items, setItems] = useState<any[]>([]);
@@ -103,7 +104,12 @@ export default function AdminServices() {
               <label>Description</label>
               <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} />
             </div>
-            <div style={{ display: "flex", gap: "12px" }}>
+
+            {formData.id && (
+              <MediaManager entityType="service" entityId={formData.id} />
+            )}
+
+            <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
               <button type="submit" className="btn btn-primary">Save</button>
               <button type="button" onClick={() => setIsEditing(false)} className="btn btn-outline">Cancel</button>
             </div>
