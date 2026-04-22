@@ -4,6 +4,7 @@ import { bookings, rooms, roomAvailability } from "@/db/schema";
 import { eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { sendBookingConfirmedEmail, sendBookingRejectedEmail } from "@/lib/plunk";
+import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 
 export async function PATCH(
   request: Request,
@@ -29,6 +30,16 @@ export async function PATCH(
 
     if (!booking) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    const willSendConfirmation = status === "confirmed" && booking.status !== "confirmed";
+    const willSendRejection = status === "rejected" && booking.status !== "rejected";
+    if (willSendConfirmation || willSendRejection) {
+      const action = willSendConfirmation ? "admin_confirm_booking" : "admin_reject_booking";
+      const limit = checkTransactionalRequestLimit(action, booking.guestEmail);
+      if (!limit.allowed) {
+        return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
+      }
     }
 
     let nextAssignedRoomId = assignedRoomId === undefined ? booking.assignedRoomId : assignedRoomId;

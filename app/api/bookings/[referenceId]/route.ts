@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { bookings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendAdminNewBookingEmail } from "@/lib/plunk";
+import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 
 export async function GET(
   request: Request,
@@ -71,6 +72,11 @@ export async function PATCH(
 
     if (booking.status === "cancelled" || booking.status === "rejected" || booking.status === "checked_out") {
       return NextResponse.json({ error: "This booking can no longer be edited" }, { status: 400 });
+    }
+
+    const limit = checkTransactionalRequestLimit("booking_edit_request", email);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
     }
 
     const checkIn = nextCheckIn ?? booking.checkIn;

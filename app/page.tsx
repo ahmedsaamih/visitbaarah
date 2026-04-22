@@ -217,7 +217,7 @@ export default async function HomePage() {
             </div>
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "30px", textAlign: "center", fontSize: "12px", opacity: 0.5 }}>
-            &copy; {new Date().getFullYear()} Serene Seaview. Design inspired by Travlla. All rights reserved.
+            &copy; {new Date().getFullYear()} Designed and Developed samih. All rights reserved.
           </div>
         </div>
       </footer>

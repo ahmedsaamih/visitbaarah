@@ -4,6 +4,7 @@ import { settings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateNumericOTP, saveOTP } from "@/lib/otp";
 import { sendOTPEmail } from "@/lib/plunk";
+import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 
 type OTPRequestType = "forgot_password" | "email_change";
 
@@ -36,6 +37,11 @@ export async function POST(request: Request) {
     }
 
     // 2. Generate and Save OTP
+    const limit = checkTransactionalRequestLimit(`otp_${type}`, normalizedEmail);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
+    }
+
     const code = generateNumericOTP();
     await saveOTP(normalizedEmail, code, type as OTPRequestType);
 

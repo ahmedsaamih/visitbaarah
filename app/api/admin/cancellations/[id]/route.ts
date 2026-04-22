@@ -4,6 +4,7 @@ import { cancellationRequests, bookings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { sendCancellationApprovedEmail, sendCancellationRejectedEmail } from "@/lib/plunk";
+import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 
 export async function PATCH(
   request: Request,
@@ -32,6 +33,14 @@ export async function PATCH(
 
     if (cancelReq.status !== "pending") {
       return NextResponse.json({ error: "Request already processed" }, { status: 400 });
+    }
+
+    if (status === "approved" || status === "rejected") {
+      const action = status === "approved" ? "admin_cancel_approve" : "admin_cancel_reject";
+      const limit = checkTransactionalRequestLimit(action, cancelReq.booking.guestEmail);
+      if (!limit.allowed) {
+        return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
+      }
     }
 
     // 2. Update status and Resolve

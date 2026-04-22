@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { bookings, roomTypes, bookingAddons } from "@/db/schema";
 import { generateReferenceId } from "@/lib/reference";
 import { sendBookingReceivedEmail, sendAdminNewBookingEmail } from "@/lib/plunk";
+import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -29,6 +30,12 @@ export async function POST(request: Request) {
     if (!guestName || !guestEmail || !roomTypeId || !checkIn || !checkOut || !totalAmount) {
       return NextResponse.json({ error: "Missing required booking details" }, { status: 400 });
     }
+    const normalizedGuestEmail = String(guestEmail).trim().toLowerCase();
+
+    const limit = checkTransactionalRequestLimit("booking_request", normalizedGuestEmail);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
+    }
 
     // 2. Generate Reference ID
     const referenceId = await generateReferenceId();
@@ -40,7 +47,7 @@ export async function POST(request: Request) {
         .values({
           referenceId,
           guestName,
-          guestEmail,
+          guestEmail: normalizedGuestEmail,
           guestPhone,
           guestCountry,
           roomTypeId: parseInt(roomTypeId),
@@ -83,7 +90,7 @@ export async function POST(request: Request) {
     // 5. Send Emails (Fire and forget or await?)
     // Using await for reliability in this context
     try {
-      const guestEmailSent = await sendBookingReceivedEmail(guestEmail, {
+      const guestEmailSent = await sendBookingReceivedEmail(normalizedGuestEmail, {
         guestName,
         referenceId,
         roomType: roomType?.name || "Room",
@@ -94,7 +101,7 @@ export async function POST(request: Request) {
 
       const adminEmailSent = await sendAdminNewBookingEmail({
         guestName,
-        guestEmail,
+        guestEmail: normalizedGuestEmail,
         referenceId,
         roomType: roomType?.name || "Room",
         checkIn,

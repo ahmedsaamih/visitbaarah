@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { bookings, cancellationRequests } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendCancellationRequestEmail } from "@/lib/plunk";
+import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 
 export async function POST(
   request: Request,
@@ -27,6 +28,11 @@ export async function POST(
     }
     if (booking.guestEmail.toLowerCase() !== normalizedEmail) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+
+    const limit = checkTransactionalRequestLimit("booking_cancel_request", normalizedEmail);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
     }
 
     // 2. Check if already cancelled or has pending request
