@@ -59,6 +59,7 @@ export async function POST(request: Request) {
       .values(mediaValues)
       .returning();
 
+    // @ts-ignore: Next.js 16 type mismatch
     revalidateTag("homepage");
     return NextResponse.json(newMedia);
   } catch (error) {

@@ -93,6 +93,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    // @ts-ignore: Next.js 16 type mismatch
     revalidateTag("homepage");
     return NextResponse.json({ success: true });
   } catch (error) {
