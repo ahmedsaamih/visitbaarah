@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { roomAvailability, rooms } from "@/db/schema";
-import { eq, and, between } from "drizzle-orm";
+import { roomAvailability, rooms, bookings } from "@/db/schema";
+import { eq, and, between, ne, lt, gte } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 
 export async function GET(request: Request) {
@@ -23,13 +23,57 @@ export async function GET(request: Request) {
   }
 
   try {
-    const items = await db.query.roomAvailability.findMany({
+    const manualItems = await db.query.roomAvailability.findMany({
       where: and(
         eq(roomAvailability.roomId, parseInt(roomId)),
         between(roomAvailability.date, startDate, endDate)
       ),
     });
-    return NextResponse.json(items);
+
+    // Also reflect occupancy from active bookings assigned to this room.
+    // This keeps the admin calendar aligned when bookings are confirmed.
+    const activeBookings = await db.query.bookings.findMany({
+      where: and(
+        eq(bookings.assignedRoomId, parseInt(roomId)),
+        ne(bookings.status, "cancelled"),
+        ne(bookings.status, "rejected"),
+        ne(bookings.status, "checked_out"),
+        lt(bookings.checkIn, incrementDateString(endDate)),
+        gte(bookings.checkOut, incrementDateString(startDate))
+      ),
+    });
+
+    const mergedByDate = new Map<string, any>();
+
+    for (const item of manualItems) {
+      mergedByDate.set(item.date, item);
+    }
+
+    for (const booking of activeBookings) {
+      const occupiedDates = eachStayDate(booking.checkIn, booking.checkOut);
+      for (const date of occupiedDates) {
+        if (date < startDate || date > endDate) continue;
+        const existing = mergedByDate.get(date);
+        if (existing) {
+          mergedByDate.set(date, {
+            ...existing,
+            isBlocked: true,
+            reason: existing.reason || `Booking ${booking.referenceId}`,
+          });
+        } else {
+          mergedByDate.set(date, {
+            id: `booking-${booking.id}-${date}`,
+            roomId: parseInt(roomId),
+            date,
+            isBlocked: true,
+            reason: `Booking ${booking.referenceId}`,
+            createdAt: booking.updatedAt,
+          });
+        }
+      }
+    }
+
+    return NextResponse.json(Array.from(mergedByDate.values()));
   } catch (error) {
     console.error("[Availability Admin API] GET Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -104,4 +148,21 @@ export async function POST(request: Request) {
     console.error("[Availability Admin API] POST Error:", error);
     return NextResponse.json({ error: "Failed to update availability" }, { status: 500 });
   }
+}
+
+function incrementDateString(dateStr: string) {
+  const date = new Date(dateStr);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().split("T")[0];
+}
+
+function eachStayDate(checkIn: string, checkOut: string) {
+  const dates: string[] = [];
+  const cursor = new Date(`${checkIn}T00:00:00.000Z`);
+  const checkoutDate = new Date(`${checkOut}T00:00:00.000Z`);
+  while (cursor < checkoutDate) {
+    dates.push(cursor.toISOString().split("T")[0]);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return dates;
 }

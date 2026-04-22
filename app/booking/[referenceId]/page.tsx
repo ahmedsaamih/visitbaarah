@@ -109,7 +109,7 @@ export default function BookingLookupPage() {
       <Navbar />
       <div className="container" style={{ paddingTop: "150px", paddingBottom: "100px" }}>
         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-          <div className="reveal card-island" style={{ padding: "30px", marginBottom: "24px" }}>
+          <div className="card-island" style={{ padding: "30px", marginBottom: "24px" }}>
             <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "12px" }}>BOOKING LOOKUP</h4>
             <p style={{ color: "var(--text-light)", marginBottom: "16px" }}>
               Enter the email used for booking reference <strong>{referenceId}</strong>.
@@ -131,14 +131,14 @@ export default function BookingLookupPage() {
 
           {booking && (
             <>
-              <div className="reveal" style={{ marginBottom: "24px" }}>
+              <div style={{ marginBottom: "24px" }}>
                 <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "16px" }}>BOOKING DETAILS</h4>
                 <h1 style={{ fontSize: "42px" }}>
                   Status: <span className={`text-${booking.status}`}>{booking.status.toUpperCase().replace("_", " ")}</span>
                 </h1>
               </div>
 
-              <div className="card-island reveal" style={{ padding: "40px", marginBottom: "24px" }}>
+              <div className="card-island" style={{ padding: "40px", marginBottom: "24px" }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
                   <div>
                     <label style={{ fontSize: "12px", color: "var(--text-light)", textTransform: "uppercase" }}>Reference ID</label>
@@ -169,7 +169,7 @@ export default function BookingLookupPage() {
               </div>
 
               {booking.status !== "cancelled" && booking.status !== "rejected" && booking.status !== "checked_out" && (
-                <div className="reveal card-island" style={{ padding: "30px", marginBottom: "24px" }}>
+                <div className="card-island" style={{ padding: "30px", marginBottom: "24px" }}>
                   <h3 style={{ marginBottom: "12px" }}>Edit Booking</h3>
                   <p style={{ color: "var(--text-light)", marginBottom: "16px", fontSize: "14px" }}>
                     If you edit this booking, it will return to <strong>pending</strong> and require admin confirmation.
@@ -202,7 +202,7 @@ export default function BookingLookupPage() {
               )}
 
               {booking.status !== "cancelled" && booking.status !== "rejected" && (
-                <div className="reveal card-island" style={{ padding: "30px" }}>
+                <div className="card-island" style={{ padding: "30px" }}>
                   <h3 style={{ marginBottom: "12px" }}>Request Cancellation</h3>
                   <textarea
                     rows={3}
