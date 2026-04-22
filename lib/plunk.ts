@@ -1,4 +1,4 @@
-const PLUNK_API_URL = "https://api.useplunk.com/v1/track";
+const PLUNK_SEND_URL = "https://next-api.useplunk.com/v1/send";
 
 interface EmailParams {
   to: string;
@@ -11,6 +11,8 @@ interface EmailParams {
  */
 export async function sendEmail({ to, subject, body }: EmailParams): Promise<boolean> {
   const rawApiKey =
+    process.env.PLUNK_SECRET_KEY ||
+    process.env.plunk_secret_key ||
     process.env.PLUNK_API_KEY ||
     process.env.PLUNK_APIKEY ||
     process.env.plunk_api_key;
@@ -28,7 +30,7 @@ export async function sendEmail({ to, subject, body }: EmailParams): Promise<boo
   }
 
   try {
-    const res = await fetch("https://api.useplunk.com/v1/send", {
+    const res = await fetch(PLUNK_SEND_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
