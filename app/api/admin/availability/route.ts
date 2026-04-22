@@ -44,8 +44,9 @@ export async function POST(request: Request) {
 
   try {
     const { roomId, dates, isBlocked, reason } = await request.json();
+    const parsedRoomId = Number(roomId);
 
-    if (!roomId || !dates || !Array.isArray(dates)) {
+    if (!Number.isInteger(parsedRoomId) || !dates || !Array.isArray(dates)) {
       return NextResponse.json(
         { error: "roomId and dates array are required" },
         { status: 400 }
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       // Upsert availability record
       const existing = await db.query.roomAvailability.findFirst({
         where: and(
-          eq(roomAvailability.roomId, roomId),
+          eq(roomAvailability.roomId, parsedRoomId),
           eq(roomAvailability.date, date)
         ),
       });
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
         const [inserted] = await db
           .insert(roomAvailability)
           .values({
-            roomId,
+            roomId: parsedRoomId,
             date,
             isBlocked,
             reason,

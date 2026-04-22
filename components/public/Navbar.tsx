@@ -5,6 +5,15 @@ import Link from "next/link";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { href: "#about", label: "About" },
+    { href: "#rooms", label: "Rooms" },
+    { href: "#activities", label: "Activities" },
+    { href: "#dining", label: "Dining" },
+    { href: "#booking", label: "Book Now", isPrimary: true },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,9 +23,20 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const closeOnResize = () => {
+      if (window.innerWidth > 768) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("resize", closeOnResize);
+    return () => window.removeEventListener("resize", closeOnResize);
+  }, []);
+
   return (
-    <nav className={`nav-public ${scrolled ? "scrolled" : ""}`}>
-      <div className="container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <>
+      <nav className={`nav-public ${scrolled ? "scrolled" : ""}`}>
+      <div className="container nav-public-inner">
         <Link href="/" style={{ 
           fontSize: "24px", 
           fontWeight: "800", 
@@ -26,14 +46,40 @@ export default function Navbar() {
         }}>
           SERENE SEAVIEW
         </Link>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Link href="#about" className="nav-link-public">About</Link>
-          <Link href="#rooms" className="nav-link-public">Rooms</Link>
-          <Link href="#activities" className="nav-link-public">Activities</Link>
-          <Link href="#dining" className="nav-link-public">Dining</Link>
-          <Link href="#booking" className="btn-luxury" style={{ marginLeft: "32px", padding: "10px 24px", fontSize: "12px" }}>Book Now</Link>
+        <div className="nav-public-desktop">
+          {navItems.slice(0, 4).map((item) => (
+            <Link key={item.href} href={item.href} className="nav-link-public">
+              {item.label}
+            </Link>
+          ))}
+          <Link href="#booking" className="btn-luxury" style={{ marginLeft: "32px", padding: "10px 24px", fontSize: "12px" }}>
+            Book Now
+          </Link>
         </div>
       </div>
-    </nav>
+      </nav>
+
+      <div className={`mobile-fab-nav ${mobileOpen ? "open" : ""}`}>
+        {navItems.map((item, index) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={`mobile-fab-item ${item.isPrimary ? "primary" : ""}`}
+            style={{ ["--item-index" as string]: String(index) }}
+            onClick={() => setMobileOpen(false)}
+          >
+            {item.label}
+          </Link>
+        ))}
+        <button
+          type="button"
+          className="mobile-fab-trigger"
+          aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"}
+          onClick={() => setMobileOpen((prev) => !prev)}
+        >
+          {mobileOpen ? "×" : "☰"}
+        </button>
+      </div>
+    </>
   );
 }

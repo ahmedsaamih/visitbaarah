@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { roomTypes } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { roomTypes, rooms, roomAvailability, bookings, media } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
 
 export async function GET(
   request: Request,
@@ -82,22 +83,54 @@ export async function DELETE(
 
   const { id } = await params;
   const itemId = parseInt(id);
+  if (!Number.isInteger(itemId)) {
+    return NextResponse.json({ error: "Invalid room type id" }, { status: 400 });
+  }
 
   try {
-    const [deletedItem] = await db
-      .delete(roomTypes)
-      .where(eq(roomTypes.id, itemId))
-      .returning();
+    const deletedItem = await db.transaction(async (tx) => {
+      const relatedRooms = await tx.query.rooms.findMany({
+        where: eq(rooms.roomTypeId, itemId),
+      });
+      const relatedRoomIds = relatedRooms.map((room) => room.id);
+
+      if (relatedRoomIds.length > 0) {
+        await tx
+          .update(bookings)
+          .set({ assignedRoomId: null })
+          .where(inArray(bookings.assignedRoomId, relatedRoomIds));
+
+        await tx
+          .delete(roomAvailability)
+          .where(inArray(roomAvailability.roomId, relatedRoomIds));
+
+        await tx.delete(rooms).where(eq(rooms.roomTypeId, itemId));
+      }
+
+      await tx
+        .delete(media)
+        .where(eq(media.roomTypeId, itemId));
+
+      const [deleted] = await tx
+        .delete(roomTypes)
+        .where(eq(roomTypes.id, itemId))
+        .returning();
+
+      return deleted;
+    });
 
     if (!deletedItem) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // @ts-ignore: Next.js 16 type mismatch
     revalidateTag("homepage");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Room Types ID API] DELETE Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    const message =
+      error instanceof Error && error.message.toLowerCase().includes("violates foreign key")
+        ? "This room type has existing bookings and cannot be deleted safely. Archive it instead."
+        : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

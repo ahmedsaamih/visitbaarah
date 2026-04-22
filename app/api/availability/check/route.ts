@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { rooms, roomAvailability, bookings, roomTypes } from "@/db/schema";
-import { eq, and, gte, lte, ne, or } from "drizzle-orm";
+import { rooms, roomAvailability, bookings } from "@/db/schema";
+import { eq, and, gte, lt, ne } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -17,9 +17,18 @@ export async function GET(request: Request) {
   }
 
   try {
+    const parsedRoomTypeId = Number(roomTypeId);
+    if (!Number.isInteger(parsedRoomTypeId)) {
+      return NextResponse.json({ error: "Invalid roomTypeId" }, { status: 400 });
+    }
+
+    if (checkIn >= checkOut) {
+      return NextResponse.json({ error: "checkOut must be after checkIn" }, { status: 400 });
+    }
+
     // 1. Get all rooms of this type
     const allRooms = await db.query.rooms.findMany({
-      where: eq(rooms.roomTypeId, parseInt(roomTypeId)),
+      where: eq(rooms.roomTypeId, parsedRoomTypeId),
     });
 
     if (allRooms.length === 0) {
@@ -39,7 +48,7 @@ export async function GET(request: Request) {
           eq(roomAvailability.roomId, room.id),
           eq(roomAvailability.isBlocked, true),
           gte(roomAvailability.date, checkIn),
-          ltDate(roomAvailability.date, checkOut) // Only check block until day before checkout
+          lt(roomAvailability.date, checkOut) // Include check-in, exclude check-out
         ),
       });
 
@@ -53,8 +62,8 @@ export async function GET(request: Request) {
           ne(bookings.status, "cancelled"),
           ne(bookings.status, "rejected"),
           and(
-            ltDate(bookings.checkIn, checkOut),
-            gtDate(bookings.checkOut, checkIn)
+            lt(bookings.checkIn, checkOut),
+            gte(bookings.checkOut, incrementDateString(checkIn))
           )
         ),
       });
@@ -68,7 +77,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       available: availableCount > 0,
       availableCount,
-      roomTypeId: parseInt(roomTypeId),
+      roomTypeId: parsedRoomTypeId,
       checkIn,
       checkOut
     });
@@ -78,23 +87,8 @@ export async function GET(request: Request) {
   }
 }
 
-// Helper for date comparisons in drizzle
-function ltDate(column: any, value: string) {
-  return lte(column, decrementDate(value));
-}
-
-function gtDate(column: any, value: string) {
-  return gte(column, incrementDate(value));
-}
-
-function incrementDate(dateStr: string) {
+function incrementDateString(dateStr: string) {
   const date = new Date(dateStr);
-  date.setDate(date.getDate() + 1);
-  return date.toISOString().split("T")[0];
-}
-
-function decrementDate(dateStr: string) {
-  const date = new Date(dateStr);
-  date.setDate(date.getDate() - 1);
+  date.setUTCDate(date.getUTCDate() + 1);
   return date.toISOString().split("T")[0];
 }
