@@ -26,8 +26,8 @@ export default function AdminAvailability() {
     if (!selectedRoomId) return;
     
     // Fetch for the current month
-    const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split("T")[0];
-    const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split("T")[0];
+    const start = formatLocalDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), 1));
+    const end = formatLocalDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0));
     
     try {
       const res = await fetch(`/api/admin/availability?roomId=${selectedRoomId}&startDate=${start}&endDate=${end}`);
@@ -83,11 +83,25 @@ export default function AdminAvailability() {
               <option key={room.id} value={room.id}>Room {room.roomNumber} ({room.roomType?.name ?? "Unknown type"})</option>
             ))}
           </select>
-          <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="btn btn-outline">&lt;</button>
+          <button
+            onClick={() =>
+              setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
+            }
+            className="btn btn-outline"
+          >
+            &lt;
+          </button>
           <div style={{ display: "flex", alignItems: "center", padding: "0 12px", fontWeight: "600" }}>
             {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </div>
-          <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className="btn btn-outline">&gt;</button>
+          <button
+            onClick={() =>
+              setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
+            }
+            className="btn btn-outline"
+          >
+            &gt;
+          </button>
         </div>
       </div>
 
@@ -144,4 +158,11 @@ export default function AdminAvailability() {
       </p>
     </div>
   );
+}
+
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }

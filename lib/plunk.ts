@@ -10,7 +10,15 @@ interface EmailParams {
  * Send an email via Plunk REST API.
  */
 export async function sendEmail({ to, subject, body }: EmailParams): Promise<boolean> {
-  const apiKey = process.env.PLUNK_API_KEY;
+  const apiKey =
+    process.env.PLUNK_API_KEY ||
+    process.env.PLUNK_APIKEY ||
+    process.env.plunk_api_key;
+  const fromEmail =
+    process.env.PLUNK_FROM_EMAIL ||
+    process.env.PLUNK_EMAIL_FROM ||
+    process.env.plunk_email_from ||
+    "info@islandsmv.online";
   if (!apiKey) {
     console.warn("[Plunk] No API key configured, skipping email send.");
     return false;
@@ -27,7 +35,7 @@ export async function sendEmail({ to, subject, body }: EmailParams): Promise<boo
         to, 
         subject, 
         body,
-        from: process.env.PLUNK_FROM_EMAIL || "info@islandsmv.online"
+        from: fromEmail
       }),
     });
 
