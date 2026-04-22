@@ -107,13 +107,26 @@ export default function AdminAvailability() {
 
       <div className="card">
         <div style={{ 
+          maxWidth: "860px",
+          margin: "0 auto",
           display: "grid", 
           gridTemplateColumns: "repeat(7, 1fr)", 
-          gap: "4px",
+          gap: "3px",
           textAlign: "center"
         }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} style={{ fontWeight: "600", fontSize: "12px", color: "var(--admin-text-light)", paddingBottom: "4px" }}>{d}</div>
+            <div
+              key={d}
+              style={{
+                fontWeight: "600",
+                fontSize: "11px",
+                color: "var(--admin-text-light)",
+                paddingBottom: "4px",
+                letterSpacing: "0.2px",
+              }}
+            >
+              {d}
+            </div>
           ))}
           {calendarDays.map((day, idx) => {
             if (day === null) return <div key={`empty-${idx}`} />;
@@ -127,25 +140,25 @@ export default function AdminAvailability() {
                 key={day} 
                 onClick={() => toggleDate(dateStr, !!isBlocked)}
                 style={{
-                  aspectRatio: "0.95/1",
+                  minHeight: "46px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: "6px",
+                  borderRadius: "5px",
                   cursor: "pointer",
                   border: "1px solid var(--admin-border)",
                   background: isBlocked ? "#fee2e2" : "#d1fae5",
                   color: isBlocked ? "#991b1b" : "#065f46",
-                  fontSize: "12px",
+                  fontSize: "11px",
                   fontWeight: "600",
                   transition: "all 0.2s"
                 }}
                 className="calendar-day"
               >
                 {day}
-                <div style={{ fontSize: "9px", marginTop: "2px" }}>
-                  {isBlocked ? "BLOCKED" : "OPEN"}
+                <div style={{ fontSize: "8px", marginTop: "1px", opacity: 0.9 }}>
+                  {isBlocked ? "BLK" : "OPEN"}
                 </div>
               </div>
             );
