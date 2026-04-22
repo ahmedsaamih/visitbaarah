@@ -65,15 +65,27 @@ export default function GsapCarousel({
 
   return (
     <div className={`carousel-container ${className}`} ref={containerRef} style={{ position: "relative", overflow: "hidden", width: "100%" }}>
+      {/* Track */}
       <div 
         ref={trackRef} 
         style={{ 
           display: "flex", 
-          transition: "none", // Handled by GSAP
-          width: `${total * 100}%` 
+          width: `${total * 100}%`,
+          touchAction: "pan-y"
         }}
+      >
+        {React.Children.map(children, (child) => (
+          <div style={{ 
+            width: `${100 / (total > 0 ? total : 1)}%`,
+            flexShrink: 0 
+          }}>
+            {child}
+          </div>
+        ))}
+      </div>
+
       {/* Navigation Arrows */}
-      {showArrows && (
+      {showArrows && total > 1 && (
         <>
           <button 
             onClick={prev}
@@ -130,53 +142,24 @@ export default function GsapCarousel({
         </>
       )}
 
-      {/* Track */}
-      <div 
-        ref={proxyRef} 
-        style={{ display: "none" }} // GSAP Draggable Proxy
-      />
-      <div 
-        style={{ 
-          overflow: "hidden", 
-          cursor: isDragging ? "grabbing" : "grab",
-          touchAction: "pan-y"
-        }}
-      >
-        <div 
-          ref={trackRef} 
-          style={{ 
-            display: "flex",
-            width: "max-content"
-          }}
-        >
-          {React.Children.map(children, (child) => (
-            <div style={{ 
-              width: "calc(100vw - clamp(40px, 10vw, 80px))", // Responsive item width
-              maxWidth: "1100px", // Cap for large screens
-              flexShrink: 0 
-            }}>
-              {child}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Dots Indicator */}
-      {showDots && (
+      {showDots && total > 1 && (
         <div style={{ 
           display: "flex", 
           justifyContent: "center", 
           gap: "8px", 
-          marginTop: "clamp(24px, 5vw, 40px)" 
+          marginTop: "clamp(24px, 5vw, 40px)",
+          position: "relative",
+          zIndex: 10
         }}>
           {React.Children.map(children, (_, idx) => (
             <button
               onClick={() => goTo(idx)}
               style={{
-                width: currentIndex === idx ? "24px" : "8px",
+                width: index === idx ? "24px" : "8px",
                 height: "8px",
                 borderRadius: "4px",
-                background: currentIndex === idx ? "var(--teal)" : "var(--border)",
+                background: index === idx ? "var(--teal)" : "var(--border)",
                 border: "none",
                 cursor: "pointer",
                 transition: "all 0.3s ease"

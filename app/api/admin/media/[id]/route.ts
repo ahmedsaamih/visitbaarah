@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { media } from "@/db/schema";
 import { verifySession } from "@/lib/auth";
@@ -7,7 +8,7 @@ import { del } from "@vercel/blob";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const isAdmin = await verifySession();
   if (!isAdmin) {
@@ -15,7 +16,8 @@ export async function DELETE(
   }
 
   try {
-    const id = parseInt(params.id);
+    const { id: paramId } = await params;
+    const id = parseInt(paramId);
     
     // 1. Get the record to find the blob URL
     const [item] = await db.select().from(media).where(eq(media.id, id));
@@ -37,6 +39,7 @@ export async function DELETE(
     // 3. Delete from DB
     await db.delete(media).where(eq(media.id, id));
 
+    revalidateTag("homepage");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Media Delete API] Error:", error);
