@@ -80,7 +80,7 @@ export default function AdminAvailability() {
         <div style={{ display: "flex", gap: "12px" }}>
           <select value={selectedRoomId} onChange={e => setSelectedRoomId(e.target.value)} className="btn btn-outline">
             {rooms.map(room => (
-              <option key={room.id} value={room.id}>Room {room.roomNumber} ({room.roomType.name})</option>
+              <option key={room.id} value={room.id}>Room {room.roomNumber} ({room.roomType?.name ?? "Unknown type"})</option>
             ))}
           </select>
           <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className="btn btn-outline">&lt;</button>

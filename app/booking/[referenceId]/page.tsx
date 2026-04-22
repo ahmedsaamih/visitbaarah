@@ -59,7 +59,7 @@ export default async function BookingLookupPage({
               </div>
               <div>
                 <label style={{ fontSize: "12px", color: "var(--text-light)", textTransform: "uppercase" }}>Accommodation</label>
-                <div style={{ fontWeight: "600" }}>{booking.roomType.name}</div>
+                <div style={{ fontWeight: "600" }}>{booking.roomType?.name ?? "Deleted room type"}</div>
               </div>
             </div>
             

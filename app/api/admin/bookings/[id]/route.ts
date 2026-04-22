@@ -58,7 +58,7 @@ export async function PATCH(
       await sendBookingConfirmedEmail(booking.guestEmail, {
         guestName: booking.guestName,
         referenceId: booking.referenceId,
-        roomType: booking.roomType.name,
+        roomType: booking.roomType?.name ?? "Room",
         roomNumber,
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,

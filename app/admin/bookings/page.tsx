@@ -76,7 +76,7 @@ export default function AdminBookings() {
                     <div style={{ fontWeight: "600" }}>{booking.guestName}</div>
                     <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{booking.guestEmail}</div>
                   </td>
-                  <td>{booking.roomType.name}</td>
+                  <td>{booking.roomType?.name ?? "Deleted room type"}</td>
                   <td>{new Date(booking.checkIn).toLocaleDateString()}</td>
                   <td>{new Date(booking.checkOut).toLocaleDateString()}</td>
                   <td>${booking.totalAmount}</td>

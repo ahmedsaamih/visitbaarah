@@ -85,7 +85,7 @@ export default async function AdminDashboard() {
                     <div style={{ fontWeight: "600" }}>{booking.guestName}</div>
                     <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{booking.referenceId}</div>
                   </td>
-                  <td>{booking.roomType.name}</td>
+                  <td>{booking.roomType?.name ?? "Deleted room type"}</td>
                   <td>
                     {new Date(booking.checkIn).toLocaleDateString()} &rarr; {new Date(booking.checkOut).toLocaleDateString()}
                   </td>
