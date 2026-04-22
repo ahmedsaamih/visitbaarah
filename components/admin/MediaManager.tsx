@@ -9,7 +9,7 @@ interface MediaItem {
 }
 
 interface MediaManagerProps {
-  entityType: "room_type" | "activity" | "tour" | "service" | "gallery";
+  entityType: "room_type" | "activity" | "tour" | "service" | "gallery" | "menu";
   entityId: number;
 }
 
@@ -34,7 +34,7 @@ export default function MediaManager({ entityType, entityId }: MediaManagerProps
   };
 
   useEffect(() => {
-    if (entityId) fetchMedia();
+    if (entityId || entityType === "gallery") fetchMedia();
   }, [entityId, entityType]);
 
   const compressImage = (file: File): Promise<Blob> => {
@@ -86,17 +86,28 @@ export default function MediaManager({ entityType, entityId }: MediaManagerProps
     try {
       let finalFile: Blob | File = file;
       let filename = file.name;
+      let contentType = file.type || "application/octet-stream";
 
       if (file.type.startsWith("image/")) {
-        console.log(`[MediaManager] Compressing ${file.name}...`);
-        finalFile = await compressImage(file);
-        filename = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+        try {
+          finalFile = await compressImage(file);
+          filename = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+          contentType = "image/jpeg";
+        } catch (compressionError) {
+          // Fallback to the original file if compression fails for specific formats/devices.
+          console.warn("[MediaManager] Compression failed, uploading original file.", compressionError);
+          finalFile = file;
+          filename = file.name;
+          contentType = file.type || "application/octet-stream";
+        }
       }
 
       const formData = new FormData();
       formData.append("file", finalFile, filename);
       formData.append("entity_type", entityType);
       formData.append("entity_id", entityId.toString());
+      formData.append("type", file.type.startsWith("video/") ? "video" : "image");
+      formData.append("content_type", contentType);
 
       const res = await fetch("/api/admin/media/upload", {
         method: "POST",
@@ -111,7 +122,7 @@ export default function MediaManager({ entityType, entityId }: MediaManagerProps
       }
     } catch (err) {
       console.error(err);
-      alert("Upload failed. Browser might lack memory for compression.");
+      alert("Upload failed. Please try a smaller image or a different format.");
     } finally {
       setUploading(false);
       e.target.value = ""; // Reset input
@@ -129,7 +140,7 @@ export default function MediaManager({ entityType, entityId }: MediaManagerProps
     }
   };
 
-  if (!entityId) return <p className="text-sm text-gray-500">Save the item first to manage images.</p>;
+  if (!entityId && entityType !== "gallery") return <p className="text-sm text-gray-500">Save the item first to manage images.</p>;
 
   return (
     <div className="media-manager" style={{ marginTop: "24px", borderTop: "1px solid var(--admin-border)", paddingTop: "24px" }}>

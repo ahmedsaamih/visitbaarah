@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { roomAvailability } from "@/db/schema";
+import { roomAvailability, rooms } from "@/db/schema";
 import { eq, and, between } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
   try {
     const { roomId, dates, isBlocked, reason } = await request.json();
     const parsedRoomId = Number(roomId);
+    const parsedReason = typeof reason === "string" ? reason.slice(0, 255) : null;
 
     if (!Number.isInteger(parsedRoomId) || !dates || !Array.isArray(dates)) {
       return NextResponse.json(
@@ -53,8 +54,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const room = await db.query.rooms.findFirst({
+      where: eq(rooms.id, parsedRoomId),
+    });
+    if (!room) {
+      return NextResponse.json({ error: "Room not found" }, { status: 404 });
+    }
+
+    const validDates = dates.filter(
+      (value: unknown) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+    );
+    if (validDates.length === 0) {
+      return NextResponse.json({ error: "No valid dates provided" }, { status: 400 });
+    }
+
     const results = [];
-    for (const date of dates) {
+    for (const date of validDates) {
       // Upsert availability record
       const existing = await db.query.roomAvailability.findFirst({
         where: and(
@@ -66,7 +81,7 @@ export async function POST(request: Request) {
       if (existing) {
         const [updated] = await db
           .update(roomAvailability)
-          .set({ isBlocked, reason }) 
+          .set({ isBlocked: !!isBlocked, reason: parsedReason })
           .where(eq(roomAvailability.id, existing.id))
           .returning();
         results.push(updated);
@@ -76,8 +91,8 @@ export async function POST(request: Request) {
           .values({
             roomId: parsedRoomId,
             date,
-            isBlocked,
-            reason,
+            isBlocked: !!isBlocked,
+            reason: parsedReason,
           })
           .returning();
         results.push(inserted);
@@ -87,6 +102,6 @@ export async function POST(request: Request) {
     return NextResponse.json(results);
   } catch (error) {
     console.error("[Availability Admin API] POST Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update availability" }, { status: 500 });
   }
 }

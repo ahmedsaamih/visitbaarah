@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File;
     const entityType = formData.get("entity_type") as string;
     const entityId = formData.get("entity_id") as string;
-    const type = formData.get("type") as "image" | "video" || "image";
+    const type = (formData.get("type") as "image" | "video") || "image";
+    const explicitContentType = formData.get("content_type") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -28,13 +29,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `File too large. Max ${type === "image" ? "10MB" : "50MB"}` }, { status: 400 });
     }
 
-    let buffer: any = Buffer.from(await file.arrayBuffer());
-    let filename = file.name || "upload";
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const filename = file.name || "upload";
+    const contentType =
+      explicitContentType ||
+      file.type ||
+      (type === "image" ? "image/jpeg" : "application/octet-stream");
 
     // 3. Upload to Vercel Blob
     const blob = await put(filename, buffer, {
       access: "public",
-      contentType: type === "image" ? "image/jpeg" : file.type,
+      contentType,
     });
 
     // 4. Save to Media table with specific relations

@@ -80,11 +80,11 @@ export default async function HomePage() {
       <Hero imageUrl={heroImage} />
       
       {/* About Section */}
-      <section id="about" className="section" style={{ background: "#fff" }}>
-        <div className="container" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "80px", alignItems: "center" }}>
+      <section id="about" className="section" style={{ background: "#fff", overflow: "hidden" }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "clamp(28px, 6vw, 80px)", alignItems: "center" }}>
           <div className="reveal">
             <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "16px" }}>OUR STORY</h4>
-            <h2 style={{ fontSize: "48px", marginBottom: "24px" }}>Authentic Island Living</h2>
+            <h2 style={{ fontSize: "clamp(32px, 6vw, 48px)", marginBottom: "24px" }}>Authentic Island Living</h2>
             <p style={{ color: "var(--text-light)", marginBottom: "24px" }}>
               Nestled in the heart of the lush island of AA. Thoddoo, Serene Seaview offers a unique blend of traditional island charm and modern comfort. 
               Our mission is to provide an immersive experience that connects you with the vibrant culture and natural beauty of the Maldives.
@@ -110,12 +110,12 @@ export default async function HomePage() {
             }}>
               <div style={{ width: "100%", height: "100%", background: "url(/images/hero.png) center/cover" }} />
             </div>
-            <div style={{ 
+            <div style={{
               position: "absolute", 
-              bottom: "-30px", 
-              left: "-30px", 
-              width: "200px", 
-              height: "200px", 
+              bottom: "clamp(-16px, -3vw, -30px)", 
+              left: "clamp(-12px, -2vw, -30px)", 
+              width: "clamp(120px, 28vw, 200px)", 
+              height: "clamp(120px, 28vw, 200px)", 
               background: "var(--gold)", 
               borderRadius: "16px",
               zIndex: -1 
@@ -139,20 +139,20 @@ export default async function HomePage() {
         <div className="container">
           <div style={{ textAlign: "center", marginBottom: "64px" }} className="reveal">
             <h4 style={{ color: "var(--gold)", letterSpacing: "2px", marginBottom: "16px" }}>GUEST REVIEWS</h4>
-            <h2 style={{ fontSize: "48px" }}>What Our Guests Say</h2>
+              <h2 style={{ fontSize: "clamp(32px, 6vw, 48px)" }}>What Our Guests Say</h2>
           </div>
           
           <GsapCarousel autoPlay={true} interval={7000} showArrows={true} showDots={true}>
             {testimonials.map(item => (
-              <div key={item.id} style={{ padding: "20px" }}>
-                <div className="card-island" style={{ padding: "60px", maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
+              <div key={item.id} style={{ padding: "clamp(8px, 3vw, 20px)" }}>
+                <div className="card-island" style={{ padding: "clamp(24px, 6vw, 60px)", maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
                   <div style={{ color: "var(--gold)", fontSize: "28px", marginBottom: "32px" }}>
                     {"★".repeat(item.rating)}{"☆".repeat(5-item.rating)}
                   </div>
                   <p style={{ 
                     fontSize: "clamp(18px, 3vw, 24px)", 
                     fontStyle: "italic", 
-                    marginBottom: "48px", 
+                    marginBottom: "clamp(20px, 5vw, 48px)",
                     color: "var(--text)",
                     lineHeight: "1.6",
                     fontFamily: "var(--font-serif)" 

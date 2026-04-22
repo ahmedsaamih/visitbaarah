@@ -18,8 +18,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing email or code" }, { status: 400 });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+    }
+
     // 1. Verify OTP
-    const isValid = await verifyAndConsumeOTP(email, code, "email_change");
+    const isValid = await verifyAndConsumeOTP(normalizedEmail, code, "email_change");
     if (!isValid) {
       return NextResponse.json({ error: "Invalid or expired OTP" }, { status: 400 });
     }
@@ -29,12 +34,12 @@ export async function POST(request: Request) {
       .insert(settings)
       .values({
         key: "admin_recovery_email",
-        value: email,
+        value: normalizedEmail,
         group: "security",
       })
       .onConflictDoUpdate({
         target: settings.key,
-        set: { value: email, updatedAt: new Date() },
+        set: { value: normalizedEmail, updatedAt: new Date() },
       });
 
     return NextResponse.json({ success: true, message: "Recovery email updated successfully" });

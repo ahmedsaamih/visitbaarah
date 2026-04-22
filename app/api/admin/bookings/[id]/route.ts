@@ -55,7 +55,7 @@ export async function PATCH(
         roomNumber = room?.roomNumber;
       }
 
-      await sendBookingConfirmedEmail(booking.guestEmail, {
+      const sent = await sendBookingConfirmedEmail(booking.guestEmail, {
         guestName: booking.guestName,
         referenceId: booking.referenceId,
         roomType: booking.roomType?.name ?? "Room",
@@ -63,13 +63,25 @@ export async function PATCH(
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,
       });
+      if (!sent) {
+        console.error("[Admin Booking Update API] Confirmation email failed to send.", {
+          bookingId,
+          referenceId: booking.referenceId,
+        });
+      }
     } else if (status === "rejected" && booking.status !== "rejected") {
       // Send rejection email
-      await sendBookingRejectedEmail(booking.guestEmail, {
+      const sent = await sendBookingRejectedEmail(booking.guestEmail, {
         guestName: booking.guestName,
         referenceId: booking.referenceId,
         reason: rejectionReason,
       });
+      if (!sent) {
+        console.error("[Admin Booking Update API] Rejection email failed to send.", {
+          bookingId,
+          referenceId: booking.referenceId,
+        });
+      }
     }
 
     return NextResponse.json(updatedBooking);

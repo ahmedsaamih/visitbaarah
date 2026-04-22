@@ -14,7 +14,9 @@ export function generateNumericOTP(): string {
  */
 export async function saveOTP(email: string, code: string, type: "email_change" | "forgot_password") {
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
-  
+  // Keep one active OTP per email/type to avoid stale-code confusion.
+  await db.delete(otps).where(and(eq(otps.email, email), eq(otps.type, type)));
+
   await db.insert(otps).values({
     email,
     code,
@@ -42,8 +44,8 @@ export async function verifyAndConsumeOTP(email: string, code: string, type: "em
 
   if (!existing) return false;
 
-  // Delete all OTPs for this email/type once verified (consume)
-  await db.delete(otps).where(eq(otps.email, email));
+  // Consume only OTPs for this specific email/type.
+  await db.delete(otps).where(and(eq(otps.email, email), eq(otps.type, type)));
   
   return true;
 }

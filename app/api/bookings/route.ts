@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     // 5. Send Emails (Fire and forget or await?)
     // Using await for reliability in this context
     try {
-      await sendBookingReceivedEmail(guestEmail, {
+      const guestEmailSent = await sendBookingReceivedEmail(guestEmail, {
         guestName,
         referenceId,
         roomType: roomType?.name || "Room",
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         totalAmount: `$${totalAmount}`,
       });
 
-      await sendAdminNewBookingEmail({
+      const adminEmailSent = await sendAdminNewBookingEmail({
         guestName,
         guestEmail,
         referenceId,
@@ -101,6 +101,14 @@ export async function POST(request: Request) {
         checkOut,
         totalAmount: `$${totalAmount}`,
       });
+
+      if (!guestEmailSent || !adminEmailSent) {
+        console.error("[Booking API] One or more transactional emails failed to send.", {
+          referenceId,
+          guestEmailSent,
+          adminEmailSent,
+        });
+      }
     } catch (emailError) {
       console.error("[Booking API] Email sending failed:", emailError);
       // Don't fail the booking if email fails
