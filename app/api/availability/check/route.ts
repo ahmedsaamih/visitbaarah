@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { rooms, roomAvailability, bookings } from "@/db/schema";
-import { eq, and, gte, lt, ne } from "drizzle-orm";
+import { eq, and, gte, lt, ne, inArray, isNull } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "checkOut must be after checkIn" }, { status: 400 });
     }
 
-    // 1. Get all rooms of this type
+    // 1) Get all rooms of this type
     const allRooms = await db.query.rooms.findMany({
       where: eq(rooms.roomTypeId, parsedRoomTypeId),
     });
@@ -35,44 +35,64 @@ export async function GET(request: Request) {
       return NextResponse.json({ available: false, message: "No rooms of this type exist" });
     }
 
-    // 2. For each room, check if it's available for the entire range
-    // A room is available if it has NO blocks and NO bookings in the range
-    
-    let availableCount = 0;
-    const availableRooms = [];
+    const roomIds = allRooms.map((room) => room.id);
 
-    for (const room of allRooms) {
-      // Check for blocks
-      const blocks = await db.query.roomAvailability.findMany({
-        where: and(
-          eq(roomAvailability.roomId, room.id),
-          eq(roomAvailability.isBlocked, true),
-          gte(roomAvailability.date, checkIn),
-          lt(roomAvailability.date, checkOut) // Include check-in, exclude check-out
-        ),
+    // 2) Rooms blocked in the requested range.
+    const blockedRows = await db.query.roomAvailability.findMany({
+      where: and(
+        inArray(roomAvailability.roomId, roomIds),
+        eq(roomAvailability.isBlocked, true),
+        gte(roomAvailability.date, checkIn),
+        lt(roomAvailability.date, checkOut)
+      ),
+    });
+    const blockedRoomIds = new Set(blockedRows.map((row) => row.roomId));
+
+    const openRoomIds = roomIds.filter((roomId) => !blockedRoomIds.has(roomId));
+    if (openRoomIds.length === 0) {
+      return NextResponse.json({
+        available: false,
+        availableCount: 0,
+        roomTypeId: parsedRoomTypeId,
+        checkIn,
+        checkOut,
       });
-
-      if (blocks.length > 0) continue;
-
-      // Check for overlapping bookings
-      // Booking overlaps if: (start1 < end2) AND (end1 > start2)
-      const overlappingBookings = await db.query.bookings.findMany({
-        where: and(
-          eq(bookings.assignedRoomId, room.id),
-          ne(bookings.status, "cancelled"),
-          ne(bookings.status, "rejected"),
-          and(
-            lt(bookings.checkIn, checkOut),
-            gte(bookings.checkOut, incrementDateString(checkIn))
-          )
-        ),
-      });
-
-      if (overlappingBookings.length === 0) {
-        availableCount++;
-        availableRooms.push(room);
-      }
     }
+
+    // 3) Occupancy from already-assigned active bookings.
+    const overlappingAssignedBookings = await db.query.bookings.findMany({
+      where: and(
+        inArray(bookings.assignedRoomId, openRoomIds),
+        ne(bookings.status, "cancelled"),
+        ne(bookings.status, "rejected"),
+        ne(bookings.status, "checked_out"),
+        lt(bookings.checkIn, checkOut),
+        gte(bookings.checkOut, incrementDateString(checkIn))
+      ),
+    });
+    const occupiedAssignedRoomIds = new Set(
+      overlappingAssignedBookings
+        .map((booking) => booking.assignedRoomId)
+        .filter((roomId): roomId is number => typeof roomId === "number")
+    );
+
+    // 4) Unassigned active bookings still consume capacity for this room type.
+    const unassignedBookings = await db.query.bookings.findMany({
+      where: and(
+        eq(bookings.roomTypeId, parsedRoomTypeId),
+        isNull(bookings.assignedRoomId),
+        ne(bookings.status, "cancelled"),
+        ne(bookings.status, "rejected"),
+        ne(bookings.status, "checked_out"),
+        lt(bookings.checkIn, checkOut),
+        gte(bookings.checkOut, incrementDateString(checkIn))
+      ),
+    });
+
+    const availableCount = Math.max(
+      0,
+      openRoomIds.length - occupiedAssignedRoomIds.size - unassignedBookings.length
+    );
 
     return NextResponse.json({
       available: availableCount > 0,

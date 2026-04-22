@@ -167,8 +167,10 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                   </form>
                 ) : (
                   <div style={{ textAlign: "center", padding: "10px 0" }}>
-                    <div style={{ fontSize: "16px", fontWeight: "700", marginBottom: "8px" }}>Booking Confirmed!</div>
-                    <p style={{ fontSize: "14px", marginBottom: "16px" }}>Your reference is <strong>{available.ref}</strong>. Check your email for details.</p>
+                    <div style={{ fontSize: "16px", fontWeight: "700", marginBottom: "8px" }}>Booking Request Received!</div>
+                    <p style={{ fontSize: "14px", marginBottom: "16px" }}>
+                      Your reference is <strong>{available.ref}</strong>. This request is pending admin confirmation, and you can track it anytime.
+                    </p>
                     <button onClick={() => setAvailable(null)} className="btn-outline-gold" style={{ width: "100%" }}>Done</button>
                   </div>
                 )}

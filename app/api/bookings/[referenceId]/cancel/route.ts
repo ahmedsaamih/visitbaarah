@@ -10,11 +10,12 @@ export async function POST(
 ) {
   try {
     const { referenceId } = await params;
-    const { reason } = await request.json();
+    const { reason, email } = await request.json();
 
-    if (!reason) {
-      return NextResponse.json({ error: "Reason is required" }, { status: 400 });
+    if (!reason || !email) {
+      return NextResponse.json({ error: "Reason and email are required" }, { status: 400 });
     }
+    const normalizedEmail = String(email).trim().toLowerCase();
 
     // 1. Verify booking exists
     const booking = await db.query.bookings.findFirst({
@@ -22,6 +23,9 @@ export async function POST(
     });
 
     if (!booking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
+    if (booking.guestEmail.toLowerCase() !== normalizedEmail) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
