@@ -123,7 +123,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    revalidateTag("homepage");
+    revalidateTag("homepage", "max");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Room Types ID API] DELETE Error:", error);

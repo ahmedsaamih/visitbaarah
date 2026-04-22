@@ -61,8 +61,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // @ts-ignore: Next.js 16 type mismatch
-    revalidateTag("homepage");
+    revalidateTag("homepage", "max");
     return NextResponse.json(updatedItem);
   } catch (error) {
     console.error("[Activities ID API] PATCH Error:", error);
@@ -92,8 +91,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // @ts-ignore: Next.js 16 type mismatch
-    revalidateTag("homepage");
+    revalidateTag("homepage", "max");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Activities ID API] DELETE Error:", error);

@@ -39,8 +39,7 @@ export async function DELETE(
     // 3. Delete from DB
     await db.delete(media).where(eq(media.id, id));
 
-    // @ts-ignore: Next.js 16 type mismatch
-    revalidateTag("homepage");
+    revalidateTag("homepage", "max");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Media Delete API] Error:", error);

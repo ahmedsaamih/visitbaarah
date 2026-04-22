@@ -34,8 +34,7 @@ export async function POST(request: Request) {
       where: eq(settings.key, data.key),
     });
 
-    // @ts-ignore: Next.js 16 type mismatch
-    revalidateTag("homepage");
+    revalidateTag("homepage", "max");
     if (existing) {
       const [updated] = await db
         .update(settings)

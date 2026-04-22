@@ -59,8 +59,7 @@ export async function POST(request: Request) {
       .values(mediaValues)
       .returning();
 
-    // @ts-ignore: Next.js 16 type mismatch
-    revalidateTag("homepage");
+    revalidateTag("homepage", "max");
     return NextResponse.json(newMedia);
   } catch (error) {
     console.error("[Media Upload API] Error:", error);
