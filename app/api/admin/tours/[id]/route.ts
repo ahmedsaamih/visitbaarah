@@ -46,9 +46,13 @@ export async function PATCH(
 
   try {
     const data = await request.json();
+    
+    // Sanitize data: Exclude fields that shouldn't be updated
+    const { id: _, createdAt: __, updatedAt: ___, ...updateData } = data;
+
     const [updatedItem] = await db
       .update(tours)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(tours.id, itemId))
       .returning();
 

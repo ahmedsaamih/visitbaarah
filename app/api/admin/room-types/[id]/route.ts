@@ -46,9 +46,17 @@ export async function PATCH(
 
   try {
     const data = await request.json();
+    
+    // Sanitize data: Exclude fields that shouldn't be updated and handle type conversion
+    const { id: _, createdAt: __, updatedAt: ___, ...updateData } = data;
+    
+    if (updateData.basePrice !== undefined) updateData.basePrice = updateData.basePrice.toString();
+    if (updateData.maxGuests !== undefined) updateData.maxGuests = parseInt(updateData.maxGuests);
+    if (updateData.sortOrder !== undefined) updateData.sortOrder = parseInt(updateData.sortOrder);
+
     const [updatedItem] = await db
       .update(roomTypes)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(roomTypes.id, itemId))
       .returning();
 

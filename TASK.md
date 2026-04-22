@@ -95,3 +95,5 @@
 - [x] Media upload hardening (size limits + fallbacks)
 - [x] Image optimization fallback logic
 - [x] Accessibility & Performance tweaks
+- [x] Admin Logout page (fixed 404 error)
+- [x] Email delivery fix (configured "From" address)

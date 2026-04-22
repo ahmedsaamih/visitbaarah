@@ -23,7 +23,12 @@ export async function sendEmail({ to, subject, body }: EmailParams): Promise<boo
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ to, subject, body }),
+      body: JSON.stringify({ 
+        to, 
+        subject, 
+        body,
+        from: process.env.PLUNK_FROM_EMAIL || "info@islandsmv.online"
+      }),
     });
 
     if (!res.ok) {
