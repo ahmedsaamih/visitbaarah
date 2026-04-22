@@ -16,7 +16,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
   });
 
   const [loading, setLoading] = useState(false);
-  const [available, setAvailable] = useState<any[] | null>(null);
+  const [available, setAvailable] = useState<any | null>(null);
 
   const handleCheck = async (e: React.FormEvent) => {
     e.preventDefault();
