@@ -86,7 +86,7 @@ export const rooms = pgTable("rooms", {
   roomNumber: varchar("room_number", { length: 20 }).notNull().unique(),
   roomTypeId: integer("room_type_id")
     .notNull()
-    .references(() => roomTypes.id),
+    .references(() => roomTypes.id, { onDelete: "cascade" }),
   floor: integer("floor"),
   status: roomStatusEnum("status").notNull().default("available"),
   notes: text("notes"),
@@ -99,7 +99,7 @@ export const roomAvailability = pgTable("room_availability", {
   id: serial("id").primaryKey(),
   roomId: integer("room_id")
     .notNull()
-    .references(() => rooms.id),
+    .references(() => rooms.id, { onDelete: "cascade" }),
   date: date("date").notNull(),
   isBlocked: boolean("is_blocked").notNull().default(false),
   priceOverride: decimal("price_override", { precision: 10, scale: 2 }),
@@ -211,9 +211,8 @@ export const bookings = pgTable("bookings", {
   guestPhone: varchar("guest_phone", { length: 30 }),
   guestCountry: varchar("guest_country", { length: 100 }),
   roomTypeId: integer("room_type_id")
-    .notNull()
-    .references(() => roomTypes.id),
-  assignedRoomId: integer("assigned_room_id").references(() => rooms.id),
+    .references(() => roomTypes.id, { onDelete: "set null" }), // Keep booking history but remove type link
+  assignedRoomId: integer("assigned_room_id").references(() => rooms.id, { onDelete: "set null" }),
   checkIn: date("check_in").notNull(),
   checkOut: date("check_out").notNull(),
   numGuests: integer("num_guests").notNull().default(1),

@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       if (existing) {
         const [updated] = await db
           .update(roomAvailability)
-          .set({ isBlocked, reason, updatedAt: new Date() } as any) // updatedAt might not be in schema, let's check
+          .set({ isBlocked, reason }) 
           .where(eq(roomAvailability.id, existing.id))
           .returning();
         results.push(updated);
