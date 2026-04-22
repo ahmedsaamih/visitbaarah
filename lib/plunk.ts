@@ -10,10 +10,13 @@ interface EmailParams {
  * Send an email via Plunk REST API.
  */
 export async function sendEmail({ to, subject, body }: EmailParams): Promise<boolean> {
-  const apiKey =
+  const rawApiKey =
     process.env.PLUNK_API_KEY ||
     process.env.PLUNK_APIKEY ||
     process.env.plunk_api_key;
+  const apiKey = rawApiKey
+    ? rawApiKey.trim().replace(/^Bearer\s+/i, "").replace(/^['"]|['"]$/g, "")
+    : "";
   const fromEmail =
     process.env.PLUNK_FROM_EMAIL ||
     process.env.PLUNK_EMAIL_FROM ||
