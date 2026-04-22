@@ -77,7 +77,7 @@ export default function AdminAvailability() {
     <div>
       <div className="title-row">
         <h1>Room Availability</h1>
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <select value={selectedRoomId} onChange={e => setSelectedRoomId(e.target.value)} className="btn btn-outline">
             {rooms.map(room => (
               <option key={room.id} value={room.id}>Room {room.roomNumber} ({room.roomType?.name ?? "Unknown type"})</option>
@@ -109,11 +109,11 @@ export default function AdminAvailability() {
         <div style={{ 
           display: "grid", 
           gridTemplateColumns: "repeat(7, 1fr)", 
-          gap: "8px",
+          gap: "4px",
           textAlign: "center"
         }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-            <div key={d} style={{ fontWeight: "600", fontSize: "14px", color: "var(--admin-text-light)", paddingBottom: "8px" }}>{d}</div>
+            <div key={d} style={{ fontWeight: "600", fontSize: "12px", color: "var(--admin-text-light)", paddingBottom: "4px" }}>{d}</div>
           ))}
           {calendarDays.map((day, idx) => {
             if (day === null) return <div key={`empty-${idx}`} />;
@@ -127,24 +127,24 @@ export default function AdminAvailability() {
                 key={day} 
                 onClick={() => toggleDate(dateStr, !!isBlocked)}
                 style={{
-                  aspectRatio: "1/1",
+                  aspectRatio: "0.95/1",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: "8px",
+                  borderRadius: "6px",
                   cursor: "pointer",
                   border: "1px solid var(--admin-border)",
                   background: isBlocked ? "#fee2e2" : "#d1fae5",
                   color: isBlocked ? "#991b1b" : "#065f46",
-                  fontSize: "14px",
+                  fontSize: "12px",
                   fontWeight: "600",
                   transition: "all 0.2s"
                 }}
                 className="calendar-day"
               >
                 {day}
-                <div style={{ fontSize: "10px", marginTop: "4px" }}>
+                <div style={{ fontSize: "9px", marginTop: "2px" }}>
                   {isBlocked ? "BLOCKED" : "OPEN"}
                 </div>
               </div>

@@ -73,6 +73,8 @@ export default async function HomePage() {
   } = await getHomepageData();
 
   const heroImage = settings.find(s => s.key === "hero_image_url")?.value;
+  const aboutImage = settings.find(s => s.key === "about_image_url")?.value || "/images/hero.png";
+  const diningImage = settings.find(s => s.key === "dining_image_url")?.value || "/images/hero.png";
 
   return (
     <main>
@@ -108,7 +110,7 @@ export default async function HomePage() {
               borderRadius: "20px",
               overflow: "hidden"
             }}>
-              <div style={{ width: "100%", height: "100%", background: "url(/images/hero.png) center/cover" }} />
+              <div style={{ width: "100%", height: "100%", background: `url(${aboutImage}) center/cover` }} />
             </div>
             <div style={{
               position: "absolute", 
@@ -132,6 +134,7 @@ export default async function HomePage() {
         menuItems={menuItems} 
         services={services} 
         gallery={gallery} 
+        diningImageUrl={diningImage}
       />
 
       {/* Testimonials */}

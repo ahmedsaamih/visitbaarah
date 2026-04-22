@@ -6,7 +6,11 @@ export default function AdminSettings() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploadState, setUploadState] = useState<"idle" | "optimizing" | "uploading" | "done">("idle");
+  const [uploadState, setUploadState] = useState<Record<string, "idle" | "optimizing" | "uploading" | "done">>({
+    hero_image_url: "idle",
+    about_image_url: "idle",
+    dining_image_url: "idle",
+  });
 
   const fetchItems = async () => {
     try {
@@ -44,11 +48,17 @@ export default function AdminSettings() {
     }
   };
 
-  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const getUploadState = (key: string) => uploadState[key] || "idle";
+
+  const setUploadStateFor = (key: string, state: "idle" | "optimizing" | "uploading" | "done") => {
+    setUploadState((prev) => ({ ...prev, [key]: state }));
+  };
+
+  const handleSettingImageUpload = async (settingKey: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadState("optimizing");
+    setUploadStateFor(settingKey, "optimizing");
     const formData = new FormData();
     formData.append("file", file);
     formData.append("entityType", "settings");
@@ -56,7 +66,7 @@ export default function AdminSettings() {
 
     // Simulate "optimizing" hint before hitting the API
     setTimeout(async () => {
-      setUploadState("uploading");
+      setUploadStateFor(settingKey, "uploading");
       try {
         const res = await fetch("/api/admin/media/upload", {
           method: "POST",
@@ -64,18 +74,17 @@ export default function AdminSettings() {
         });
         const data = await res.json();
         if (res.ok) {
-          // Update hero_image_url setting
-          handleChange("hero_image_url", data.url);
-          await handleSave({ key: "hero_image_url", value: data.url, group: "general" });
-          setUploadState("done");
-          setTimeout(() => setUploadState("idle"), 2000);
+          handleChange(settingKey, data.url);
+          await handleSave({ key: settingKey, value: data.url, group: "general" });
+          setUploadStateFor(settingKey, "done");
+          setTimeout(() => setUploadStateFor(settingKey, "idle"), 2000);
         } else {
-          alert("Hero upload failed");
-          setUploadState("idle");
+          alert("Image upload failed");
+          setUploadStateFor(settingKey, "idle");
         }
       } catch (err) {
         alert("Error uploading");
-        setUploadState("idle");
+        setUploadStateFor(settingKey, "idle");
       }
     }, 1000);
   };
@@ -146,9 +155,9 @@ export default function AdminSettings() {
 
       {/* Hero Image Setting */}
       <div className="card">
-        <h2 style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "12px", marginBottom: "20px" }}>Hero Visual</h2>
+        <h2 style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "12px", marginBottom: "20px" }}>Homepage Visuals</h2>
         <div style={{ display: "flex", gap: "32px", alignItems: "start" }}>
-          <div style={{ width: "300px", aspectRatio: "16/9", borderRadius: "12px", overflow: "hidden", background: "#000" }}>
+          <div style={{ width: "300px", aspectRatio: "16/9", borderRadius: "12px", overflow: "hidden", background: "#000", flexShrink: 0 }}>
             <img 
               src={items.find(i => i.key === "hero_image_url")?.value || "/images/hero.png"} 
               alt="Hero Preview" 
@@ -157,15 +166,44 @@ export default function AdminSettings() {
           </div>
           <div>
             <label className="btn btn-primary" style={{ cursor: "pointer" }}>
-              {uploadState === "idle" ? "Change Hero Image" : 
-               uploadState === "optimizing" ? "Optimizing..." : 
-               uploadState === "uploading" ? "Uploading..." : "Done ✓"}
-              <input type="file" onChange={handleHeroUpload} style={{ display: "none" }} accept="image/*" disabled={uploadState !== "idle"} />
+              {getUploadState("hero_image_url") === "idle" ? "Change Hero Image" : 
+               getUploadState("hero_image_url") === "optimizing" ? "Optimizing..." : 
+               getUploadState("hero_image_url") === "uploading" ? "Uploading..." : "Done ✓"}
+              <input type="file" onChange={(e) => handleSettingImageUpload("hero_image_url", e)} style={{ display: "none" }} accept="image/*" disabled={getUploadState("hero_image_url") !== "idle"} />
             </label>
             <p style={{ marginTop: "12px", fontSize: "13px", color: "var(--admin-text-light)" }}>
               Optimization hint: Images are automatically compressed to WebP/JPEG for fast loading.
             </p>
           </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "20px", marginTop: "24px" }}>
+          {[
+            { key: "about_image_url", label: "Our Story Image" },
+            { key: "dining_image_url", label: "Culinary Delights Image" },
+          ].map((imageSetting) => (
+            <div key={imageSetting.key} style={{ border: "1px solid var(--admin-border)", borderRadius: "10px", padding: "14px" }}>
+              <div style={{ fontWeight: 600, marginBottom: "10px" }}>{imageSetting.label}</div>
+              <div style={{ width: "100%", aspectRatio: "16/10", borderRadius: "10px", overflow: "hidden", background: "#0f172a", marginBottom: "10px" }}>
+                <img
+                  src={items.find(i => i.key === imageSetting.key)?.value || "/images/hero.png"}
+                  alt={imageSetting.label}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+              <label className="btn btn-outline" style={{ cursor: "pointer", width: "100%", textAlign: "center" }}>
+                {getUploadState(imageSetting.key) === "idle" ? "Upload" :
+                  getUploadState(imageSetting.key) === "optimizing" ? "Optimizing..." :
+                  getUploadState(imageSetting.key) === "uploading" ? "Uploading..." : "Done ✓"}
+                <input
+                  type="file"
+                  onChange={(e) => handleSettingImageUpload(imageSetting.key, e)}
+                  style={{ display: "none" }}
+                  accept="image/*"
+                  disabled={getUploadState(imageSetting.key) !== "idle"}
+                />
+              </label>
+            </div>
+          ))}
         </div>
       </div>
 

@@ -56,9 +56,9 @@ export default function RoomTypesSection({ roomTypes }: RoomTypeProps) {
                       borderTop: "1px solid var(--border)",
                       borderBottom: "1px solid var(--border)"
                     }}>
-                      <span>👤 {type.maxGuests} Guests</span>
-                      <span className="hide-mobile">📶 High-speed WiFi</span>
-                      <span>🏖️ Island View</span>
+                      <span>Guests: {type.maxGuests}</span>
+                      <span className="hide-mobile">Premium Wi-Fi</span>
+                      <span>Island View</span>
                     </div>
 
                     <a href="#booking" className="btn-luxury" style={{ alignSelf: "flex-start", padding: "16px 40px", width: "100%", textAlign: "center" }}>

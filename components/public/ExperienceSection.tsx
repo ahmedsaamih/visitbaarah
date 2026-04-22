@@ -8,15 +8,18 @@ interface ExperienceProps {
   menuItems: any[];
   services: any[];
   gallery: any[];
+  diningImageUrl?: string;
 }
 
-export default function ExperienceSection({ menuItems, services, gallery }: ExperienceProps) {
+export default function ExperienceSection({ menuItems, services, gallery, diningImageUrl }: ExperienceProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const hasDining = menuItems && menuItems.length > 0;
   const hasGallery = gallery && gallery.length > 0;
 
   if (!hasDining && !hasGallery) return null;
+
+  const diningImage = diningImageUrl || "/images/hero.png";
 
   return (
     <>
@@ -51,7 +54,7 @@ export default function ExperienceSection({ menuItems, services, gallery }: Expe
                   <div style={{ 
                     width: "100%", 
                     height: "100%", 
-                    background: "url(/images/hero.png) center/cover",
+                    background: `url(${diningImage}) center/cover`,
                     zIndex: 0
                   }} />
                   <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(rgba(13,92,92,0.2), transparent)" }} />

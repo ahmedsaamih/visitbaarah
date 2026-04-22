@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, rooms } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { bookings, rooms, roomAvailability } from "@/db/schema";
+import { eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { sendBookingConfirmedEmail, sendBookingRejectedEmail } from "@/lib/plunk";
 
@@ -31,12 +31,23 @@ export async function PATCH(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
+    let nextAssignedRoomId = assignedRoomId === undefined ? booking.assignedRoomId : assignedRoomId;
+    if (status === "confirmed" && !nextAssignedRoomId) {
+      if (!booking.roomTypeId) {
+        return NextResponse.json({ error: "Booking has no room type and cannot be confirmed." }, { status: 400 });
+      }
+      nextAssignedRoomId = await findAvailableRoomId(booking);
+      if (!nextAssignedRoomId) {
+        return NextResponse.json({ error: "No available room for selected dates. Please block/adjust booking dates." }, { status: 400 });
+      }
+    }
+
     // 2. Update Booking
     const [updatedBooking] = await db
       .update(bookings)
       .set({
         status: status || booking.status,
-        assignedRoomId: assignedRoomId === undefined ? booking.assignedRoomId : assignedRoomId,
+        assignedRoomId: nextAssignedRoomId,
         rejectionReason: rejectionReason || booking.rejectionReason,
         adminNotes: adminNotes || booking.adminNotes,
         updatedAt: new Date(),
@@ -48,9 +59,9 @@ export async function PATCH(
     if (status === "confirmed" && booking.status !== "confirmed") {
       // Send confirmation email
       let roomNumber;
-      if (assignedRoomId) {
+      if (nextAssignedRoomId) {
         const room = await db.query.rooms.findFirst({
-          where: eq(rooms.id, assignedRoomId),
+          where: eq(rooms.id, nextAssignedRoomId),
         });
         roomNumber = room?.roomNumber;
       }
@@ -89,4 +100,55 @@ export async function PATCH(
     console.error("[Admin Booking Update API] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+async function findAvailableRoomId(booking: {
+  id: number;
+  roomTypeId: number | null;
+  checkIn: string;
+  checkOut: string;
+}) {
+  if (!booking.roomTypeId) return null;
+
+  const candidateRooms = await db.query.rooms.findMany({
+    where: eq(rooms.roomTypeId, booking.roomTypeId),
+  });
+  if (candidateRooms.length === 0) return null;
+
+  const roomIds = candidateRooms.map((room) => room.id);
+
+  const blockedRows = await db.query.roomAvailability.findMany({
+    where: and(
+      inArray(roomAvailability.roomId, roomIds),
+      eq(roomAvailability.isBlocked, true),
+      gte(roomAvailability.date, booking.checkIn),
+      lt(roomAvailability.date, booking.checkOut)
+    ),
+  });
+  const blockedRoomIds = new Set(blockedRows.map((row) => row.roomId));
+
+  for (const room of candidateRooms) {
+    if (blockedRoomIds.has(room.id)) continue;
+
+    const overlap = await db.query.bookings.findFirst({
+      where: and(
+        eq(bookings.assignedRoomId, room.id),
+        ne(bookings.id, booking.id),
+        ne(bookings.status, "cancelled"),
+        ne(bookings.status, "rejected"),
+        ne(bookings.status, "checked_out"),
+        lt(bookings.checkIn, booking.checkOut),
+        gte(bookings.checkOut, incrementDateString(booking.checkIn))
+      ),
+    });
+    if (!overlap) return room.id;
+  }
+
+  return null;
+}
+
+function incrementDateString(dateStr: string) {
+  const date = new Date(dateStr);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().split("T")[0];
 }
