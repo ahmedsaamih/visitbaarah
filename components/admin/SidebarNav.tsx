@@ -19,7 +19,11 @@ const navItems = [
   { label: "Settings", href: "/admin/settings" },
 ];
 
-export default function SidebarNav() {
+interface SidebarNavProps {
+  onNavigate?: () => void;
+}
+
+export default function SidebarNav({ onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
 
   return (
@@ -29,6 +33,7 @@ export default function SidebarNav() {
           key={item.href}
           href={item.href}
           className={`nav-link ${pathname === item.href ? "active" : ""}`}
+          onClick={onNavigate}
         >
           {item.label}
         </Link>

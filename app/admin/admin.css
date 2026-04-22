@@ -55,6 +55,30 @@ body {
   width: calc(100% - var(--admin-sidebar-width));
 }
 
+.admin-mobile-topbar {
+  display: none;
+}
+
+.admin-backdrop {
+  display: none;
+}
+
+.admin-menu-btn {
+  border: 1px solid var(--admin-border);
+  background: #fff;
+  color: var(--admin-text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-mobile-brand {
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
 /* ─── Sidebar ───────────────────────────────────────────── */
 
 .sidebar-brand {
@@ -239,9 +263,41 @@ tr:hover td {
 /* ─── Media Queries ─────────────────────────────────────── */
 
 @media (max-width: 1024px) {
+  .admin-mobile-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    padding: 10px 14px;
+    background: #fff;
+    border-bottom: 1px solid var(--admin-border);
+    z-index: 1200;
+  }
+
+  .admin-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1100;
+  }
+
+  .admin-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .admin-sidebar {
     transform: translateX(-100%);
     transition: transform 0.3s;
+    z-index: 1300;
   }
   .admin-sidebar.open {
     transform: translateX(0);
@@ -249,5 +305,7 @@ tr:hover td {
   .admin-main {
     margin-left: 0;
     width: 100%;
+    padding: 20px 14px;
+    padding-top: 72px;
   }
 }

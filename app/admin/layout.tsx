@@ -1,7 +1,6 @@
 import "./admin.css";
-import Link from "next/link";
 import { headers } from "next/headers";
-import SidebarNav from "@/components/admin/SidebarNav";
+import AdminShell from "@/components/admin/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -17,20 +16,6 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="admin-wrapper">
-      <aside className="admin-sidebar">
-        <div className="sidebar-brand">SERENE ADMIN</div>
-        <SidebarNav />
-        <div className="sidebar-footer">
-          <Link href="/admin/logout" className="nav-link">
-            <span>Logout</span>
-          </Link>
-        </div>
-      </aside>
-
-      <main className="admin-main">
-        {children}
-      </main>
-    </div>
+    <AdminShell>{children}</AdminShell>
   );
 }

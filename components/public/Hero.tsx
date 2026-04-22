@@ -87,7 +87,7 @@ export default function Hero({ imageUrl }: HeroProps) {
           marginInline: "auto",
           lineHeight: "1.1"
         }}>
-          Your Private Island <span style={{ color: "var(--gold)" }}>Paradise</span> Awaits
+          Your Island <span style={{ color: "var(--gold)" }}>Paradise</span> Awaits
         </h1>
         <p style={{ 
           fontSize: "18px", 

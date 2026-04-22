@@ -106,22 +106,25 @@ export default function AdminAvailability() {
       </div>
 
       <div className="card">
-        <div style={{ 
-          maxWidth: "860px",
+        <div
+          className="availability-grid"
+          style={{ 
+          maxWidth: "1020px",
           margin: "0 auto",
           display: "grid", 
           gridTemplateColumns: "repeat(7, 1fr)", 
-          gap: "3px",
+          gap: "6px",
           textAlign: "center"
         }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
             <div
+              className="availability-weekday"
               key={d}
               style={{
                 fontWeight: "600",
-                fontSize: "11px",
+                fontSize: "12px",
                 color: "var(--admin-text-light)",
-                paddingBottom: "4px",
+                paddingBottom: "6px",
                 letterSpacing: "0.2px",
               }}
             >
@@ -139,25 +142,25 @@ export default function AdminAvailability() {
               <div 
                 key={day} 
                 onClick={() => toggleDate(dateStr, !!isBlocked)}
+                className="availability-day"
                 style={{
-                  minHeight: "46px",
+                  minHeight: "64px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  borderRadius: "5px",
+                  borderRadius: "8px",
                   cursor: "pointer",
                   border: "1px solid var(--admin-border)",
                   background: isBlocked ? "#fee2e2" : "#d1fae5",
                   color: isBlocked ? "#991b1b" : "#065f46",
-                  fontSize: "11px",
+                  fontSize: "14px",
                   fontWeight: "600",
                   transition: "all 0.2s"
                 }}
-                className="calendar-day"
               >
                 {day}
-                <div style={{ fontSize: "8px", marginTop: "1px", opacity: 0.9 }}>
+                <div className="availability-state" style={{ fontSize: "10px", marginTop: "3px", opacity: 0.9 }}>
                   {isBlocked ? "BLK" : "OPEN"}
                 </div>
               </div>
@@ -169,6 +172,44 @@ export default function AdminAvailability() {
       <p style={{ fontSize: "13px", color: "var(--admin-text-light)", marginTop: "16px" }}>
         * Click on a day to toggle between OPEN and BLOCKED for this room.
       </p>
+      <style jsx>{`
+        @media (max-width: 1024px) {
+          .availability-grid {
+            max-width: 920px !important;
+            gap: 5px !important;
+          }
+          .availability-day {
+            min-height: 58px !important;
+            font-size: 13px !important;
+            border-radius: 7px !important;
+          }
+          .availability-state {
+            font-size: 9px !important;
+            margin-top: 2px !important;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .availability-grid {
+            max-width: 100% !important;
+            gap: 3px !important;
+          }
+          .availability-weekday {
+            font-size: 10px !important;
+            padding-bottom: 4px !important;
+          }
+          .availability-day {
+            min-height: 44px !important;
+            font-size: 11px !important;
+            border-radius: 6px !important;
+          }
+          .availability-state {
+            font-size: 8px !important;
+            margin-top: 1px !important;
+            letter-spacing: 0.2px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
