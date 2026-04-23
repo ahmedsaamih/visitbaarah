@@ -34,7 +34,7 @@ This document provides a high-level technical summary of the Serene Seaview Gues
 - **Availability**: Public and admin views account for blocks and active bookings; admin calendar UX iterated for mobile/desktop.
 - **Rate limiting**: Selected routes that send **transactional email** enforce **one request per 15 minutes** per identity, with a clear retry message. **Telegram outbound alerts are not subject to that limiter.**
 - **Admin UI**: Mobile-friendly shell (menu drawer); `/admin` redirects to dashboard or login.
-- **Future (not built)**: Telegram **inbound** webhook for `/approve` / `/reject` commands — tracked in `TASK.md` Phase 22.
+- **Reviews**: Checkout now triggers review invitation email with a tokenized **3-day** review link; guest submits review via public page; admin approves/rejects from Bookings/Testimonials; homepage renders approved+published testimonials (latest 15, featured-first).
 
 ## 📍 Environment Context
 Ensure the following variables are configured in Vercel:
@@ -47,4 +47,4 @@ Ensure the following variables are configured in Vercel:
 - `TELEGRAM_BOT_TOKEN`: Telegram bot for outbound admin notifications (optional but recommended if using Telegram alerts).
 
 ## 🏁 Current Status
-Core guest and admin flows are integrated on Vercel; continue to validate against production logs (Plunk, Telegram, booking edge cases). See `TASK.md` for open items (e.g. seed script, optional Telegram command webhook).
+Core guest and admin flows are integrated on Vercel; continue to validate against production logs (Plunk, Telegram, booking/review edge cases). See `TASK.md` for open items (e.g. seed script).

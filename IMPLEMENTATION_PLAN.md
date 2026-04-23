@@ -11,7 +11,7 @@ Build a full-stack single-property island guest house booking website with a pol
 | ORM | Drizzle ORM + drizzle-kit |
 | Media Storage | Vercel Blob |
 | Email | Plunk (REST API) |
-| Admin alerts | Telegram Bot API (outbound `sendMessage`; optional future inbound webhook) |
+| Admin alerts | Telegram Bot API (outbound `sendMessage`) |
 | Public Animations | GSAP + ScrollTrigger + jQuery (CDN) |
 | Admin UI | React + plain CSS (functional, no animation libs) |
 | Auth | bcryptjs + HTTP-only cookie + Next.js middleware |
@@ -113,12 +113,10 @@ Outbound admin alerts via Telegram Bot API (`sendMessage`), with Plunk email fal
 - **Events wired:** booking request received; booking confirmed/rejected; cancellation request received; cancellation approved
 - **Rate limits:** transactional email/user request limiter does **not** apply to Telegram sends
 
-#### Future (Phase 22 — not implemented)
-- **Inbound bot:** `setWebhook` + handler for `/approve <REF>` / `/reject <REF>` (or reply-based flows), with Telegram user allowlist and abuse limits. See `TASK.md` Phase 22.
-
 ### Documentation changelog (since prior handoff)
 
 - **Plunk:** Use secret key env (`PLUNK_API_KEY` / `PLUNK_SECRET_KEY` per code); `revalidateTag("homepage", "max")` for Next.js 16; optional `PLUNK_FROM_EMAIL` aliases supported in code.
 - **Bookings:** Guest lookup/edit/cancel by reference + email; admin confirm may auto-assign room; availability logic accounts for blocks + bookings; transactional email routes rate-limited (15 min) with user-facing hint.
 - **Admin:** Mobile nav shell (`AdminShell`); `/admin` redirect; availability calendar sizing; Telegram settings block.
 - **Public:** FAB mobile nav; booking card + “View My Booking” modal; section image settings (`about_image_url`, `dining_image_url`); assorted UX fixes.
+- **Reviews/Testimonial flow:** checkout-triggered review invite email with 3-day tokenized link; guest review form (`/review/[token]`); admin moderation from bookings/testimonials; approved + published reviews shown on homepage (max 15, featured-first).
