@@ -127,22 +127,31 @@
 - [x] Instant Admin-driven Cache Invalidation
 - [x] Metadata-only database selection (Lean queries)
 
-## Phase 21: Telegram Notifications & Failure Escalation — 📋 PLANNED
-- [ ] Add Telegram env config (`TELEGRAM_BOT_TOKEN`)
-- [ ] Add settings keys:
-  - [ ] `telegram_chat_id`
-  - [ ] `telegram_notifications_enabled`
-  - [ ] `telegram_failure_alert_email`
-- [ ] Create `lib/telegram.ts` notification helper with event templates
-- [ ] Integrate Telegram sends for:
-  - [ ] Booking request received
-  - [ ] Booking confirmed
-  - [ ] Booking rejected
-  - [ ] Cancellation request received
-  - [ ] Cancellation approved
-- [ ] Add Telegram failure escalation email to recovery/super-admin with error details
-- [ ] Add Admin Settings UI controls for Telegram chat ID/toggle/failure email
-- [ ] Add "Send Test Telegram" action in Admin Settings
-- [ ] Ensure Telegram event alerts are NOT rate-limited by request limiter rules
-- [ ] Ensure non-blocking behavior (core APIs succeed even when Telegram fails)
-- [ ] Add verification checklist in deployment QA notes
+## Phase 21: Telegram Notifications & Failure Escalation — ✅ DONE
+- [x] Add Telegram env config (`TELEGRAM_BOT_TOKEN`)
+- [x] Add settings keys:
+  - [x] `telegram_chat_id`
+  - [x] `telegram_notifications_enabled`
+  - [x] `telegram_failure_alert_email`
+- [x] Create `lib/telegram.ts` notification helper with event templates
+- [x] Integrate Telegram sends for:
+  - [x] Booking request received
+  - [x] Booking confirmed
+  - [x] Booking rejected
+  - [x] Cancellation request received
+  - [x] Cancellation approved
+- [x] Add Telegram failure escalation email to recovery/super-admin with error details
+- [x] Add Admin Settings UI controls for Telegram chat ID/toggle/failure email
+- [x] Add "Send Test Telegram" action in Admin Settings (`/api/admin/notifications/telegram/test`)
+- [x] Ensure Telegram event alerts are NOT rate-limited by request limiter rules
+- [x] Ensure non-blocking behavior (core APIs succeed even when Telegram fails)
+- [ ] Add verification checklist in deployment QA notes (optional doc polish)
+
+## Phase 22: Future development — Telegram bot commands (no Mini App) — 📋 PLANNED
+- [ ] Register **Telegram webhook** (`setWebhook`) to a secure HTTPS route (e.g. secret token header)
+- [ ] Parse incoming messages for commands such as `/approve <REF>` and `/reject <REF> [reason]`
+- [ ] Only allow actions when booking status is `pending` (and same rules as admin panel)
+- [ ] **Authorize senders** via allowlisted Telegram `user_id` (stored in settings or env), not public URL alone
+- [ ] Reply to user with success/failure text (and optional link to admin dashboard)
+- [ ] Rate-limit command abuse separately from transactional email limits
+- [ ] Document BotFather / Telegram setup: webhook URL, optional `setMyCommands`, DM-only vs group privacy
