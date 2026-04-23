@@ -4,14 +4,28 @@ import { useState } from "react";
 import MenuModal from "./MenuModal";
 import GsapCarousel from "./GsapCarousel";
 
+interface MenuItem {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string;
+  category: string;
+  isVegetarian: boolean;
+}
+
+interface GalleryItem {
+  id: number;
+  url: string;
+  alt?: string | null;
+}
+
 interface ExperienceProps {
-  menuItems: any[];
-  services: any[];
-  gallery: any[];
+  menuItems: MenuItem[];
+  gallery: GalleryItem[];
   diningImageUrl?: string;
 }
 
-export default function ExperienceSection({ menuItems, services, gallery, diningImageUrl }: ExperienceProps) {
+export default function ExperienceSection({ menuItems, gallery, diningImageUrl }: ExperienceProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const hasDining = menuItems && menuItems.length > 0;
@@ -61,7 +75,7 @@ export default function ExperienceSection({ menuItems, services, gallery, dining
                 </div>
               </div>
               <div className="reveal">
-                <h3 style={{ fontSize: "clamp(24px, 3vw, 28px)", marginBottom: "32px", borderBottom: "1px solid var(--border)", paddingBottom: "16px" }}>The Chef's Specials</h3>
+                <h3 style={{ fontSize: "clamp(24px, 3vw, 28px)", marginBottom: "32px", borderBottom: "1px solid var(--border)", paddingBottom: "16px" }}>The Chef&apos;s Specials</h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                   {menuItems.slice(0, 5).map(item => (
                     <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
@@ -99,7 +113,7 @@ export default function ExperienceSection({ menuItems, services, gallery, dining
           </div>
 
           <div style={{ padding: "0 20px" }}>
-             <GsapCarousel showArrows={false} showDots={false}>
+             <GsapCarousel autoPlay={true} interval={4500} showArrows={false} showDots={true}>
                 {Array.from({ length: Math.ceil(gallery.length / 4) }).map((_, rowIndex) => (
                   <div key={rowIndex} style={{ 
                     display: "flex", 

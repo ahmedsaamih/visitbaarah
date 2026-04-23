@@ -16,7 +16,6 @@ const getHomepageData = unstable_cache(
       roomTypes,
       activities,
       menuItems,
-      services,
       gallery,
       testimonials,
       settings
@@ -27,10 +26,6 @@ const getHomepageData = unstable_cache(
         with: { media: true }
       }),
       db.query.menuItems.findMany({ where: (t, { eq }) => eq(t.isAvailable, true) }),
-      db.query.services.findMany({ 
-        where: (t, { eq }) => eq(t.isActive, true),
-        with: { media: true }
-      }),
       db.query.media.findMany({ 
         where: (t, { eq }) => eq(t.entityType, "gallery"),
         limit: 20 
@@ -47,7 +42,6 @@ const getHomepageData = unstable_cache(
       roomTypes,
       activities,
       menuItems,
-      services,
       gallery,
       testimonials,
       settings
@@ -63,7 +57,6 @@ export default async function HomePage() {
     roomTypes,
     activities,
     menuItems,
-    services,
     gallery,
     testimonials,
     settings
@@ -129,7 +122,6 @@ export default async function HomePage() {
 
       <ExperienceSection 
         menuItems={menuItems} 
-        services={services} 
         gallery={gallery} 
         diningImageUrl={diningImage}
       />
@@ -177,9 +169,16 @@ export default async function HomePage() {
 
       <BookingSection roomTypes={roomTypes} />
       
-      <footer style={{ background: "var(--teal)", color: "#fff", padding: "80px 0 40px" }}>
+      <footer style={{ background: "var(--teal)", color: "#fff", padding: "clamp(56px, 10vw, 80px) 0 40px" }}>
         <div className="container">
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: "40px", marginBottom: "60px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+              gap: "clamp(24px, 4vw, 40px)",
+              marginBottom: "clamp(36px, 8vw, 60px)",
+            }}
+          >
             <div>
               <h2 style={{ color: "#fff", marginBottom: "24px", fontFamily: "var(--font-serif)" }}>SERENE</h2>
               <p style={{ opacity: 0.7, maxWidth: "300px", fontSize: "14px" }}>

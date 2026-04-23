@@ -110,7 +110,9 @@ export default function GsapCarousel({
               transition: "all 0.3s"
             }}
           >
-            Ã¢â€ Â
+            <span aria-hidden="true" style={{ fontSize: "clamp(20px, 5vw, 26px)", lineHeight: 1 }}>
+              &#8249;
+            </span>
           </button>
           <button 
             onClick={next}
@@ -136,7 +138,9 @@ export default function GsapCarousel({
               transition: "all 0.3s"
             }}
           >
-            Ã¢â€ â€™
+            <span aria-hidden="true" style={{ fontSize: "clamp(20px, 5vw, 26px)", lineHeight: 1 }}>
+              &#8250;
+            </span>
           </button>
         </>
       )}
