@@ -102,6 +102,15 @@ export default function AdminSettings() {
   const [otpStep, setOtpStep] = useState<"idle" | "verify">("idle");
   const [newEmail, setNewEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const telegramChatId = items.find(i => i.key === "telegram_chat_id")?.value || "";
+  const telegramEnabled = items.find(i => i.key === "telegram_notifications_enabled")?.value || "false";
+  const telegramFailureEmail = items.find(i => i.key === "telegram_failure_alert_email")?.value || "";
+
+  useEffect(() => {
+    setTelegramChatIdInput(telegramChatId);
+    setTelegramEnabledInput(telegramEnabled);
+    setTelegramFailureEmailInput(telegramFailureEmail);
+  }, [telegramChatId, telegramEnabled, telegramFailureEmail]);
 
   const handleSendEmailOtp = async () => {
     if (!newEmail) return;
@@ -149,16 +158,6 @@ export default function AdminSettings() {
   };
 
   if (loading) return <div>Loading...</div>;
-
-  const telegramChatId = items.find(i => i.key === "telegram_chat_id")?.value || "";
-  const telegramEnabled = items.find(i => i.key === "telegram_notifications_enabled")?.value || "false";
-  const telegramFailureEmail = items.find(i => i.key === "telegram_failure_alert_email")?.value || "";
-
-  useEffect(() => {
-    setTelegramChatIdInput(telegramChatId);
-    setTelegramEnabledInput(telegramEnabled);
-    setTelegramFailureEmailInput(telegramFailureEmail);
-  }, [telegramChatId, telegramEnabled, telegramFailureEmail]);
 
   const groups = items.reduce((acc: any, item: any) => {
     const g = item.group || "general";
