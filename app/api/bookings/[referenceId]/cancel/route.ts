@@ -4,6 +4,7 @@ import { bookings, cancellationRequests } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendCancellationRequestEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function POST(
   request: Request,
@@ -67,6 +68,13 @@ export async function POST(
     } catch (emailError) {
       console.error("[Cancellation API] Email failed:", emailError);
     }
+
+    await sendTelegramNotification("cancellation_request_received", {
+      referenceId: booking.referenceId,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      reason,
+    });
 
     return NextResponse.json({ success: true, message: "Cancellation request submitted" });
   } catch (error) {

@@ -97,3 +97,60 @@ Build a full-stack single-property island guest house booking website with a pol
 
 ### Phase 15: Final QA & Polish ✅ DONE
 - Responsive, validation, and error handling complete
+
+### Phase 21: Telegram Notifications & Failure Escalation 📋 PLANNED
+
+Goal: Add free, reliable Telegram admin notifications for key booking lifecycle events, with email fallback to recovery/super-admin if Telegram delivery fails.
+
+#### Scope
+- Send Telegram notifications for:
+  - Booking request received
+  - Booking confirmed
+  - Booking rejected
+  - Cancellation request received
+  - Cancellation approved
+- Add settings support for Telegram destination and control flags in Admin Settings.
+- Add delivery-failure escalation email to recovery/super-admin email.
+
+#### Configuration Plan
+- Required env vars:
+  - `TELEGRAM_BOT_TOKEN` — Telegram bot token from BotFather
+- Settings keys (DB settings table):
+  - `telegram_chat_id` — target user/group chat ID
+  - `telegram_notifications_enabled` — true/false
+  - `telegram_failure_alert_email` — fallback destination; default to `admin_recovery_email` setting if empty
+
+#### Service Design
+- Create `lib/telegram.ts`:
+  - `sendTelegramNotification(eventType, payload)`
+  - Normalized templates per event
+  - Non-blocking send behavior (never fail booking transaction)
+  - Structured error logging
+- Create failure alert helper:
+  - On Telegram send failure, send detailed email via Plunk to fallback email
+  - Include event type, referenceId, endpoint source, Telegram error message, timestamp
+
+#### Integration Points (No behavior change to booking flow)
+- Public booking create route -> notify "booking_request_received"
+- Admin booking status route -> notify "booking_confirmed"/"booking_rejected"
+- Public cancellation request route -> notify "cancellation_request_received"
+- Admin cancellation resolution route -> notify "cancellation_approved"
+
+#### Validation & Safety
+- Validate chat ID format before sending
+- Honor `telegram_notifications_enabled` toggle
+- Do NOT apply user/admin request rate-limit rules to internal Telegram event alerts
+- Keep all sends idempotent/non-critical: booking/cancellation APIs should succeed even if notification fails
+
+#### Admin UI Plan
+- In `admin/settings` add:
+  - Telegram Chat ID input
+  - Enable/disable switch
+  - Failure alert email input
+  - "Send Test Telegram" button for live verification
+
+#### Acceptance Criteria
+- For each event, Telegram message appears in configured chat with reference and status context
+- If Telegram call fails, fallback alert email is sent to recovery/super-admin with failure reason/details
+- Core transaction succeeds even if notification channel fails
+- Toggle can disable Telegram notifications without redeploy

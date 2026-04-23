@@ -6,6 +6,10 @@ export default function AdminSettings() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
+  const [telegramChatIdInput, setTelegramChatIdInput] = useState("");
+  const [telegramEnabledInput, setTelegramEnabledInput] = useState("false");
+  const [telegramFailureEmailInput, setTelegramFailureEmailInput] = useState("");
   const [uploadState, setUploadState] = useState<Record<string, "idle" | "optimizing" | "uploading" | "done">>({
     hero_image_url: "idle",
     about_image_url: "idle",
@@ -46,6 +50,12 @@ export default function AdminSettings() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const upsertSetting = async (key: string, value: string, group = "notifications") => {
+    handleChange(key, value);
+    await handleSave({ key, value, group });
+    await fetchItems();
   };
 
   const getUploadState = (key: string) => uploadState[key] || "idle";
@@ -139,6 +149,16 @@ export default function AdminSettings() {
   };
 
   if (loading) return <div>Loading...</div>;
+
+  const telegramChatId = items.find(i => i.key === "telegram_chat_id")?.value || "";
+  const telegramEnabled = items.find(i => i.key === "telegram_notifications_enabled")?.value || "false";
+  const telegramFailureEmail = items.find(i => i.key === "telegram_failure_alert_email")?.value || "";
+
+  useEffect(() => {
+    setTelegramChatIdInput(telegramChatId);
+    setTelegramEnabledInput(telegramEnabled);
+    setTelegramFailureEmailInput(telegramFailureEmail);
+  }, [telegramChatId, telegramEnabled, telegramFailureEmail]);
 
   const groups = items.reduce((acc: any, item: any) => {
     const g = item.group || "general";
@@ -244,8 +264,93 @@ export default function AdminSettings() {
         )}
       </div>
 
+      {/* Telegram Notifications */}
+      <div className="card">
+        <h2 style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "12px", marginBottom: "20px" }}>Telegram Notifications</h2>
+        <div className="form-group">
+          <label>Telegram Chat ID</label>
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <input
+              type="text"
+              value={telegramChatIdInput}
+              placeholder="-1001234567890"
+              onChange={(e) => setTelegramChatIdInput(e.target.value)}
+              style={{ minWidth: "280px", flex: 1 }}
+            />
+            <button
+              onClick={() => upsertSetting("telegram_chat_id", telegramChatIdInput.trim(), "notifications")}
+              className="btn btn-outline"
+              disabled={saving}
+            >
+              Save
+            </button>
+          </div>
+          <p style={{ marginTop: "8px", fontSize: "12px", color: "var(--admin-text-light)" }}>
+            Use the numeric chat ID of the receiving user/group (not bot username).
+          </p>
+        </div>
+
+        <div className="form-group">
+          <label>Enable Telegram Notifications</label>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <select
+              value={telegramEnabledInput}
+              onChange={(e) => {
+                setTelegramEnabledInput(e.target.value);
+                upsertSetting("telegram_notifications_enabled", e.target.value, "notifications");
+              }}
+              style={{ maxWidth: "180px" }}
+            >
+              <option value="true">Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Telegram Failure Alert Email (optional)</label>
+          <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+            <input
+              type="email"
+              value={telegramFailureEmailInput}
+              placeholder="fallback-alerts@example.com"
+              onChange={(e) => setTelegramFailureEmailInput(e.target.value)}
+              style={{ minWidth: "280px", flex: 1 }}
+            />
+            <button
+              onClick={() => upsertSetting("telegram_failure_alert_email", telegramFailureEmailInput.trim(), "notifications")}
+              className="btn btn-outline"
+              disabled={saving}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
+        <button
+          className="btn btn-primary"
+          disabled={testingTelegram}
+          onClick={async () => {
+            setTestingTelegram(true);
+            try {
+              const res = await fetch("/api/admin/notifications/telegram/test", { method: "POST" });
+              const data = await res.json();
+              if (!res.ok) {
+                alert(data.error || "Telegram test failed");
+              } else {
+                alert("Test message sent to Telegram.");
+              }
+            } finally {
+              setTestingTelegram(false);
+            }
+          }}
+        >
+          {testingTelegram ? "Sending Test..." : "Send Test Telegram"}
+        </button>
+      </div>
+
       {/* Rest of Settings */}
-      {Object.keys(groups).filter(g => g !== "security").sort().map((groupName) => (
+      {Object.keys(groups).filter(g => g !== "security" && g !== "notifications").sort().map((groupName) => (
         <div key={groupName} className="card">
           <h2 style={{ textTransform: "capitalize", borderBottom: "1px solid var(--admin-border)", paddingBottom: "12px", marginBottom: "20px" }}>
             {groupName} Settings

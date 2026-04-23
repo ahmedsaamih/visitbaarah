@@ -4,6 +4,7 @@ import { bookings, roomTypes, bookingAddons } from "@/db/schema";
 import { generateReferenceId } from "@/lib/reference";
 import { sendBookingReceivedEmail, sendAdminNewBookingEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
+import { sendTelegramNotification } from "@/lib/telegram";
 import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
@@ -120,6 +121,15 @@ export async function POST(request: Request) {
       console.error("[Booking API] Email sending failed:", emailError);
       // Don't fail the booking if email fails
     }
+
+    await sendTelegramNotification("booking_request_received", {
+      referenceId,
+      guestName,
+      guestEmail: normalizedGuestEmail,
+      roomType: roomType?.name || "Room",
+      checkIn,
+      checkOut,
+    });
 
     return NextResponse.json({ success: true, referenceId, bookingId: booking.id });
   } catch (error) {

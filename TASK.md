@@ -126,3 +126,23 @@
 - [x] Homepage Edge Caching (unstable_cache)
 - [x] Instant Admin-driven Cache Invalidation
 - [x] Metadata-only database selection (Lean queries)
+
+## Phase 21: Telegram Notifications & Failure Escalation — 📋 PLANNED
+- [ ] Add Telegram env config (`TELEGRAM_BOT_TOKEN`)
+- [ ] Add settings keys:
+  - [ ] `telegram_chat_id`
+  - [ ] `telegram_notifications_enabled`
+  - [ ] `telegram_failure_alert_email`
+- [ ] Create `lib/telegram.ts` notification helper with event templates
+- [ ] Integrate Telegram sends for:
+  - [ ] Booking request received
+  - [ ] Booking confirmed
+  - [ ] Booking rejected
+  - [ ] Cancellation request received
+  - [ ] Cancellation approved
+- [ ] Add Telegram failure escalation email to recovery/super-admin with error details
+- [ ] Add Admin Settings UI controls for Telegram chat ID/toggle/failure email
+- [ ] Add "Send Test Telegram" action in Admin Settings
+- [ ] Ensure Telegram event alerts are NOT rate-limited by request limiter rules
+- [ ] Ensure non-blocking behavior (core APIs succeed even when Telegram fails)
+- [ ] Add verification checklist in deployment QA notes

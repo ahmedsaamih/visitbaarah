@@ -5,6 +5,7 @@ import { eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { sendBookingConfirmedEmail, sendBookingRejectedEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function PATCH(
   request: Request,
@@ -91,6 +92,15 @@ export async function PATCH(
           referenceId: booking.referenceId,
         });
       }
+
+      await sendTelegramNotification("booking_confirmed", {
+        referenceId: booking.referenceId,
+        guestName: booking.guestName,
+        guestEmail: booking.guestEmail,
+        roomType: booking.roomType?.name ?? "Room",
+        checkIn: booking.checkIn,
+        checkOut: booking.checkOut,
+      });
     } else if (status === "rejected" && booking.status !== "rejected") {
       // Send rejection email
       const sent = await sendBookingRejectedEmail(booking.guestEmail, {
@@ -104,6 +114,13 @@ export async function PATCH(
           referenceId: booking.referenceId,
         });
       }
+
+      await sendTelegramNotification("booking_rejected", {
+        referenceId: booking.referenceId,
+        guestName: booking.guestName,
+        guestEmail: booking.guestEmail,
+        reason: rejectionReason,
+      });
     }
 
     return NextResponse.json(updatedBooking);

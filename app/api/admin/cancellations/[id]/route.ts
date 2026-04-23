@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { sendCancellationApprovedEmail, sendCancellationRejectedEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function PATCH(
   request: Request,
@@ -71,6 +72,12 @@ export async function PATCH(
       await sendCancellationApprovedEmail(cancelReq.booking.guestEmail, {
         guestName: cancelReq.booking.guestName,
         referenceId: cancelReq.booking.referenceId,
+      });
+      await sendTelegramNotification("cancellation_approved", {
+        referenceId: cancelReq.booking.referenceId,
+        guestName: cancelReq.booking.guestName,
+        guestEmail: cancelReq.booking.guestEmail,
+        adminResponse,
       });
     } else if (status === "rejected") {
       await sendCancellationRejectedEmail(cancelReq.booking.guestEmail, {
