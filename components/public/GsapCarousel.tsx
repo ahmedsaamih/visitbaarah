@@ -23,7 +23,10 @@ export default function GsapCarousel({
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
 
   const total = children.length;
 
@@ -36,6 +39,15 @@ export default function GsapCarousel({
 
   const next = () => goTo(index + 1);
   const prev = () => goTo(index - 1);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 768px)");
+    const onChange = () => setIsMobile(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   // Auto-play logic
   useEffect(() => {
@@ -61,11 +73,34 @@ export default function GsapCarousel({
 
   if (total === 0) return null;
 
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = e.changedTouches[0]?.clientX ?? null;
+    touchEndXRef.current = null;
+  };
+
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndXRef.current = e.changedTouches[0]?.clientX ?? null;
+  };
+
+  const onTouchEnd = () => {
+    if (touchStartXRef.current === null || touchEndXRef.current === null) return;
+    const delta = touchStartXRef.current - touchEndXRef.current;
+    const threshold = 42;
+    if (Math.abs(delta) < threshold) return;
+    if (delta > 0) next();
+    else prev();
+  };
+
   return (
     <div
       className={`carousel-container ${className}`}
       ref={containerRef}
-      style={{ position: "relative", overflow: "hidden", width: "100%", paddingBottom: showArrows && total > 1 ? "76px" : "0" }}
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        width: "100%",
+        paddingBottom: showArrows && total > 1 && !isMobile ? "76px" : "0",
+      }}
     >
       {/* Track */}
       <div 
@@ -75,6 +110,9 @@ export default function GsapCarousel({
           width: "100%",
           touchAction: "pan-y"
         }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
       >
         {React.Children.map(children, (child) => (
           <div style={{ 
@@ -88,7 +126,7 @@ export default function GsapCarousel({
       </div>
 
       {/* Navigation Arrows */}
-      {showArrows && total > 1 && (
+      {showArrows && total > 1 && !isMobile && (
         <div
           style={{
             position: "absolute",
@@ -152,6 +190,33 @@ export default function GsapCarousel({
         </div>
       )}
 
+      {isMobile && total > 1 && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: showDots ? "38px" : "12px",
+            transform: "translateX(-50%)",
+            zIndex: 11,
+            fontSize: "12px",
+            letterSpacing: "1px",
+            color: "var(--teal)",
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid var(--border)",
+            borderRadius: "999px",
+            padding: "6px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            pointerEvents: "none",
+            animation: "swipeHintPulse 1.6s ease-in-out infinite",
+          }}
+        >
+          <span aria-hidden="true" style={{ opacity: 0.8 }}>⇠ ⇢</span>
+          <span>Swipe cards</span>
+        </div>
+      )}
+
       {/* Dots Indicator */}
       {showDots && total > 1 && (
         <div style={{ 
@@ -178,6 +243,13 @@ export default function GsapCarousel({
           ))}
         </div>
       )}
+      <style>{`
+        @keyframes swipeHintPulse {
+          0% { opacity: 0.55; transform: translateX(-50%) translateY(0); }
+          50% { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+          100% { opacity: 0.55; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

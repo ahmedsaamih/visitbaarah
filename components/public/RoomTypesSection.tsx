@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import GsapCarousel from "./GsapCarousel";
 
+type RoomType = {
+  id: number;
+  name: string;
+  basePrice: string;
+  description?: string | null;
+  size?: string | null;
+  bedType?: string | null;
+  maxGuests: number;
+  media?: Array<{ url: string }>;
+};
+
 interface RoomTypeProps {
-  roomTypes: any[];
+  roomTypes: RoomType[];
 }
 
 export default function RoomTypesSection({ roomTypes }: RoomTypeProps) {
