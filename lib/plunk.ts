@@ -234,3 +234,35 @@ export async function sendOTPEmail(
   `);
   return sendEmail({ to, subject, body });
 }
+
+/**
+ * 9. Checkout review request — sent after admin marks checked-out.
+ */
+export async function sendCheckoutReviewRequestEmail(
+  to: string,
+  data: {
+    guestName: string;
+    referenceId: string;
+    reviewToken: string;
+    roomType: string;
+    checkIn: string;
+    checkOut: string;
+  }
+) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+  const reviewUrl = `${baseUrl}/review/${data.reviewToken}`;
+  const body = emailLayout(`
+    <h2 style="color:#0D5C5C;margin:0 0 20px;font-size:20px;">How Was Your Stay?</h2>
+    <p style="color:#333;line-height:1.6;">Dear ${data.guestName},</p>
+    <p style="color:#333;line-height:1.6;">Thank you for staying with us. We'd love to hear your feedback.</p>
+    <table style="width:100%;margin:24px 0;border-collapse:collapse;">
+      <tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee;">Reference</td><td style="padding:8px 0;color:#333;font-weight:600;border-bottom:1px solid #eee;">${data.referenceId}</td></tr>
+      <tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee;">Room</td><td style="padding:8px 0;color:#333;border-bottom:1px solid #eee;">${data.roomType}</td></tr>
+      <tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee;">Check-in</td><td style="padding:8px 0;color:#333;border-bottom:1px solid #eee;">${data.checkIn}</td></tr>
+      <tr><td style="padding:8px 0;color:#666;">Check-out</td><td style="padding:8px 0;color:#333;">${data.checkOut}</td></tr>
+    </table>
+    <p style="color:#333;line-height:1.6;">This review link expires in <strong>3 days</strong>.</p>
+    <a href="${reviewUrl}" style="display:inline-block;background:#0D5C5C;color:#fff;text-decoration:none;padding:12px 28px;border-radius:4px;margin-top:16px;font-size:14px;">Leave a Review</a>
+  `);
+  return sendEmail({ to, subject: `Share Your Stay Review — ${data.referenceId}`, body });
+}

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, rooms, roomAvailability } from "@/db/schema";
+import { bookings, rooms, roomAvailability, testimonials } from "@/db/schema";
 import { eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
-import { sendBookingConfirmedEmail, sendBookingRejectedEmail } from "@/lib/plunk";
+import { sendBookingConfirmedEmail, sendBookingRejectedEmail, sendCheckoutReviewRequestEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 import { sendTelegramNotification } from "@/lib/telegram";
 
@@ -121,6 +121,68 @@ export async function PATCH(
         guestEmail: booking.guestEmail,
         reason: rejectionReason,
       });
+    } else if (status === "checked_out" && booking.status !== "checked_out") {
+      const existingReview = await db.query.testimonials.findFirst({
+        where: eq(testimonials.bookingId, booking.id),
+      });
+
+      const reviewToken = crypto.randomUUID().replace(/-/g, "");
+      const reviewTokenExpiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      const stayDate = booking.checkOut;
+
+      let reviewId = existingReview?.id;
+      if (existingReview) {
+        const [updatedReview] = await db
+          .update(testimonials)
+          .set({
+            guestName: booking.guestName,
+            guestCountry: booking.guestCountry || existingReview.guestCountry,
+            stayDate,
+            reviewStatus: "pending",
+            isPublished: false,
+            reviewToken,
+            reviewTokenExpiresAt,
+            reviewSubmittedAt: null,
+          })
+          .where(eq(testimonials.id, existingReview.id))
+          .returning();
+        reviewId = updatedReview?.id;
+      } else {
+        const [createdReview] = await db
+          .insert(testimonials)
+          .values({
+            bookingId: booking.id,
+            guestName: booking.guestName,
+            guestCountry: booking.guestCountry,
+            rating: 5,
+            content: "",
+            stayDate,
+            reviewStatus: "pending",
+            isPublished: false,
+            reviewToken,
+            reviewTokenExpiresAt,
+          })
+          .returning();
+        reviewId = createdReview?.id;
+      }
+
+      if (reviewId) {
+        const sent = await sendCheckoutReviewRequestEmail(booking.guestEmail, {
+          guestName: booking.guestName,
+          referenceId: booking.referenceId,
+          reviewToken,
+          roomType: booking.roomType?.name ?? "Room",
+          checkIn: booking.checkIn,
+          checkOut: booking.checkOut,
+        });
+
+        if (!sent) {
+          console.error("[Admin Booking Update API] Review invitation email failed to send.", {
+            bookingId,
+            referenceId: booking.referenceId,
+          });
+        }
+      }
     }
 
     return NextResponse.json(updatedBooking);

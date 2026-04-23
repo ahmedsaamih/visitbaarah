@@ -8,6 +8,14 @@
       "when": 1776800633476,
       "tag": "0000_loving_wendigo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776934800000,
+      "tag": "0001_customer_reviews_workflow",
+      "breakpoints": true
     }
   ]
 }
+

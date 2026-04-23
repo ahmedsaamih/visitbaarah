@@ -11,6 +11,7 @@ import {
   pgEnum,
   json,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -265,15 +266,25 @@ export const cancellationRequests = pgTable("cancellation_requests", {
 
 export const testimonials = pgTable("testimonials", {
   id: serial("id").primaryKey(),
+  bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "set null" }),
   guestName: varchar("guest_name", { length: 100 }).notNull(),
   guestCountry: varchar("guest_country", { length: 100 }),
   rating: integer("rating").notNull().default(5),
-  content: text("content").notNull(),
+  content: text("content").notNull().default(""),
+  reviewStatus: varchar("review_status", { length: 20 }).notNull().default("approved"), // pending | submitted | approved | rejected
+  isFeatured: boolean("is_featured").notNull().default(false),
+  reviewToken: varchar("review_token", { length: 64 }),
+  reviewTokenExpiresAt: timestamp("review_token_expires_at"),
+  reviewSubmittedAt: timestamp("review_submitted_at"),
   isPublished: boolean("is_published").notNull().default(false),
   stayDate: date("stay_date"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
   index("test_published_idx").on(table.isPublished),
+  index("test_status_idx").on(table.reviewStatus),
+  index("test_featured_idx").on(table.isFeatured),
+  index("test_review_token_idx").on(table.reviewToken),
+  uniqueIndex("test_booking_id_unique").on(table.bookingId),
 ]);
 
 // ─── Settings ────────────────────────────────────────────
@@ -379,6 +390,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   }),
   addons: many(bookingAddons),
   cancellationRequests: many(cancellationRequests),
+  testimonials: many(testimonials),
 }));
 
 export const bookingAddonsRelations = relations(bookingAddons, ({ one }) => ({
@@ -397,3 +409,10 @@ export const cancellationRequestsRelations = relations(
     }),
   })
 );
+
+export const testimonialsRelations = relations(testimonials, ({ one }) => ({
+  booking: one(bookings, {
+    fields: [testimonials.bookingId],
+    references: [bookings.id],
+  }),
+}));

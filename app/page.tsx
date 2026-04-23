@@ -15,7 +15,6 @@ const getHomepageData = unstable_cache(
     const [
       roomTypes,
       activities,
-      tours,
       menuItems,
       services,
       gallery,
@@ -24,10 +23,6 @@ const getHomepageData = unstable_cache(
     ] = await Promise.all([
       db.query.roomTypes.findMany({ with: { media: true } }),
       db.query.activities.findMany({ 
-        where: (t, { eq }) => eq(t.isActive, true),
-        with: { media: true }
-      }),
-      db.query.tours.findMany({ 
         where: (t, { eq }) => eq(t.isActive, true),
         with: { media: true }
       }),
@@ -40,14 +35,17 @@ const getHomepageData = unstable_cache(
         where: (t, { eq }) => eq(t.entityType, "gallery"),
         limit: 20 
       }),
-      db.query.testimonials.findMany({ where: (t, { eq }) => eq(t.isPublished, true) }),
+      db.query.testimonials.findMany({
+        where: (t, { and, eq }) => and(eq(t.isPublished, true), eq(t.reviewStatus, "approved")),
+        orderBy: (t, { desc }) => [desc(t.isFeatured), desc(t.createdAt)],
+        limit: 15,
+      }),
       db.query.settings.findMany()
     ]);
 
     return {
       roomTypes,
       activities,
-      tours,
       menuItems,
       services,
       gallery,
@@ -64,7 +62,6 @@ export default async function HomePage() {
   const {
     roomTypes,
     activities,
-    tours,
     menuItems,
     services,
     gallery,
@@ -160,7 +157,7 @@ export default async function HomePage() {
                     lineHeight: "1.6",
                     fontFamily: "var(--font-serif)" 
                   }}>
-                    "{item.content}"
+                    &ldquo;{item.content}&rdquo;
                   </p>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" }}>
                      <div style={{ width: "64px", height: "64px", background: "var(--teal)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "700", fontSize: "20px" }}>

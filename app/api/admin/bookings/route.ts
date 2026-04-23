@@ -16,6 +16,7 @@ export async function GET() {
       with: {
         roomType: true,
         assignedRoom: true,
+        testimonials: true,
       },
     });
     return NextResponse.json(items);

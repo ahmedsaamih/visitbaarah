@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { testimonials } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
+import { revalidateTag } from "next/cache";
 
 export async function GET(
   request: Request,
@@ -19,6 +20,9 @@ export async function GET(
   try {
     const item = await db.query.testimonials.findFirst({
       where: eq(testimonials.id, itemId),
+      with: {
+        booking: true,
+      },
     });
 
     if (!item) {
@@ -50,6 +54,13 @@ export async function PATCH(
     // Sanitize data: Exclude fields that shouldn't be updated
     const { id: _, createdAt: __, ...updateData } = data;
 
+    if (updateData.isFeatured === true) {
+      await db
+        .update(testimonials)
+        .set({ isFeatured: false })
+        .where(eq(testimonials.isFeatured, true));
+    }
+
     const [updatedItem] = await db
       .update(testimonials)
       .set(updateData)
@@ -60,6 +71,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    revalidateTag("homepage", "max");
     return NextResponse.json(updatedItem);
   } catch (error) {
     console.error("[Testimonials ID API] PATCH Error:", error);
@@ -89,6 +101,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    revalidateTag("homepage", "max");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[Testimonials ID API] DELETE Error:", error);
