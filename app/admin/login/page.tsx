@@ -26,11 +26,12 @@ export default function LoginPage() {
         body: JSON.stringify({ password }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (res.ok) {
         router.push("/admin/dashboard");
+        router.refresh();
       } else {
-        setError(data.error || "Login failed");
+        setError(data?.error || "Login failed");
       }
     } catch (err) {
       setError("An error occurred");
@@ -206,3 +207,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -9,35 +9,35 @@ const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "anonymous";
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
 
-  // 1. Rate Limiting for sensitive routes
-  if (pathname.startsWith("/api/admin/login") || pathname.startsWith("/api/admin/auth/otp")) {
+  // 1. Rate limiting for OTP route (login has failed-attempt limiter in route handler)
+  if (pathname.startsWith("/api/admin/auth/otp") && request.method === "POST") {
     const now = Date.now();
     const limit = 5; // max 5 attempts
     const window = 60 * 1000; // per 1 minute
-    
+
     const stats = rateLimitMap.get(ip) || { count: 0, lastReset: now };
-    
+
     if (now - stats.lastReset > window) {
       stats.count = 1;
       stats.lastReset = now;
     } else {
       stats.count++;
     }
-    
+
     rateLimitMap.set(ip, stats);
-    
+
     if (stats.count > limit) {
-      return new NextResponse(JSON.stringify({ error: "Too many requests. Please try again in a minute." }), { 
-        status: 429, 
-        headers: { "Content-Type": "application/json" } 
+      return new NextResponse(JSON.stringify({ error: "Too many requests. Please try again in a minute." }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" }
       });
     }
   }
 
-  const response = pathname.startsWith("/admin") && pathname !== "/admin/login" 
-    ? await handleAdminAuth(request) 
+  const response = pathname.startsWith("/admin") && pathname !== "/admin/login"
+    ? await handleAdminAuth(request)
     : NextResponse.next();
 
   // 2. Security Headers
@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-  response.headers.set("Content-Security-Policy", 
+  response.headers.set("Content-Security-Policy",
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdnjs.cloudflare.com; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
