@@ -39,23 +39,21 @@ export default function GsapCarousel({
 
   // Auto-play logic
   useEffect(() => {
-    if (autoPlay) {
-      timerRef.current = setInterval(next, interval);
-    }
+    if (!autoPlay || total <= 1) return;
+    timerRef.current = setInterval(() => {
+      setIndex((prevIndex) => (prevIndex + 1) % total);
+    }, interval);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [index, autoPlay, interval]);
+  }, [autoPlay, interval, total]);
 
   // Animation logic
   useEffect(() => {
     if (!trackRef.current) return;
     
     gsap.to(trackRef.current, {
-      xPercent: -index * (100 / (total > 0 ? 1 : 1)), // Basic slide logic
-      // In a real responsive carousel, we'd calculate based on container width vs item width
-      // But for a simple "full width" or "card by card" feel:
-      x: `-${index * 100}%`,
+      xPercent: -index * 100,
       duration: 0.8,
       ease: "power2.inOut",
     });
@@ -70,13 +68,14 @@ export default function GsapCarousel({
         ref={trackRef} 
         style={{ 
           display: "flex", 
-          width: `${total * 100}%`,
+          width: "100%",
           touchAction: "pan-y"
         }}
       >
         {React.Children.map(children, (child) => (
           <div style={{ 
-            width: `${100 / (total > 0 ? total : 1)}%`,
+            width: "100%",
+            flexBasis: "100%",
             flexShrink: 0 
           }}>
             {child}
@@ -111,7 +110,7 @@ export default function GsapCarousel({
               transition: "all 0.3s"
             }}
           >
-            ←
+            Ã¢â€ Â
           </button>
           <button 
             onClick={next}
@@ -137,7 +136,7 @@ export default function GsapCarousel({
               transition: "all 0.3s"
             }}
           >
-            →
+            Ã¢â€ â€™
           </button>
         </>
       )}

@@ -42,7 +42,7 @@ export default function ReviewPage() {
         setLoading(false);
       }
     };
-    load();
+    void load();
   }, [token]);
 
   async function handleSubmit(e: FormEvent) {
@@ -73,11 +73,23 @@ export default function ReviewPage() {
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "var(--cream)", padding: "40px 16px" }}>
+    <main
+      style={{
+        minHeight: "100vh",
+        background:
+          "radial-gradient(circle at top right, rgba(201,169,110,0.16), transparent 38%), var(--cream)",
+        padding: "40px 16px",
+      }}
+    >
       <div className="container" style={{ maxWidth: "760px" }}>
-        <div className="card-island" style={{ padding: "32px" }}>
-          <h1 style={{ marginBottom: "12px" }}>Share Your Stay Experience</h1>
-          <p style={{ color: "var(--text-light)", marginBottom: "24px" }}>
+        <div className="card-island" style={{ padding: "clamp(20px, 4vw, 38px)", border: "1px solid rgba(13,92,92,0.12)" }}>
+          <div style={{ marginBottom: "18px" }}>
+            <div style={{ color: "var(--gold)", letterSpacing: "2px", fontSize: "12px", marginBottom: "8px" }}>
+              SERENE SEAVIEW
+            </div>
+            <h1 style={{ marginBottom: "10px", fontSize: "clamp(28px, 5vw, 40px)" }}>Share Your Stay Experience</h1>
+          </div>
+          <p style={{ color: "var(--text-light)", marginBottom: "24px", lineHeight: 1.65 }}>
             Your feedback helps us improve and helps future guests choose us with confidence.
           </p>
 
@@ -87,21 +99,32 @@ export default function ReviewPage() {
 
           {!loading && data && !success && (
             <form onSubmit={handleSubmit}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                  marginBottom: "22px",
+                  background: "#fff",
+                  border: "1px solid var(--border)",
+                  borderRadius: "14px",
+                  padding: "14px",
+                }}
+              >
                 <div>
-                  <label style={{ display: "block", marginBottom: "6px" }}>Guest</label>
+                  <label style={{ display: "block", marginBottom: "6px", color: "var(--text-light)", fontSize: "12px", letterSpacing: "0.8px" }}>GUEST</label>
                   <input value={data.guestName} disabled />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "6px" }}>Reference</label>
+                  <label style={{ display: "block", marginBottom: "6px", color: "var(--text-light)", fontSize: "12px", letterSpacing: "0.8px" }}>REFERENCE</label>
                   <input value={data.referenceId || "-"} disabled />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "6px" }}>Check-in</label>
+                  <label style={{ display: "block", marginBottom: "6px", color: "var(--text-light)", fontSize: "12px", letterSpacing: "0.8px" }}>CHECK-IN</label>
                   <input value={data.checkIn || "-"} disabled />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "6px" }}>Check-out</label>
+                  <label style={{ display: "block", marginBottom: "6px", color: "var(--text-light)", fontSize: "12px", letterSpacing: "0.8px" }}>CHECK-OUT</label>
                   <input value={data.checkOut || "-"} disabled />
                 </div>
               </div>
@@ -124,6 +147,10 @@ export default function ReviewPage() {
                   <option value={2}>2 - Fair</option>
                   <option value={1}>1 - Poor</option>
                 </select>
+              </div>
+
+              <div style={{ marginTop: "-4px", marginBottom: "14px", color: "var(--gold)", fontSize: "20px", letterSpacing: "2px" }}>
+                {"\u2605".repeat(rating)}{"\u2606".repeat(5 - rating)}
               </div>
 
               <div className="form-group">

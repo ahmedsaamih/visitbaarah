@@ -35,7 +35,7 @@ export default function AdminBookings() {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch("/api/admin/bookings");
+      const res = await fetch("/api/admin/bookings", { cache: "no-store" });
       const data = await res.json();
       if (res.ok) {
         setBookings(data);
@@ -244,13 +244,13 @@ export default function AdminBookings() {
           <div className="card" style={{ maxWidth: "700px", width: "100%" }} onClick={(e) => e.stopPropagation()}>
             <h2 style={{ marginBottom: "8px" }}>Guest Review</h2>
             <p style={{ color: "var(--admin-text-light)", fontSize: "13px", marginBottom: "16px" }}>
-              Ref: {activeReview.bookingReferenceId || "-"} â€¢ Status: {activeReview.reviewStatus || "pending"}
+              Ref: {activeReview.bookingReferenceId || "-"} | Status: {activeReview.reviewStatus || "pending"}
             </p>
 
             <div style={{ marginBottom: "16px" }}>
               <strong>{activeReview.guestName}</strong>
-              {activeReview.guestCountry ? <span style={{ color: "var(--admin-text-light)" }}> â€¢ {activeReview.guestCountry}</span> : null}
-              <div style={{ marginTop: "8px", color: "#c99700" }}>{"?".repeat(activeReview.rating || 0)}</div>
+              {activeReview.guestCountry ? <span style={{ color: "var(--admin-text-light)" }}> | {activeReview.guestCountry}</span> : null}
+              <div style={{ marginTop: "8px", color: "#c99700" }}>{"\u2605".repeat(activeReview.rating || 0)}</div>
             </div>
 
             <div style={{ background: "#f8fafc", borderRadius: "10px", padding: "14px", marginBottom: "16px", whiteSpace: "pre-wrap" }}>

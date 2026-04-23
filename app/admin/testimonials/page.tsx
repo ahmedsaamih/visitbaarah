@@ -40,7 +40,7 @@ export default function AdminTestimonials() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch("/api/admin/testimonials");
+      const res = await fetch("/api/admin/testimonials", { cache: "no-store" });
       const data = await res.ok ? await res.json() : [];
       setItems(data);
     } catch (err) {
@@ -202,7 +202,7 @@ export default function AdminTestimonials() {
                       <div style={{ fontSize: "11px", color: "var(--admin-accent)" }}>Ref: {item.booking.referenceId}</div>
                     ) : null}
                   </td>
-                  <td>{"?".repeat(item.rating || 0)}</td>
+                  <td>{"\u2605".repeat(item.rating || 0)}</td>
                   <td>
                     <span className={`badge ${item.reviewStatus === "approved" ? "badge-confirmed" : item.reviewStatus === "rejected" ? "badge-cancelled" : "badge-pending"}`}>
                       {item.reviewStatus || "approved"}
