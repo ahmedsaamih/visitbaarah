@@ -102,7 +102,7 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
         </section>
       )}
 
-      {/* Gallery Section - Overlapping Staggered Layout */}
+      {/* Gallery Section - GSAP Auto-playing Carousel */}
       {hasGallery && (
         <section id="gallery" className="section" style={{ background: "#fff", overflow: "hidden", paddingBottom: "clamp(60px, 10vw, 100px)" }}>
           <div className="container" style={{ textAlign: "center", marginBottom: "clamp(40px, 8vw, 80px)" }}>
@@ -113,38 +113,28 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
           </div>
 
           <div style={{ padding: "0 20px" }}>
-             <GsapCarousel autoPlay={true} interval={4500} showArrows={false} showDots={true}>
-                {Array.from({ length: Math.ceil(gallery.length / 4) }).map((_, rowIndex) => (
-                  <div key={rowIndex} style={{ 
-                    display: "flex", 
-                    gap: "clamp(12px, 3vw, 40px)", 
-                    alignItems: "center", 
-                    justifyContent: "center",
-                    padding: "40px 0",
-                    height: "clamp(350px, 50vh, 500px)"
-                  }}>
-                    {gallery.slice(rowIndex * 4, rowIndex * 4 + 4).map((item, idx) => (
-                      <div key={item.id} className="reveal" style={{ 
-                        width: "clamp(140px, 20vw, 300px)",
-                        height: idx % 2 === 0 ? "clamp(200px, 30vw, 400px)" : "clamp(160px, 24vw, 320px)",
-                        borderRadius: "12px",
+             <GsapCarousel autoPlay={true} interval={4500} showArrows={true} showDots={true}>
+                {gallery.map((item) => (
+                  <div key={item.id} style={{ padding: "8px 0" }}>
+                    <div
+                      className="reveal"
+                      style={{
+                        width: "min(100%, 980px)",
+                        height: "clamp(280px, 58vw, 560px)",
+                        margin: "0 auto",
+                        borderRadius: "20px",
                         overflow: "hidden",
                         background: "var(--border)",
-                        boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-                        transform: `rotate(${idx % 2 === 0 ? (idx + 1) * 2 : -(idx + 1) * 2}deg) translateY(${idx % 2 === 0 ? "-5px" : "15px"})`,
-                        flexShrink: 0,
-                        zIndex: idx,
-                        marginLeft: idx === 0 ? 0 : "clamp(-40px, -5vw, -60px)", // Overlap effect
-                        transition: "all 0.5s ease"
-                      }}>
-                        <img 
-                          src={item.url} 
-                          alt={item.alt || ""} 
-                          style={{ width: "100%", height: "100%", objectFit: "cover" }} 
-                          className="hover-bright"
-                        />
-                      </div>
-                    ))}
+                        boxShadow: "0 20px 40px rgba(0,0,0,0.12)",
+                      }}
+                    >
+                      <img
+                        src={item.url}
+                        alt={item.alt || ""}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        className="hover-bright"
+                      />
+                    </div>
                   </div>
                 ))}
              </GsapCarousel>

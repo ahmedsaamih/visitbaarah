@@ -62,7 +62,11 @@ export default function GsapCarousel({
   if (total === 0) return null;
 
   return (
-    <div className={`carousel-container ${className}`} ref={containerRef} style={{ position: "relative", overflow: "hidden", width: "100%" }}>
+    <div
+      className={`carousel-container ${className}`}
+      ref={containerRef}
+      style={{ position: "relative", overflow: "hidden", width: "100%", paddingBottom: showArrows && total > 1 ? "76px" : "0" }}
+    >
       {/* Track */}
       <div 
         ref={trackRef} 
@@ -85,16 +89,23 @@ export default function GsapCarousel({
 
       {/* Navigation Arrows */}
       {showArrows && total > 1 && (
-        <>
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            bottom: "10px",
+            transform: "translateX(-50%)",
+            zIndex: 10,
+            display: "flex",
+            gap: "10px",
+            pointerEvents: "none",
+          }}
+        >
           <button 
             onClick={prev}
             className="carousel-arrow"
             style={{ 
-              position: "absolute", 
-              left: "10px", 
-              top: "50%", 
-              transform: "translateY(-50%)", 
-              zIndex: 10,
+              pointerEvents: "auto",
               width: "clamp(36px, 8vw, 50px)",
               height: "clamp(36px, 8vw, 50px)",
               borderRadius: "50%",
@@ -118,11 +129,7 @@ export default function GsapCarousel({
             onClick={next}
             className="carousel-arrow"
             style={{ 
-              position: "absolute", 
-              right: "10px", 
-              top: "50%", 
-              transform: "translateY(-50%)", 
-              zIndex: 10,
+              pointerEvents: "auto",
               width: "clamp(36px, 8vw, 50px)",
               height: "clamp(36px, 8vw, 50px)",
               borderRadius: "50%",
@@ -142,7 +149,7 @@ export default function GsapCarousel({
               &#8250;
             </span>
           </button>
-        </>
+        </div>
       )}
 
       {/* Dots Indicator */}
