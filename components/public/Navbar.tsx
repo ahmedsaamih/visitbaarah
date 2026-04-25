@@ -40,12 +40,12 @@ export default function Navbar() {
       <div className="container nav-public-inner">
         <Link href="/" className="nav-brand-logo" aria-label="Serene Seaview Home">
           <Image
-            src="/images/logo.PNG"
+            src="/images/logo.svg"
             alt="Serene Seaview"
-            width={220}
+            width={228}
             height={56}
             priority
-            style={{ width: "auto", height: "46px" }}
+            style={{ width: "auto", height: "44px" }}
           />
         </Link>
         <div className="nav-public-desktop">

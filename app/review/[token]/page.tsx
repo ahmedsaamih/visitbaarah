@@ -87,12 +87,12 @@ export default function ReviewPage() {
           <div style={{ marginBottom: "18px" }}>
             <div style={{ marginBottom: "10px" }}>
               <Image
-                src="/images/logo.PNG"
+                src="/images/logo.svg"
                 alt="Serene Seaview"
-                width={210}
+                width={218}
                 height={54}
                 priority
-                style={{ width: "auto", height: "40px" }}
+                style={{ width: "auto", height: "38px" }}
               />
             </div>
             <h1 style={{ marginBottom: "10px", fontSize: "clamp(28px, 5vw, 40px)" }}>Share Your Stay Experience</h1>
