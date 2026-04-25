@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, rooms, roomAvailability } from "@/db/schema";
+import { bookings, rooms, roomAvailability, roomTypes } from "@/db/schema";
 import { desc, eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { generateReferenceId } from "@/lib/reference";
+import { sendBookingConfirmedEmail } from "@/lib/plunk";
 
 export async function GET() {
   const isAdmin = await verifySession();
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
     const checkOut = typeof data.checkOut === "string" ? data.checkOut : "";
     const specialRequests = typeof data.specialRequests === "string" ? data.specialRequests.trim() : "";
     const totalAmountRaw = data.totalAmount;
+    const sendCustomerEmail = data.sendCustomerEmail === true;
     const roomTypeId = Number(data.roomTypeId);
     const numGuests = Number(data.numGuests) || 1;
     const numRooms = Number(data.numRooms) || 1;
@@ -106,6 +108,33 @@ export async function POST(request: Request) {
         adminNotes: "Manual booking created by admin",
       })
       .returning();
+
+    if (sendCustomerEmail) {
+      try {
+        const [roomType, assignedRoom] = await Promise.all([
+          db.query.roomTypes.findFirst({ where: eq(roomTypes.id, roomTypeId) }),
+          db.query.rooms.findFirst({ where: eq(rooms.id, assignedRoomId) }),
+        ]);
+
+        const sent = await sendBookingConfirmedEmail(guestEmailRaw, {
+          guestName,
+          referenceId,
+          roomType: roomType?.name ?? "Room",
+          roomNumber: assignedRoom?.roomNumber,
+          checkIn,
+          checkOut,
+        });
+
+        if (!sent) {
+          console.error("[Admin Bookings API] Manual booking confirmation email failed.", {
+            referenceId,
+            guestEmail: guestEmailRaw,
+          });
+        }
+      } catch (emailError) {
+        console.error("[Admin Bookings API] Manual booking confirmation email error:", emailError);
+      }
+    }
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

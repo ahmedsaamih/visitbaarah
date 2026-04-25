@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { roomTypes, rooms, roomAvailability, bookings, media } from "@/db/schema";
+import { roomTypes, rooms, roomAvailability, bookings, media, settings } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
+import { getRoomTypeRatesSettingKey, normalizeSeasonalRates, saveSeasonalRates } from "@/lib/room-pricing";
 
 export async function GET(
   request: Request,
@@ -26,7 +27,13 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(item);
+    const ratesRow = await db.query.settings.findFirst({
+      where: eq(settings.key, getRoomTypeRatesSettingKey(itemId)),
+    });
+    return NextResponse.json({
+      ...item,
+      seasonalRates: normalizeSeasonalRates(ratesRow ? safeJsonParse(ratesRow.value) : []),
+    });
   } catch (error) {
     console.error("[Room Types ID API] GET Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -47,9 +54,10 @@ export async function PATCH(
 
   try {
     const data = await request.json();
+    const { seasonalRates, ...payloadWithoutRates } = data;
     
     // Sanitize data: Exclude fields that shouldn't be updated and handle type conversion
-    const { id: _, createdAt: __, updatedAt: ___, ...updateData } = data;
+    const { id: _, createdAt: __, updatedAt: ___, ...updateData } = payloadWithoutRates;
     
     if (updateData.basePrice !== undefined) updateData.basePrice = updateData.basePrice.toString();
     if (updateData.maxGuests !== undefined) updateData.maxGuests = parseInt(updateData.maxGuests);
@@ -63,6 +71,10 @@ export async function PATCH(
 
     if (!updatedItem) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (seasonalRates !== undefined) {
+      await saveSeasonalRates(itemId, normalizeSeasonalRates(seasonalRates));
     }
 
     return NextResponse.json(updatedItem);
@@ -111,6 +123,10 @@ export async function DELETE(
         .delete(media)
         .where(eq(media.roomTypeId, itemId));
 
+      await tx
+        .delete(settings)
+        .where(eq(settings.key, getRoomTypeRatesSettingKey(itemId)));
+
       const [deleted] = await tx
         .delete(roomTypes)
         .where(eq(roomTypes.id, itemId))
@@ -132,5 +148,13 @@ export async function DELETE(
         ? "This room type has existing bookings and cannot be deleted safely. Archive it instead."
         : "Internal server error";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+function safeJsonParse(value: string) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return [];
   }
 }

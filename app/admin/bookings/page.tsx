@@ -62,6 +62,7 @@ export default function AdminBookings() {
     numRooms: "1",
     totalAmount: "",
     specialRequests: "",
+    sendCustomerEmail: false,
   });
 
   const fetchBookings = async () => {
@@ -209,6 +210,7 @@ export default function AdminBookings() {
         numRooms: "1",
         totalAmount: "",
         specialRequests: "",
+        sendCustomerEmail: false,
       });
       fetchBookings();
     } catch {
@@ -352,6 +354,16 @@ export default function AdminBookings() {
               value={manualForm.specialRequests}
               onChange={(e) => setManualForm((prev) => ({ ...prev, specialRequests: e.target.value }))}
             />
+          </div>
+          <div className="form-group" style={{ marginTop: "-4px" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={manualForm.sendCustomerEmail}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, sendCustomerEmail: e.target.checked }))}
+              />
+              Send confirmation email now (and review invite will send on checkout)
+            </label>
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             <button className="btn btn-primary" type="submit" disabled={creatingBooking}>

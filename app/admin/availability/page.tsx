@@ -53,10 +53,24 @@ export default function AdminAvailability() {
   const [availability, setAvailability] = useState<AvailabilityItem[]>([]);
   const [viewMode, setViewMode] = useState<"by-room" | "all-rooms">("by-room");
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [jumpMonth, setJumpMonth] = useState(
+    selectedYear === new Date().getFullYear() ? new Date().getMonth() : 0
+  );
   const [allRoomsPayload, setAllRoomsPayload] = useState<AllRoomsPayload | null>(null);
   const [allRoomsLoading, setAllRoomsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const allRoomsScrollerRef = useRef<HTMLDivElement | null>(null);
+  const scrollToMonth = useCallback((year: number, monthIndex: number) => {
+    const scroller = allRoomsScrollerRef.current;
+    if (!scroller) return;
+    const dayOffset = getDayOffsetInYear(year, monthIndex);
+    const leftPaneWidth = 160;
+    const columnWidth = 36;
+    scroller.scrollTo({
+      left: leftPaneWidth + dayOffset * columnWidth,
+      behavior: "smooth",
+    });
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -130,18 +144,9 @@ export default function AdminAvailability() {
   useEffect(() => {
     if (viewMode !== "all-rooms") return;
     if (!allRoomsPayload) return;
-    const scroller = allRoomsScrollerRef.current;
-    if (!scroller) return;
-
     const monthIndex = selectedYear === new Date().getFullYear() ? new Date().getMonth() : 0;
-    const dayOffset = getDayOffsetInYear(selectedYear, monthIndex);
-    const leftPaneWidth = 160;
-    const columnWidth = 36;
-    scroller.scrollTo({
-      left: leftPaneWidth + dayOffset * columnWidth,
-      behavior: "smooth",
-    });
-  }, [viewMode, selectedYear, allRoomsPayload]);
+    scrollToMonth(selectedYear, monthIndex);
+  }, [viewMode, selectedYear, allRoomsPayload, scrollToMonth]);
 
   const toggleDate = async (dateStr: string, isCurrentlyBlocked: boolean) => {
     try {
@@ -241,17 +246,40 @@ export default function AdminAvailability() {
               </button>
             </>
           ) : (
-            <select
-              value={selectedYear}
-              className="btn btn-outline"
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-            >
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+            <>
+              <select
+                value={selectedYear}
+                className="btn btn-outline"
+                onChange={(e) => {
+                  const nextYear = Number(e.target.value);
+                  setSelectedYear(nextYear);
+                  setJumpMonth(nextYear === new Date().getFullYear() ? new Date().getMonth() : 0);
+                }}
+              >
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={jumpMonth}
+                className="btn btn-outline"
+                onChange={(e) => setJumpMonth(Number(e.target.value))}
+              >
+                {MONTH_NAMES.map((monthName, idx) => (
+                  <option key={monthName} value={idx}>
+                    {monthName}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="btn btn-outline"
+                onClick={() => scrollToMonth(selectedYear, jumpMonth)}
+              >
+                Jump to Month
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -374,7 +402,12 @@ export default function AdminAvailability() {
                         }}
                         title={dateStr}
                       >
-                        {new Date(`${dateStr}T00:00:00Z`).getUTCDate()}
+                        <div>{new Date(`${dateStr}T00:00:00Z`).getUTCDate()}</div>
+                        {new Date(`${dateStr}T00:00:00Z`).getUTCDate() === 1 ? (
+                          <div style={{ fontSize: "9px", fontWeight: 700, color: "#1e3a8a", lineHeight: 1.1 }}>
+                            {MONTH_SHORT[new Date(`${dateStr}T00:00:00Z`).getUTCMonth()]}
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -535,6 +568,23 @@ function daysBetween(startDate: string, endDate: string) {
 function getDayOffsetInYear(year: number, monthIndex: number) {
   return daysBetween(`${year}-01-01`, formatLocalDate(new Date(year, monthIndex, 1)));
 }
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function formatLocalDate(date: Date) {
   const year = date.getFullYear();

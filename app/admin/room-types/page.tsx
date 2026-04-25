@@ -16,7 +16,10 @@ export default function AdminRoomTypes() {
     bedType: "",
     size: "",
     amenities: [],
+    seasonalRates: [],
   });
+  const seasonalRates: any[] = Array.isArray(formData.seasonalRates) ? formData.seasonalRates : [];
+  const overlapMessages = getSeasonalRateOverlapMessages(seasonalRates);
 
   const fetchItems = async () => {
     try {
@@ -47,7 +50,7 @@ export default function AdminRoomTypes() {
       });
       if (res.ok) {
         setIsEditing(false);
-        setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [] });
+        setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [] });
         fetchItems();
       }
     } catch (err) {
@@ -71,7 +74,7 @@ export default function AdminRoomTypes() {
     <div>
       <div className="title-row">
         <h1>Room Types</h1>
-        <button onClick={() => { setIsEditing(true); setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [] }); }} className="btn btn-primary">
+        <button onClick={() => { setIsEditing(true); setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [] }); }} className="btn btn-primary">
           Add Room Type
         </button>
       </div>
@@ -110,6 +113,147 @@ export default function AdminRoomTypes() {
               <label>Description</label>
               <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} rows={3} />
             </div>
+
+            <div className="form-group">
+              <label>Seasonal / Date-Range Rates (Optional)</label>
+              <div style={{ display: "grid", gap: "8px" }}>
+                {seasonalRates.map((rate: any, index: number) => (
+                  <div
+                    key={`${rate.startDate || "rate"}-${index}`}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "90px 1fr 1fr 1fr auto auto auto",
+                      gap: "8px",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ fontSize: "12px", color: "var(--admin-text-light)", fontWeight: 600 }}>
+                      Priority {index + 1}
+                    </div>
+                    <input
+                      type="date"
+                      value={rate.startDate || ""}
+                      onChange={(e) => {
+                        const next = [...(formData.seasonalRates || [])];
+                        next[index] = { ...next[index], startDate: e.target.value };
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                    />
+                    <input
+                      type="date"
+                      value={rate.endDate || ""}
+                      onChange={(e) => {
+                        const next = [...(formData.seasonalRates || [])];
+                        next[index] = { ...next[index], endDate: e.target.value };
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      placeholder="Nightly rate"
+                      value={rate.nightlyRate || ""}
+                      onChange={(e) => {
+                        const next = [...(formData.seasonalRates || [])];
+                        next[index] = { ...next[index], nightlyRate: e.target.value };
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Label (optional)"
+                      value={rate.label || ""}
+                      onChange={(e) => {
+                        const next = [...seasonalRates];
+                        next[index] = { ...next[index], label: e.target.value };
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      disabled={index === 0}
+                      onClick={() => {
+                        if (index === 0) return;
+                        const next = [...seasonalRates];
+                        [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                      title="Move up priority"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      disabled={index === seasonalRates.length - 1}
+                      onClick={() => {
+                        if (index === seasonalRates.length - 1) return;
+                        const next = [...seasonalRates];
+                        [next[index], next[index + 1]] = [next[index + 1], next[index]];
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                      title="Move down priority"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      style={{ color: "var(--admin-error)" }}
+                      onClick={() => {
+                        const next = [...seasonalRates];
+                        next.splice(index, 1);
+                        setFormData({ ...formData, seasonalRates: next });
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {overlapMessages.length > 0 && (
+                <div
+                  style={{
+                    marginTop: "10px",
+                    background: "#fff7ed",
+                    border: "1px solid #fed7aa",
+                    borderRadius: "8px",
+                    padding: "10px 12px",
+                    fontSize: "12px",
+                    color: "#9a3412",
+                  }}
+                >
+                  <strong>Overlap warning:</strong>
+                  <div style={{ marginTop: "6px", display: "grid", gap: "4px" }}>
+                    {overlapMessages.map((msg, idx) => (
+                      <div key={`overlap-${idx}`}>- {msg}</div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "6px" }}>
+                    First matching range by priority is used for each night.
+                  </div>
+                </div>
+              )}
+              <div style={{ marginTop: "10px" }}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      seasonalRates: [...seasonalRates, { startDate: "", endDate: "", nightlyRate: "", label: "" }],
+                    })
+                  }
+                >
+                  Add Date-Range Price
+                </button>
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--admin-text-light)", marginTop: "8px" }}>
+                The first matching date range by priority is applied for each stay night. Base price is used when no range matches.
+              </p>
+            </div>
             
             {formData.id && (
               <MediaManager entityType="room_type" entityId={formData.id} />
@@ -130,6 +274,7 @@ export default function AdminRoomTypes() {
               <tr>
                 <th>Name</th>
                 <th>Base Price</th>
+                <th>Date-range prices</th>
                 <th>Max Guests</th>
                 <th>Bed Type</th>
                 <th>Actions</th>
@@ -140,6 +285,7 @@ export default function AdminRoomTypes() {
                 <tr key={item.id}>
                   <td style={{ fontWeight: "600" }}>{item.name}</td>
                   <td>${item.basePrice}</td>
+                  <td>{item.seasonalRates?.length || 0}</td>
                   <td>{item.maxGuests}</td>
                   <td>{item.bedType || "-"}</td>
                   <td>
@@ -156,4 +302,27 @@ export default function AdminRoomTypes() {
       </div>
     </div>
   );
+}
+
+function getSeasonalRateOverlapMessages(rates: Array<{ startDate?: string; endDate?: string; label?: string }>) {
+  const messages: string[] = [];
+  for (let i = 0; i < rates.length; i++) {
+    const a = rates[i];
+    if (!a?.startDate || !a?.endDate) continue;
+    if (a.startDate > a.endDate) {
+      messages.push(`Priority ${i + 1} has start date after end date.`);
+      continue;
+    }
+    for (let j = i + 1; j < rates.length; j++) {
+      const b = rates[j];
+      if (!b?.startDate || !b?.endDate) continue;
+      if (b.startDate > b.endDate) continue;
+      const overlaps = a.startDate <= b.endDate && b.startDate <= a.endDate;
+      if (!overlaps) continue;
+      const left = a.label?.trim() ? `${a.label} (P${i + 1})` : `Priority ${i + 1}`;
+      const right = b.label?.trim() ? `${b.label} (P${j + 1})` : `Priority ${j + 1}`;
+      messages.push(`${left} overlaps with ${right}.`);
+    }
+  }
+  return messages;
 }

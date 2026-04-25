@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { rooms, roomAvailability, bookings } from "@/db/schema";
+import { rooms, roomAvailability, bookings, roomTypes } from "@/db/schema";
 import { eq, and, gte, lt, ne, inArray, isNull } from "drizzle-orm";
+import { calculateRoomPricing, getSeasonalRatesMap } from "@/lib/room-pricing";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -24,6 +25,13 @@ export async function GET(request: Request) {
 
     if (checkIn >= checkOut) {
       return NextResponse.json({ error: "checkOut must be after checkIn" }, { status: 400 });
+    }
+
+    const roomType = await db.query.roomTypes.findFirst({
+      where: eq(roomTypes.id, parsedRoomTypeId),
+    });
+    if (!roomType) {
+      return NextResponse.json({ error: "Room type not found" }, { status: 404 });
     }
 
     // 1) Get all rooms of this type
@@ -93,13 +101,21 @@ export async function GET(request: Request) {
       0,
       openRoomIds.length - occupiedAssignedRoomIds.size - unassignedBookings.length
     );
+    const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
+    const pricing = calculateRoomPricing(
+      roomType.basePrice,
+      checkIn,
+      checkOut,
+      rateMap.get(parsedRoomTypeId) || []
+    );
 
     return NextResponse.json({
       available: availableCount > 0,
       availableCount,
       roomTypeId: parsedRoomTypeId,
       checkIn,
-      checkOut
+      checkOut,
+      pricing,
     });
   } catch (error) {
     console.error("[Availability Check API] Error:", error);

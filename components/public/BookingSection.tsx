@@ -6,6 +6,20 @@ interface BookingProps {
   roomTypes: any[];
 }
 
+type AvailabilityResult = {
+  available: boolean;
+  availableCount?: number;
+  pricing?: {
+    nights: number;
+    roomTotal: string;
+    minNightlyRate: string;
+    maxNightlyRate: string;
+    averageNightlyRate: string;
+  };
+  booked?: boolean;
+  ref?: string;
+};
+
 export default function BookingSection({ roomTypes }: BookingProps) {
   const [formData, setFormData] = useState({
     checkIn: "",
@@ -16,7 +30,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
   });
 
   const [loading, setLoading] = useState(false);
-  const [available, setAvailable] = useState<any | null>(null);
+  const [available, setAvailable] = useState<AvailabilityResult | null>(null);
   const [lookupOpen, setLookupOpen] = useState(false);
   const [lookupRef, setLookupRef] = useState("");
   const [lookupEmail, setLookupEmail] = useState("");
@@ -47,7 +61,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
     try {
       const res = await fetch(`/api/availability/check?roomTypeId=${formData.roomTypeId}&startDate=${formData.checkIn}&endDate=${formData.checkOut}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as AvailabilityResult;
         setAvailable(data);
       } else {
         const errData = await res.json();
@@ -161,6 +175,27 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                      <p style={{ fontSize: "14px", opacity: 0.9 }}>Secure your stay by entering your details below.</p>
                    </div>
                 </div>
+                {available.pricing && (
+                  <div
+                    style={{
+                      background: "#ecfdf3",
+                      border: "1px solid #bcf0da",
+                      borderRadius: "10px",
+                      padding: "12px",
+                      marginBottom: "16px",
+                      fontSize: "13px",
+                    }}
+                  >
+                    <div>
+                      <strong>Rate per night:</strong> ${available.pricing.minNightlyRate}
+                      {available.pricing.minNightlyRate !== available.pricing.maxNightlyRate
+                        ? ` - $${available.pricing.maxNightlyRate}`
+                        : ""}
+                    </div>
+                    <div><strong>Nights:</strong> {available.pricing.nights}</div>
+                    <div><strong>Room total:</strong> ${available.pricing.roomTotal}</div>
+                  </div>
+                )}
 
                 {!available.booked ? (
                   <form onSubmit={async (e) => {
@@ -170,8 +205,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                     const email = (e.currentTarget.elements.namedItem("email") as HTMLInputElement).value;
                     
                     try {
-                      const calculatedTotal = (parseFloat(roomTypes.find(rt => rt.id == formData.roomTypeId)?.basePrice || "0") * 
-                        Math.max(1, Math.ceil((new Date(formData.checkOut).getTime() - new Date(formData.checkIn).getTime()) / (1000 * 60 * 60 * 24)))).toString();
+                      const calculatedTotal = available?.pricing?.roomTotal || "0";
 
                       const res = await fetch("/api/bookings", {
                         method: "POST",

@@ -6,6 +6,7 @@ import { sendBookingReceivedEmail, sendAdminNewBookingEmail } from "@/lib/plunk"
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { eq } from "drizzle-orm";
+import { calculateRoomPricing, getSeasonalRatesMap } from "@/lib/room-pricing";
 
 export async function POST(request: Request) {
   try {
@@ -20,15 +21,13 @@ export async function POST(request: Request) {
       checkOut,
       numGuests,
       numRooms,
-      roomTotal,
       addonsTotal,
-      totalAmount,
       specialRequests,
       addons // Array of { addonType, addonId, addonName, quantity, unitPrice, totalPrice, date }
     } = data;
 
     // 1. Validate required fields
-    if (!guestName || !guestEmail || !roomTypeId || !checkIn || !checkOut || !totalAmount) {
+    if (!guestName || !guestEmail || !roomTypeId || !checkIn || !checkOut) {
       return NextResponse.json({ error: "Missing required booking details" }, { status: 400 });
     }
     const normalizedGuestEmail = String(guestEmail).trim().toLowerCase();
@@ -37,6 +36,19 @@ export async function POST(request: Request) {
     if (!limit.allowed) {
       return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
     }
+
+    const parsedRoomTypeId = Number(roomTypeId);
+    const roomType = await db.query.roomTypes.findFirst({
+      where: eq(roomTypes.id, parsedRoomTypeId),
+    });
+    if (!roomType) {
+      return NextResponse.json({ error: "Room type not found" }, { status: 404 });
+    }
+    const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
+    const pricing = calculateRoomPricing(roomType.basePrice, checkIn, checkOut, rateMap.get(parsedRoomTypeId) || []);
+    const roomTotal = pricing.roomTotal;
+    const addonsTotalValue = Number(addonsTotal || "0");
+    const totalAmount = (Number(roomTotal) + (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0)).toFixed(2);
 
     // 2. Generate Reference ID
     const referenceId = await generateReferenceId();
@@ -51,13 +63,13 @@ export async function POST(request: Request) {
           guestEmail: normalizedGuestEmail,
           guestPhone,
           guestCountry,
-          roomTypeId: parseInt(roomTypeId),
+          roomTypeId: parsedRoomTypeId,
           checkIn,
           checkOut,
           numGuests: parseInt(numGuests) || 1,
           numRooms: parseInt(numRooms) || 1,
           roomTotal,
-          addonsTotal: addonsTotal || "0",
+          addonsTotal: (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0).toFixed(2),
           totalAmount,
           specialRequests,
           status: "pending",
@@ -84,10 +96,6 @@ export async function POST(request: Request) {
     });
 
     // 4. Fetch Room Type Name for Email
-    const roomType = await db.query.roomTypes.findFirst({
-      where: eq(roomTypes.id, parseInt(roomTypeId)),
-    });
-
     // 5. Send Emails (Fire and forget or await?)
     // Using await for reliability in this context
     try {
