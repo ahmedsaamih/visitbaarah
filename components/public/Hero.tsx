@@ -1,18 +1,24 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 
 interface HeroProps {
   imageUrl?: string;
 }
+
+type GsapLike = {
+  from: (target: string, vars: Record<string, unknown>) => void;
+  to: (target: string, vars: Record<string, unknown>) => void;
+};
 
 export default function Hero({ imageUrl }: HeroProps) {
   const heroRef = useRef<HTMLDivElement>(null);
   const finalImage = imageUrl || "/images/hero.png";
 
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).gsap) {
-      const gsap = (window as any).gsap;
+    const gsap = (window as Window & { gsap?: GsapLike }).gsap;
+    if (gsap) {
       
       gsap.from(".hero-content > *", {
         y: 50,
@@ -70,16 +76,16 @@ export default function Hero({ imageUrl }: HeroProps) {
       </div>
 
       <div className="container hero-content" style={{ zIndex: 1, paddingTop: "80px" }}>
-        <h4 style={{ 
-          color: "var(--gold)", 
-          textTransform: "uppercase", 
-          letterSpacing: "4px", 
-          marginBottom: "24px",
-          fontSize: "14px",
-          fontWeight: "600"
-        }}>
-          Escape to Serenity
-        </h4>
+        <div style={{ marginBottom: "26px", display: "flex", justifyContent: "center" }}>
+          <Image
+            src="/images/logo.svg"
+            alt="Serene Seaview"
+            width={520}
+            height={132}
+            priority
+            style={{ width: "clamp(240px, 38vw, 520px)", height: "auto" }}
+          />
+        </div>
         <h1 style={{ 
           fontSize: "clamp(48px, 8vw, 96px)", 
           marginBottom: "32px",
