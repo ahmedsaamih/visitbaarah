@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { roomAvailability, rooms, bookings } from "@/db/schema";
-import { eq, and, between, ne, lt, gte } from "drizzle-orm";
+import { eq, and, between, ne, lt, gte, asc } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
+
+type AvailabilityEntry = {
+  id: number | string;
+  roomId: number;
+  date: string;
+  isBlocked: boolean;
+  reason: string | null;
+  createdAt: Date;
+};
 
 export async function GET(request: Request) {
   const isAdmin = await verifySession();
@@ -11,6 +20,11 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
+  const view = searchParams.get("view");
+  if (view === "all-rooms") {
+    return getAllRoomsView(searchParams);
+  }
+
   const roomId = searchParams.get("roomId");
   const startDate = searchParams.get("startDate");
   const endDate = searchParams.get("endDate");
@@ -43,7 +57,7 @@ export async function GET(request: Request) {
       ),
     });
 
-    const mergedByDate = new Map<string, any>();
+    const mergedByDate = new Map<string, AvailabilityEntry>();
 
     for (const item of manualItems) {
       mergedByDate.set(item.date, item);
@@ -76,6 +90,73 @@ export async function GET(request: Request) {
     return NextResponse.json(Array.from(mergedByDate.values()));
   } catch (error) {
     console.error("[Availability Admin API] GET Error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+async function getAllRoomsView(searchParams: URLSearchParams) {
+  const yearRaw = Number(searchParams.get("year"));
+  const currentYear = new Date().getFullYear();
+  const year = Number.isInteger(yearRaw) ? yearRaw : currentYear;
+  if (year < 2000 || year > 2100) {
+    return NextResponse.json({ error: "Invalid year" }, { status: 400 });
+  }
+
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+
+  try {
+    const roomItems = await db.query.rooms.findMany({
+      orderBy: [asc(rooms.roomNumber)],
+      with: {
+        roomType: true,
+      },
+    });
+
+    const activeBookings = await db.query.bookings.findMany({
+      where: and(
+        ne(bookings.status, "cancelled"),
+        ne(bookings.status, "rejected"),
+        ne(bookings.status, "checked_out"),
+        gte(bookings.checkOut, yearStart),
+        lt(bookings.checkIn, incrementDateString(yearEnd))
+      ),
+    });
+
+    const manualBlocks = await db.query.roomAvailability.findMany({
+      where: and(
+        eq(roomAvailability.isBlocked, true),
+        between(roomAvailability.date, yearStart, yearEnd)
+      ),
+    });
+
+    return NextResponse.json({
+      year,
+      rooms: roomItems.map((room) => ({
+        id: room.id,
+        roomNumber: room.roomNumber,
+        roomTypeName: room.roomType?.name ?? "Unknown",
+      })),
+      bookings: activeBookings
+        .filter((booking) => typeof booking.assignedRoomId === "number")
+        .map((booking) => ({
+          id: booking.id,
+          roomId: booking.assignedRoomId,
+          guestName: booking.guestName,
+          referenceId: booking.referenceId,
+          checkIn: booking.checkIn,
+          checkOut: booking.checkOut,
+          status: booking.status,
+        })),
+      manualBlocks: manualBlocks.map((block) => ({
+        id: block.id,
+        roomId: block.roomId,
+        date: block.date,
+        reason: block.reason,
+      })),
+    });
+  } catch (error) {
+    console.error("[Availability Admin API] ALL-ROOMS GET Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

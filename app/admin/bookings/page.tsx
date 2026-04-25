@@ -11,8 +11,20 @@ type BookingRow = {
   checkOut: string;
   totalAmount: string;
   status: string;
+  adminNotes?: string | null;
   roomType?: { name?: string | null } | null;
   testimonials?: ReviewEntry[];
+};
+
+type RoomTypeOption = {
+  id: number;
+  name: string;
+};
+
+type RoomOption = {
+  id: number;
+  roomNumber: string;
+  roomTypeId: number;
 };
 
 type ReviewEntry = {
@@ -32,6 +44,25 @@ export default function AdminBookings() {
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [activeReview, setActiveReview] = useState<ReviewEntry | null>(null);
   const [savingReview, setSavingReview] = useState(false);
+  const [creatingBooking, setCreatingBooking] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [createSuccess, setCreateSuccess] = useState("");
+  const [roomTypes, setRoomTypes] = useState<RoomTypeOption[]>([]);
+  const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [manualForm, setManualForm] = useState({
+    guestName: "",
+    guestEmail: "",
+    guestPhone: "",
+    guestCountry: "",
+    roomTypeId: "",
+    assignedRoomId: "",
+    checkIn: "",
+    checkOut: "",
+    numGuests: "2",
+    numRooms: "1",
+    totalAmount: "",
+    specialRequests: "",
+  });
 
   const fetchBookings = async () => {
     try {
@@ -54,6 +85,30 @@ export default function AdminBookings() {
       void fetchBookings();
     }, 0);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const loadFormData = async () => {
+      try {
+        const [roomTypesRes, roomsRes] = await Promise.all([
+          fetch("/api/admin/room-types", { cache: "no-store" }),
+          fetch("/api/admin/rooms", { cache: "no-store" }),
+        ]);
+
+        if (roomTypesRes.ok) {
+          const roomTypesData = await roomTypesRes.json();
+          setRoomTypes(roomTypesData);
+        }
+        if (roomsRes.ok) {
+          const roomsData = await roomsRes.json();
+          setRooms(roomsData);
+        }
+      } catch {
+        // Keep booking list functional even if these fail.
+      }
+    };
+
+    void loadFormData();
   }, []);
 
   const updateStatus = async (id: number, status: string) => {
@@ -108,6 +163,60 @@ export default function AdminBookings() {
     () => bookings.reduce((acc, b) => acc + (b.testimonials?.length || 0), 0),
     [bookings]
   );
+  const filteredRooms = useMemo(
+    () => rooms.filter((room) => String(room.roomTypeId) === manualForm.roomTypeId),
+    [rooms, manualForm.roomTypeId]
+  );
+
+  const createManualBooking = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCreateError("");
+    setCreateSuccess("");
+    setCreatingBooking(true);
+
+    try {
+      const payload = {
+        ...manualForm,
+        roomTypeId: manualForm.roomTypeId ? Number(manualForm.roomTypeId) : null,
+        assignedRoomId: manualForm.assignedRoomId ? Number(manualForm.assignedRoomId) : null,
+        numGuests: Number(manualForm.numGuests) || 1,
+        numRooms: Number(manualForm.numRooms) || 1,
+      };
+
+      const res = await fetch("/api/admin/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setCreateError(body?.error || "Failed to create booking");
+        return;
+      }
+
+      setCreateSuccess(`Manual booking created (${body?.referenceId || "Ref generated"}).`);
+      setManualForm({
+        guestName: "",
+        guestEmail: "",
+        guestPhone: "",
+        guestCountry: "",
+        roomTypeId: "",
+        assignedRoomId: "",
+        checkIn: "",
+        checkOut: "",
+        numGuests: "2",
+        numRooms: "1",
+        totalAmount: "",
+        specialRequests: "",
+      });
+      fetchBookings();
+    } catch {
+      setCreateError("An error occurred while creating booking.");
+    } finally {
+      setCreatingBooking(false);
+    }
+  };
 
   if (loading) return <div>Loading bookings...</div>;
   if (error) return <div className="card" style={{ color: "var(--admin-error)" }}>{error}</div>;
@@ -119,6 +228,139 @@ export default function AdminBookings() {
         <div style={{ fontSize: "13px", color: "var(--admin-text-light)" }}>
           Reviews in system: {reviewCount}
         </div>
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginBottom: "12px" }}>Create Manual Booking</h2>
+        <form onSubmit={createManualBooking}>
+          <div className="grid-2">
+            <div className="form-group">
+              <label>Guest Name</label>
+              <input
+                required
+                value={manualForm.guestName}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, guestName: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Guest Email</label>
+              <input
+                required
+                type="email"
+                value={manualForm.guestEmail}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, guestEmail: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Phone</label>
+              <input
+                value={manualForm.guestPhone}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, guestPhone: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Country</label>
+              <input
+                value={manualForm.guestCountry}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, guestCountry: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Room Type</label>
+              <select
+                required
+                value={manualForm.roomTypeId}
+                onChange={(e) =>
+                  setManualForm((prev) => ({ ...prev, roomTypeId: e.target.value, assignedRoomId: "" }))
+                }
+              >
+                <option value="">Select room type</option>
+                {roomTypes.map((roomType) => (
+                  <option key={roomType.id} value={roomType.id}>
+                    {roomType.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Assign Room (optional)</label>
+              <select
+                value={manualForm.assignedRoomId}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, assignedRoomId: e.target.value }))}
+                disabled={!manualForm.roomTypeId}
+              >
+                <option value="">Auto-assign available room</option>
+                {filteredRooms.map((room) => (
+                  <option key={room.id} value={room.id}>
+                    Room {room.roomNumber}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Check-in</label>
+              <input
+                required
+                type="date"
+                value={manualForm.checkIn}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, checkIn: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Check-out</label>
+              <input
+                required
+                type="date"
+                value={manualForm.checkOut}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, checkOut: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Guests</label>
+              <input
+                type="number"
+                min={1}
+                value={manualForm.numGuests}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, numGuests: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Rooms</label>
+              <input
+                type="number"
+                min={1}
+                value={manualForm.numRooms}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, numRooms: e.target.value }))}
+              />
+            </div>
+            <div className="form-group">
+              <label>Total Amount (USD)</label>
+              <input
+                required
+                type="number"
+                min={0}
+                step="0.01"
+                value={manualForm.totalAmount}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, totalAmount: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Special Requests</label>
+            <textarea
+              rows={2}
+              value={manualForm.specialRequests}
+              onChange={(e) => setManualForm((prev) => ({ ...prev, specialRequests: e.target.value }))}
+            />
+          </div>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <button className="btn btn-primary" type="submit" disabled={creatingBooking}>
+              {creatingBooking ? "Creating..." : "Create Manual Booking"}
+            </button>
+            {createError && <span style={{ color: "var(--admin-error)", fontSize: "13px" }}>{createError}</span>}
+            {createSuccess && <span style={{ color: "var(--admin-success)", fontSize: "13px" }}>{createSuccess}</span>}
+          </div>
+        </form>
       </div>
 
       <div className="card">
@@ -141,7 +383,28 @@ export default function AdminBookings() {
                 const review = booking.testimonials?.[0] || null;
                 return (
                   <tr key={booking.id}>
-                    <td style={{ fontWeight: "600", fontSize: "12px" }}>{booking.referenceId}</td>
+                    <td>
+                      <div style={{ fontWeight: "600", fontSize: "12px" }}>{booking.referenceId}</div>
+                      {booking.adminNotes === "Manual booking created by admin" && (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            marginTop: "6px",
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            letterSpacing: "0.04em",
+                            textTransform: "uppercase",
+                            color: "var(--admin-accent)",
+                            background: "rgba(41, 98, 255, 0.1)",
+                            border: "1px solid rgba(41, 98, 255, 0.25)",
+                            borderRadius: "999px",
+                            padding: "2px 8px",
+                          }}
+                        >
+                          Manual
+                        </span>
+                      )}
+                    </td>
                     <td>
                       <div style={{ fontWeight: "600" }}>{booking.guestName}</div>
                       <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{booking.guestEmail}</div>
