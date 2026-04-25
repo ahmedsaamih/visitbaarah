@@ -131,7 +131,14 @@ export default function AdminRoomTypes() {
               </div>
               <div className="form-group">
                 <label>Max Guests</label>
-                <input type="number" value={formData.maxGuests} onChange={e => setFormData({ ...formData, maxGuests: e.target.value })} required />
+                <input
+                  type="number"
+                  value={formData.maxGuests}
+                  onChange={(e) =>
+                    setFormData({ ...formData, maxGuests: Number.parseInt(e.target.value || "0", 10) || 0 })
+                  }
+                  required
+                />
               </div>
               <div className="form-group">
                 <label>Bed Type</label>
