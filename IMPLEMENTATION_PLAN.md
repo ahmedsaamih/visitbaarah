@@ -113,10 +113,47 @@ Outbound admin alerts via Telegram Bot API (`sendMessage`), with Plunk email fal
 - **Events wired:** booking request received; booking confirmed/rejected; cancellation request received; cancellation approved
 - **Rate limits:** transactional email/user request limiter does **not** apply to Telegram sends
 
+### Phase 22: Admin Booking Ops Enhancements ✅ IMPLEMENTED
+
+- **Manual booking (admin):**
+  - Create booking directly from `Bookings` page
+  - Auto-generate reference ID
+  - Auto-assign available room (or optional manual room selection)
+  - Create as `confirmed` and reflect immediately in availability
+  - Optional customer confirmation email toggle
+  - Manual booking badge shown in bookings table
+  - Telegram alert wired for manual-booking confirmations
+- **Bookings table tooling:**
+  - Date-range filter with presets: Current Month, Current Year, Custom, All Time
+  - CSV export for **currently filtered** bookings only
+- **Availability page UX:**
+  - View switch: `By Rooms` (existing) and `All Rooms` (new timeline matrix)
+  - `All Rooms` view includes year selector, month jump, sticky room column, horizontal yearly timeline
+  - Booking bars show guest name; hover reveals reference ID
+
+### Phase 23: Dynamic Pricing Enhancements ✅ IMPLEMENTED
+
+- **Seasonal pricing by stay date (per room type):**
+  - Admin can define multiple date-range nightly rates with priority ordering and overlap warnings
+  - Base price remains fallback
+- **Local nationality pricing:**
+  - Added `Maldivian Discount (%)` per room type (managed under seasonal pricing section)
+  - Public booking flow now captures nationality (`Maldivian` / `Foreigner`)
+  - Availability pricing and booking totals apply Maldivian discount when applicable
+- **Pricing source of truth:**
+  - Public booking totals are computed server-side from stay dates + seasonal rates + nationality discount
+  - Avoids client-side mismatch and booking-month vs stay-month pricing errors
+- **Storage approach (no DB migration):**
+  - Room-type seasonal rates and Maldivian discount stored in existing `settings` table (pricing keys)
+
 ### Documentation changelog (since prior handoff)
 
 - **Plunk:** Use secret key env (`PLUNK_API_KEY` / `PLUNK_SECRET_KEY` per code); `revalidateTag("homepage", "max")` for Next.js 16; optional `PLUNK_FROM_EMAIL` aliases supported in code.
 - **Bookings:** Guest lookup/edit/cancel by reference + email; admin confirm may auto-assign room; availability logic accounts for blocks + bookings; transactional email routes rate-limited (15 min) with user-facing hint.
 - **Admin:** Mobile nav shell (`AdminShell`); `/admin` redirect; availability calendar sizing; Telegram settings block.
+- **Admin Bookings:** Manual booking creation flow, optional confirmation email toggle, Telegram alert on manual confirm, date-range/preset filtering, CSV export.
+- **Admin Availability:** Added `All Rooms` yearly timeline view with month labels and jump-to-month action.
+- **Admin Room Types:** Seasonal/date-range pricing editor with priority controls and overlap warnings; per-room-type Maldivian discount (%) setting.
 - **Public:** FAB mobile nav; booking card + “View My Booking” modal; section image settings (`about_image_url`, `dining_image_url`); assorted UX fixes.
+- **Public Booking Pricing:** Availability now returns rate/total for selected stay period; nationality-aware price adjustments supported (`Maldivian` discount per room type, foreigner default rates).
 - **Reviews/Testimonial flow:** checkout-triggered review invite email with 3-day tokenized link; guest review form (`/review/[token]`); admin moderation from bookings/testimonials; approved + published reviews shown on homepage (max 15, featured-first).

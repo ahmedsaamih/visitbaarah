@@ -15,6 +15,8 @@ type AvailabilityResult = {
     minNightlyRate: string;
     maxNightlyRate: string;
     averageNightlyRate: string;
+    discountPercentApplied: string;
+    discountAmount: string;
   };
   booked?: boolean;
   ref?: string;
@@ -25,6 +27,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
     checkIn: "",
     checkOut: "",
     roomTypeId: "",
+    nationality: "Foreigner",
     guests: 1,
     rooms: 1
   });
@@ -59,7 +62,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
     setLoading(true);
     setAvailable(null);
     try {
-      const res = await fetch(`/api/availability/check?roomTypeId=${formData.roomTypeId}&startDate=${formData.checkIn}&endDate=${formData.checkOut}`);
+      const res = await fetch(`/api/availability/check?roomTypeId=${formData.roomTypeId}&startDate=${formData.checkIn}&endDate=${formData.checkOut}&nationality=${encodeURIComponent(formData.nationality)}`);
       if (res.ok) {
         const data = (await res.json()) as AvailabilityResult;
         setAvailable(data);
@@ -150,6 +153,18 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                   />
                 </div>
                 <div className="form-group">
+                  <label>Nationality</label>
+                  <select
+                    value={formData.nationality}
+                    onChange={e => setFormData({ ...formData, nationality: e.target.value })}
+                    required
+                    style={{ ...fieldStyle, appearance: "none", backgroundImage: "linear-gradient(45deg, transparent 50%, #0d5c5c 50%), linear-gradient(135deg, #0d5c5c 50%, transparent 50%)", backgroundPosition: "calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px)", backgroundSize: "6px 6px, 6px 6px", backgroundRepeat: "no-repeat" }}
+                  >
+                    <option value="Foreigner">Foreigner</option>
+                    <option value="Maldivian">Maldivian</option>
+                  </select>
+                </div>
+                <div className="form-group">
                   <label>Check-out</label>
                   <input 
                     type="date" 
@@ -193,6 +208,12 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                         : ""}
                     </div>
                     <div><strong>Nights:</strong> {available.pricing.nights}</div>
+                    {Number(available.pricing.discountPercentApplied) > 0 && (
+                      <div>
+                        <strong>Maldivian discount:</strong> {available.pricing.discountPercentApplied}% (-$
+                        {available.pricing.discountAmount})
+                      </div>
+                    )}
                     <div><strong>Room total:</strong> ${available.pricing.roomTotal}</div>
                   </div>
                 )}
@@ -214,6 +235,8 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                           ...formData,
                           guestName: name,
                           guestEmail: email,
+                          guestCountry: formData.nationality,
+                          nationality: formData.nationality,
                           totalAmount: calculatedTotal,
                           roomTotal: calculatedTotal
                         })

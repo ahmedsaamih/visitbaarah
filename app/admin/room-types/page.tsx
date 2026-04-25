@@ -17,6 +17,7 @@ export default function AdminRoomTypes() {
     size: "",
     amenities: [],
     seasonalRates: [],
+    maldivianDiscountPercent: "0",
   });
   const seasonalRates: any[] = Array.isArray(formData.seasonalRates) ? formData.seasonalRates : [];
   const overlapMessages = getSeasonalRateOverlapMessages(seasonalRates);
@@ -50,7 +51,7 @@ export default function AdminRoomTypes() {
       });
       if (res.ok) {
         setIsEditing(false);
-        setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [] });
+        setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [], maldivianDiscountPercent: "0" });
         fetchItems();
       }
     } catch (err) {
@@ -74,7 +75,7 @@ export default function AdminRoomTypes() {
     <div>
       <div className="title-row">
         <h1>Room Types</h1>
-        <button onClick={() => { setIsEditing(true); setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [] }); }} className="btn btn-primary">
+        <button onClick={() => { setIsEditing(true); setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [], maldivianDiscountPercent: "0" }); }} className="btn btn-primary">
           Add Room Type
         </button>
       </div>
@@ -116,13 +117,26 @@ export default function AdminRoomTypes() {
 
             <div className="form-group">
               <label>Seasonal / Date-Range Rates (Optional)</label>
+              <div style={{ marginBottom: "10px", maxWidth: "320px" }}>
+                <label style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>
+                  Maldivian Discount (%)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={formData.maldivianDiscountPercent ?? "0"}
+                  onChange={(e) => setFormData({ ...formData, maldivianDiscountPercent: e.target.value })}
+                />
+              </div>
               <div style={{ display: "grid", gap: "8px" }}>
                 {seasonalRates.map((rate: any, index: number) => (
                   <div
                     key={`${rate.startDate || "rate"}-${index}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "90px 1fr 1fr 1fr auto auto auto",
+                      gridTemplateColumns: "90px minmax(140px,1fr) minmax(140px,1fr) minmax(140px,1fr) minmax(160px,1fr) auto auto auto",
                       gap: "8px",
                       alignItems: "center",
                     }}
@@ -237,18 +251,23 @@ export default function AdminRoomTypes() {
                 </div>
               )}
               <div style={{ marginTop: "10px" }}>
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      seasonalRates: [...seasonalRates, { startDate: "", endDate: "", nightlyRate: "", label: "" }],
-                    })
-                  }
-                >
-                  Add Date-Range Price
-                </button>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        seasonalRates: [...seasonalRates, { startDate: "", endDate: "", nightlyRate: "", label: "" }],
+                      })
+                    }
+                  >
+                    Add Date-Range Price
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Save Seasonal Rates
+                  </button>
+                </div>
               </div>
               <p style={{ fontSize: "12px", color: "var(--admin-text-light)", marginTop: "8px" }}>
                 The first matching date range by priority is applied for each stay night. Base price is used when no range matches.

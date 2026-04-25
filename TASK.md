@@ -146,3 +146,29 @@
 - [x] Ensure Telegram event alerts are NOT rate-limited by request limiter rules
 - [x] Ensure non-blocking behavior (core APIs succeed even when Telegram fails)
 - [ ] Add verification checklist in deployment QA notes (optional doc polish)
+
+## Phase 22: Admin Booking & Availability Ops Upgrade — ✅ DONE
+- [x] Add admin manual booking creation form in Bookings page
+- [x] Auto-generate booking reference for manual bookings
+- [x] Manual booking defaults to confirmed and reflects in Availability
+- [x] Add optional "send customer confirmation email" toggle for manual booking
+- [x] Ensure manual booking sends Telegram booking-confirmed alert
+- [x] Add manual booking badge in bookings table
+- [x] Add bookings filter presets (current month/year/custom/all)
+- [x] Add bookings date-range filtering
+- [x] Add filtered CSV export on bookings page
+- [x] Add Availability view switch (`By Rooms` / `All Rooms`)
+- [x] Implement yearly all-rooms horizontal timeline with room rows
+- [x] Add year selector + jump-to-month controls in all-rooms view
+- [x] Show booking bars with guest name and hover reference ID
+
+## Phase 23: Pricing Engine Upgrade (Seasonal + Nationality) — ✅ DONE
+- [x] Add room-type seasonal date-range pricing editor in admin
+- [x] Add priority ordering and overlap warnings for seasonal ranges
+- [x] Add room-type Maldivian discount (%) under seasonal pricing section
+- [x] Persist seasonal pricing + local discount in settings (no schema migration)
+- [x] Apply stay-date seasonal pricing in availability check response
+- [x] Show dynamic nightly range and total in public check-availability card
+- [x] Add nationality field (`Maldivian` / `Foreigner`) in public availability flow
+- [x] Apply Maldivian discount in availability and booking total calculations
+- [x] Enforce pricing server-side on booking create (source-of-truth backend)

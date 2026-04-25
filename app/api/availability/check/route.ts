@@ -2,13 +2,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { rooms, roomAvailability, bookings, roomTypes } from "@/db/schema";
 import { eq, and, gte, lt, ne, inArray, isNull } from "drizzle-orm";
-import { calculateRoomPricing, getSeasonalRatesMap } from "@/lib/room-pricing";
+import {
+  calculateRoomPricing,
+  getMaldivianDiscountMap,
+  getSeasonalRatesMap,
+  isMaldivianNationality,
+} from "@/lib/room-pricing";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const roomTypeId = searchParams.get("roomTypeId");
   const checkIn = searchParams.get("checkIn") || searchParams.get("startDate"); // YYYY-MM-DD
   const checkOut = searchParams.get("checkOut") || searchParams.get("endDate"); // YYYY-MM-DD
+  const nationality = searchParams.get("nationality") || "";
 
   if (!roomTypeId || !checkIn || !checkOut) {
     return NextResponse.json(
@@ -102,11 +108,16 @@ export async function GET(request: Request) {
       openRoomIds.length - occupiedAssignedRoomIds.size - unassignedBookings.length
     );
     const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
+    const discountMap = await getMaldivianDiscountMap([parsedRoomTypeId]);
     const pricing = calculateRoomPricing(
       roomType.basePrice,
       checkIn,
       checkOut,
-      rateMap.get(parsedRoomTypeId) || []
+      rateMap.get(parsedRoomTypeId) || [],
+      {
+        applyMaldivianDiscount: isMaldivianNationality(nationality),
+        maldivianDiscountPercent: discountMap.get(parsedRoomTypeId) || "0.00",
+      }
     );
 
     return NextResponse.json({

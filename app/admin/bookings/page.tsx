@@ -9,6 +9,7 @@ type BookingRow = {
   guestEmail: string;
   checkIn: string;
   checkOut: string;
+  createdAt?: string;
   totalAmount: string;
   status: string;
   adminNotes?: string | null;
@@ -49,6 +50,15 @@ export default function AdminBookings() {
   const [createSuccess, setCreateSuccess] = useState("");
   const [roomTypes, setRoomTypes] = useState<RoomTypeOption[]>([]);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [filterPreset, setFilterPreset] = useState<"all" | "month" | "year" | "custom">("month");
+  const [filterStartDate, setFilterStartDate] = useState(() => {
+    const now = new Date();
+    return formatLocalDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  });
+  const [filterEndDate, setFilterEndDate] = useState(() => {
+    const now = new Date();
+    return formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  });
   const [manualForm, setManualForm] = useState({
     guestName: "",
     guestEmail: "",
@@ -87,6 +97,25 @@ export default function AdminBookings() {
     }, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  const applyFilterPreset = (preset: "all" | "month" | "year" | "custom") => {
+    setFilterPreset(preset);
+    const now = new Date();
+    if (preset === "month") {
+      setFilterStartDate(formatLocalDate(new Date(now.getFullYear(), now.getMonth(), 1)));
+      setFilterEndDate(formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)));
+      return;
+    }
+    if (preset === "year") {
+      setFilterStartDate(formatLocalDate(new Date(now.getFullYear(), 0, 1)));
+      setFilterEndDate(formatLocalDate(new Date(now.getFullYear(), 11, 31)));
+      return;
+    }
+    if (preset === "all") {
+      setFilterStartDate("");
+      setFilterEndDate("");
+    }
+  };
 
   useEffect(() => {
     const loadFormData = async () => {
@@ -164,6 +193,16 @@ export default function AdminBookings() {
     () => bookings.reduce((acc, b) => acc + (b.testimonials?.length || 0), 0),
     [bookings]
   );
+  const filteredBookings = useMemo(() => {
+    if (!filterStartDate && !filterEndDate) return bookings;
+    return bookings.filter((booking) => {
+      const inDate = booking.checkIn;
+      const outDate = booking.checkOut;
+      if (filterStartDate && outDate < filterStartDate) return false;
+      if (filterEndDate && inDate > filterEndDate) return false;
+      return true;
+    });
+  }, [bookings, filterStartDate, filterEndDate]);
   const filteredRooms = useMemo(
     () => rooms.filter((room) => String(room.roomTypeId) === manualForm.roomTypeId),
     [rooms, manualForm.roomTypeId]
@@ -220,6 +259,55 @@ export default function AdminBookings() {
     }
   };
 
+  const exportFilteredBookings = () => {
+    const rows = filteredBookings.map((booking) => ({
+      referenceId: booking.referenceId,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      roomType: booking.roomType?.name ?? "",
+      checkIn: booking.checkIn,
+      checkOut: booking.checkOut,
+      totalAmount: booking.totalAmount,
+      status: booking.status,
+      bookingType: booking.adminNotes === "Manual booking created by admin" ? "manual" : "website",
+      createdAt: booking.createdAt || "",
+    }));
+    const header = Object.keys(rows[0] || {
+      referenceId: "",
+      guestName: "",
+      guestEmail: "",
+      roomType: "",
+      checkIn: "",
+      checkOut: "",
+      totalAmount: "",
+      status: "",
+      bookingType: "",
+      createdAt: "",
+    });
+    const csvLines = [
+      header.join(","),
+      ...rows.map((row) =>
+        header
+          .map((key) => {
+            const value = String(row[key as keyof typeof row] ?? "");
+            const escaped = value.replace(/"/g, "\"\"");
+            return `"${escaped}"`;
+          })
+          .join(",")
+      ),
+    ];
+    const csv = csvLines.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `bookings_${filterStartDate || "all"}_${filterEndDate || "all"}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) return <div>Loading bookings...</div>;
   if (error) return <div className="card" style={{ color: "var(--admin-error)" }}>{error}</div>;
 
@@ -229,6 +317,42 @@ export default function AdminBookings() {
         <h1>Bookings</h1>
         <div style={{ fontSize: "13px", color: "var(--admin-text-light)" }}>
           Reviews in system: {reviewCount}
+        </div>
+      </div>
+
+      <div className="card">
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <label style={{ fontSize: "13px", color: "var(--admin-text-light)" }}>Filter</label>
+          <select
+            className="btn btn-outline"
+            value={filterPreset}
+            onChange={(e) => applyFilterPreset(e.target.value as "all" | "month" | "year" | "custom")}
+          >
+            <option value="month">Current Month</option>
+            <option value="year">Current Year</option>
+            <option value="custom">Custom Range</option>
+            <option value="all">All Time</option>
+          </select>
+          <input
+            type="date"
+            value={filterStartDate}
+            onChange={(e) => {
+              setFilterPreset("custom");
+              setFilterStartDate(e.target.value);
+            }}
+          />
+          <span style={{ color: "var(--admin-text-light)" }}>to</span>
+          <input
+            type="date"
+            value={filterEndDate}
+            onChange={(e) => {
+              setFilterPreset("custom");
+              setFilterEndDate(e.target.value);
+            }}
+          />
+          <button className="btn btn-outline" onClick={exportFilteredBookings}>
+            Export CSV ({filteredBookings.length})
+          </button>
         </div>
       </div>
 
@@ -355,12 +479,22 @@ export default function AdminBookings() {
               onChange={(e) => setManualForm((prev) => ({ ...prev, specialRequests: e.target.value }))}
             />
           </div>
-          <div className="form-group" style={{ marginTop: "-4px" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+          <div className="form-group" style={{ marginTop: "2px" }}>
+            <label
+              style={{
+                display: "grid",
+                gridTemplateColumns: "18px 1fr",
+                alignItems: "start",
+                gap: "8px",
+                cursor: "pointer",
+                lineHeight: 1.35,
+              }}
+            >
               <input
                 type="checkbox"
                 checked={manualForm.sendCustomerEmail}
                 onChange={(e) => setManualForm((prev) => ({ ...prev, sendCustomerEmail: e.target.checked }))}
+                style={{ marginTop: "2px" }}
               />
               Send confirmation email now (and review invite will send on checkout)
             </label>
@@ -391,7 +525,7 @@ export default function AdminBookings() {
               </tr>
             </thead>
             <tbody>
-              {bookings.map((booking) => {
+              {filteredBookings.map((booking) => {
                 const review = booking.testimonials?.[0] || null;
                 return (
                   <tr key={booking.id}>
@@ -490,10 +624,10 @@ export default function AdminBookings() {
                   </tr>
                 );
               })}
-              {bookings.length === 0 && (
+              {filteredBookings.length === 0 && (
                 <tr>
                   <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "var(--admin-text-light)" }}>
-                    No bookings found.
+                    No bookings found for selected range.
                   </td>
                 </tr>
               )}
@@ -557,6 +691,13 @@ export default function AdminBookings() {
       )}
     </div>
   );
+}
+
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 

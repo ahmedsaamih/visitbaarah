@@ -6,7 +6,12 @@ import { sendBookingReceivedEmail, sendAdminNewBookingEmail } from "@/lib/plunk"
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { eq } from "drizzle-orm";
-import { calculateRoomPricing, getSeasonalRatesMap } from "@/lib/room-pricing";
+import {
+  calculateRoomPricing,
+  getMaldivianDiscountMap,
+  getSeasonalRatesMap,
+  isMaldivianNationality,
+} from "@/lib/room-pricing";
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +21,7 @@ export async function POST(request: Request) {
       guestEmail,
       guestPhone,
       guestCountry,
+      nationality,
       roomTypeId,
       checkIn,
       checkOut,
@@ -45,7 +51,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room type not found" }, { status: 404 });
     }
     const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
-    const pricing = calculateRoomPricing(roomType.basePrice, checkIn, checkOut, rateMap.get(parsedRoomTypeId) || []);
+    const discountMap = await getMaldivianDiscountMap([parsedRoomTypeId]);
+    const effectiveNationality = typeof nationality === "string" ? nationality : guestCountry;
+    const pricing = calculateRoomPricing(roomType.basePrice, checkIn, checkOut, rateMap.get(parsedRoomTypeId) || [], {
+      applyMaldivianDiscount: isMaldivianNationality(effectiveNationality),
+      maldivianDiscountPercent: discountMap.get(parsedRoomTypeId) || "0.00",
+    });
     const roomTotal = pricing.roomTotal;
     const addonsTotalValue = Number(addonsTotal || "0");
     const totalAmount = (Number(roomTotal) + (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0)).toFixed(2);
@@ -62,7 +73,7 @@ export async function POST(request: Request) {
           guestName,
           guestEmail: normalizedGuestEmail,
           guestPhone,
-          guestCountry,
+          guestCountry: typeof guestCountry === "string" && guestCountry.trim() ? guestCountry : effectiveNationality,
           roomTypeId: parsedRoomTypeId,
           checkIn,
           checkOut,
@@ -78,8 +89,17 @@ export async function POST(request: Request) {
 
       // Addons if any
       if (addons && Array.isArray(addons) && addons.length > 0) {
+        type BookingAddonInput = {
+          addonType: string;
+          addonId: number;
+          addonName: string;
+          quantity: number;
+          unitPrice: string;
+          totalPrice: string;
+          date?: string;
+        };
         await tx.insert(bookingAddons).values(
-          addons.map((addon: any) => ({
+          (addons as BookingAddonInput[]).map((addon) => ({
             bookingId: newBooking.id,
             addonType: addon.addonType,
             addonId: addon.addonId,

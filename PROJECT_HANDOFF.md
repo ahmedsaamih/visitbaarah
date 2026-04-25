@@ -36,6 +36,20 @@ This document provides a high-level technical summary of the Serene Seaview Gues
 - **Admin UI**: Mobile-friendly shell (menu drawer); `/admin` redirects to dashboard or login.
 - **Reviews**: Checkout now triggers review invitation email with a tokenized **3-day** review link; guest submits review via public page; admin approves/rejects from Bookings/Testimonials; homepage renders approved+published testimonials (latest 15, featured-first).
 
+### 5. Admin bookings/availability operations refresh
+- **Manual bookings**: Admin can create bookings directly from `Bookings` page; reference ID auto-generated; booking is saved as confirmed and assigned to a room (auto-assign or selected room).
+- **Notifications**: Manual booking confirmations now trigger Telegram booking-confirmed alert; optional customer confirmation email can be sent at creation.
+- **Bookings tooling**: Added date-range filtering with presets (Current Month, Current Year, Custom, All Time) and CSV export for filtered results.
+- **Availability UI**: Added dual view mode (`By Rooms` + `All Rooms`). `All Rooms` shows yearly horizontal timeline with room rows, sticky room column, month markers, and jump-to-month control.
+
+### 6. Pricing model refresh (stay-date aware + local discount)
+- **Seasonal rates**: Room types now support multiple date-range nightly rates with explicit priority order and overlap warnings in admin.
+- **Local discount**: Added per-room-type **Maldivian discount (%)** in Room Types admin (under seasonal pricing).
+- **Nationality input**: Public check-availability flow captures guest nationality (`Maldivian` / `Foreigner`) and uses it in pricing.
+- **Pricing behavior**: Room total is computed by **stay dates** (e.g., booking in April for December uses December rates), with Maldivian discount applied when selected.
+- **Server authority**: Booking totals are recalculated server-side to avoid client mismatch.
+- **Storage**: Seasonal rates and Maldivian discount are stored via existing `settings` keys (`room_type_rates:{id}` and `room_type_maldivian_discount:{id}`), so no schema migration was required.
+
 ## 📍 Environment Context
 Ensure the following variables are configured in Vercel:
 - `DATABASE_URL`: Neon Connection string.
@@ -47,4 +61,4 @@ Ensure the following variables are configured in Vercel:
 - `TELEGRAM_BOT_TOKEN`: Telegram bot for outbound admin notifications (optional but recommended if using Telegram alerts).
 
 ## 🏁 Current Status
-Core guest and admin flows are integrated on Vercel; continue to validate against production logs (Plunk, Telegram, booking/review edge cases). See `TASK.md` for open items (e.g. seed script).
+Core guest and admin flows are integrated on Vercel, including manual booking ops, all-rooms availability timeline, and dynamic pricing with nationality-aware discounting. Continue to validate against production logs (Plunk/Telegram delivery, seasonal pricing edge ranges, overlap-priority behavior, and booking/review edge cases). See `TASK.md` for open items (e.g. seed script).

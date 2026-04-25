@@ -4,7 +4,14 @@ import { roomTypes, rooms, roomAvailability, bookings, media, settings } from "@
 import { eq, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { revalidateTag } from "next/cache";
-import { getRoomTypeRatesSettingKey, normalizeSeasonalRates, saveSeasonalRates } from "@/lib/room-pricing";
+import {
+  getRoomTypeMaldivianDiscountKey,
+  getRoomTypeRatesSettingKey,
+  normalizeDiscountPercent,
+  normalizeSeasonalRates,
+  saveMaldivianDiscountPercent,
+  saveSeasonalRates,
+} from "@/lib/room-pricing";
 
 export async function GET(
   request: Request,
@@ -30,9 +37,13 @@ export async function GET(
     const ratesRow = await db.query.settings.findFirst({
       where: eq(settings.key, getRoomTypeRatesSettingKey(itemId)),
     });
+    const discountRow = await db.query.settings.findFirst({
+      where: eq(settings.key, getRoomTypeMaldivianDiscountKey(itemId)),
+    });
     return NextResponse.json({
       ...item,
       seasonalRates: normalizeSeasonalRates(ratesRow ? safeJsonParse(ratesRow.value) : []),
+      maldivianDiscountPercent: normalizeDiscountPercent(discountRow?.value),
     });
   } catch (error) {
     console.error("[Room Types ID API] GET Error:", error);
@@ -54,7 +65,7 @@ export async function PATCH(
 
   try {
     const data = await request.json();
-    const { seasonalRates, ...payloadWithoutRates } = data;
+    const { seasonalRates, maldivianDiscountPercent, ...payloadWithoutRates } = data;
     
     // Sanitize data: Exclude fields that shouldn't be updated and handle type conversion
     const { id: _, createdAt: __, updatedAt: ___, ...updateData } = payloadWithoutRates;
@@ -75,6 +86,9 @@ export async function PATCH(
 
     if (seasonalRates !== undefined) {
       await saveSeasonalRates(itemId, normalizeSeasonalRates(seasonalRates));
+    }
+    if (maldivianDiscountPercent !== undefined) {
+      await saveMaldivianDiscountPercent(itemId, maldivianDiscountPercent);
     }
 
     return NextResponse.json(updatedItem);
@@ -126,6 +140,10 @@ export async function DELETE(
       await tx
         .delete(settings)
         .where(eq(settings.key, getRoomTypeRatesSettingKey(itemId)));
+
+      await tx
+        .delete(settings)
+        .where(eq(settings.key, getRoomTypeMaldivianDiscountKey(itemId)));
 
       const [deleted] = await tx
         .delete(roomTypes)

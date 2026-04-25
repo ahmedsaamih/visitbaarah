@@ -5,6 +5,7 @@ import { desc, eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { generateReferenceId } from "@/lib/reference";
 import { sendBookingConfirmedEmail } from "@/lib/plunk";
+import { sendTelegramNotification } from "@/lib/telegram";
 
 export async function GET() {
   const isAdmin = await verifySession();
@@ -134,6 +135,22 @@ export async function POST(request: Request) {
       } catch (emailError) {
         console.error("[Admin Bookings API] Manual booking confirmation email error:", emailError);
       }
+    }
+
+    try {
+      const roomType = await db.query.roomTypes.findFirst({
+        where: eq(roomTypes.id, roomTypeId),
+      });
+      await sendTelegramNotification("booking_confirmed", {
+        referenceId,
+        guestName,
+        guestEmail: guestEmailRaw,
+        roomType: roomType?.name ?? "Room",
+        checkIn,
+        checkOut,
+      });
+    } catch (telegramError) {
+      console.error("[Admin Bookings API] Manual booking telegram notify error:", telegramError);
     }
 
     return NextResponse.json(created, { status: 201 });
