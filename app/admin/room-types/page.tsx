@@ -3,11 +3,33 @@
 import { useEffect, useState } from "react";
 import MediaManager from "@/components/admin/MediaManager";
 
-export default function AdminRoomTypes() {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<any>({
+type SeasonalRateInput = {
+  startDate?: string;
+  endDate?: string;
+  nightlyRate?: string;
+  label?: string;
+};
+
+type RoomTypeFormData = {
+  id?: number;
+  name: string;
+  slug: string;
+  description: string;
+  basePrice: string;
+  maxGuests: number;
+  bedType: string;
+  size: string;
+  amenities: string[];
+  seasonalRates: SeasonalRateInput[];
+  maldivianDiscountPercent: string;
+};
+
+type RoomTypeItem = RoomTypeFormData & {
+  id: number;
+};
+
+function createInitialFormData(): RoomTypeFormData {
+  return {
     name: "",
     slug: "",
     description: "",
@@ -18,24 +40,34 @@ export default function AdminRoomTypes() {
     amenities: [],
     seasonalRates: [],
     maldivianDiscountPercent: "0",
-  });
-  const seasonalRates: any[] = Array.isArray(formData.seasonalRates) ? formData.seasonalRates : [];
+  };
+}
+
+export default function AdminRoomTypes() {
+  const [items, setItems] = useState<RoomTypeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<RoomTypeFormData>(createInitialFormData());
+  const seasonalRates: SeasonalRateInput[] = Array.isArray(formData.seasonalRates) ? formData.seasonalRates : [];
   const overlapMessages = getSeasonalRateOverlapMessages(seasonalRates);
 
   const fetchItems = async () => {
     try {
       const res = await fetch("/api/admin/room-types");
-      const data = await res.ok ? await res.json() : [];
+      const data = res.ok ? ((await res.json()) as RoomTypeItem[]) : [];
       setItems(data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchItems();
+    const timer = setTimeout(() => {
+      void fetchItems();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,10 +83,10 @@ export default function AdminRoomTypes() {
       });
       if (res.ok) {
         setIsEditing(false);
-        setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [], maldivianDiscountPercent: "0" });
+        setFormData(createInitialFormData());
         fetchItems();
       }
-    } catch (err) {
+    } catch {
       alert("Submission failed");
     }
   };
@@ -64,7 +96,7 @@ export default function AdminRoomTypes() {
     try {
       const res = await fetch(`/api/admin/room-types/${id}`, { method: "DELETE" });
       if (res.ok) fetchItems();
-    } catch (err) {
+    } catch {
       alert("Delete failed");
     }
   };
@@ -75,7 +107,7 @@ export default function AdminRoomTypes() {
     <div>
       <div className="title-row">
         <h1>Room Types</h1>
-        <button onClick={() => { setIsEditing(true); setFormData({ name: "", slug: "", description: "", basePrice: "", maxGuests: 2, bedType: "", size: "", amenities: [], seasonalRates: [], maldivianDiscountPercent: "0" }); }} className="btn btn-primary">
+        <button onClick={() => { setIsEditing(true); setFormData(createInitialFormData()); }} className="btn btn-primary">
           Add Room Type
         </button>
       </div>
@@ -131,7 +163,7 @@ export default function AdminRoomTypes() {
                 />
               </div>
               <div style={{ display: "grid", gap: "8px" }}>
-                {seasonalRates.map((rate: any, index: number) => (
+                {seasonalRates.map((rate, index) => (
                   <div
                     key={`${rate.startDate || "rate"}-${index}`}
                     style={{

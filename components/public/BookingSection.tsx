@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface BookingProps {
-  roomTypes: any[];
+  roomTypes: Array<{ id: number; name: string; basePrice?: string }>;
 }
 
 type AvailabilityResult = {
@@ -20,6 +20,15 @@ type AvailabilityResult = {
   };
   booked?: boolean;
   ref?: string;
+};
+
+type LookupBooking = {
+  status?: string;
+  referenceId: string;
+  guestName: string;
+  checkIn: string;
+  checkOut: string;
+  roomType?: { name?: string | null } | null;
 };
 
 export default function BookingSection({ roomTypes }: BookingProps) {
@@ -39,7 +48,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState("");
-  const [lookupBooking, setLookupBooking] = useState<any | null>(null);
+  const [lookupBooking, setLookupBooking] = useState<LookupBooking | null>(null);
 
   const fieldStyle: React.CSSProperties = {
     width: "100%",
@@ -71,7 +80,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
         alert(errData.error || "Failed to check availability");
         setAvailable(null);
       }
-    } catch (err) {
+    } catch {
       alert("Error checking availability. Please try again later.");
     } finally {
       setLoading(false);
@@ -247,7 +256,7 @@ export default function BookingSection({ roomTypes }: BookingProps) {
                       } else {
                         alert("Booking failed. Please try again.");
                       }
-                    } catch (err) {
+                    } catch {
                       alert("Network error.");
                     } finally {
                       setLoading(false);
