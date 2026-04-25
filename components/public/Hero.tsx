@@ -76,14 +76,14 @@ export default function Hero({ imageUrl }: HeroProps) {
       </div>
 
       <div className="container hero-content" style={{ zIndex: 1, paddingTop: "80px" }}>
-        <div style={{ marginBottom: "26px", display: "flex", justifyContent: "center" }}>
+        <div style={{ marginBottom: "0px", display: "flex", justifyContent: "center" }}>
           <Image
             src="/images/logo.svg"
             alt="Serene Seaview"
             width={520}
             height={132}
             priority
-            style={{ width: "clamp(240px, 38vw, 520px)", height: "auto" }}
+            style={{ width: "clamp(130px, 38vw, 180px)", height: "auto" }}
           />
         </div>
         <h1 style={{ 
