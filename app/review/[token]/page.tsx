@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 type ReviewData = {
   guestName: string;
@@ -84,8 +85,15 @@ export default function ReviewPage() {
       <div className="container" style={{ maxWidth: "760px" }}>
         <div className="card-island" style={{ padding: "clamp(20px, 4vw, 38px)", border: "1px solid rgba(13,92,92,0.12)" }}>
           <div style={{ marginBottom: "18px" }}>
-            <div style={{ color: "var(--gold)", letterSpacing: "2px", fontSize: "12px", marginBottom: "8px" }}>
-              SERENE SEAVIEW
+            <div style={{ marginBottom: "10px" }}>
+              <Image
+                src="/images/logo.PNG"
+                alt="Serene Seaview"
+                width={210}
+                height={54}
+                priority
+                style={{ width: "auto", height: "40px" }}
+              />
             </div>
             <h1 style={{ marginBottom: "10px", fontSize: "clamp(28px, 5vw, 40px)" }}>Share Your Stay Experience</h1>
           </div>

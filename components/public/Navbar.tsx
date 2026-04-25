@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -37,14 +38,15 @@ export default function Navbar() {
     <>
       <nav className={`nav-public ${scrolled ? "scrolled" : ""}`}>
       <div className="container nav-public-inner">
-        <Link href="/" style={{ 
-          fontSize: "24px", 
-          fontWeight: "800", 
-          textDecoration: "none", 
-          color: scrolled ? "var(--teal)" : "var(--teal)",
-          fontFamily: "var(--font-serif)"
-        }}>
-          SERENE SEAVIEW
+        <Link href="/" className="nav-brand-logo" aria-label="Serene Seaview Home">
+          <Image
+            src="/images/logo.PNG"
+            alt="Serene Seaview"
+            width={220}
+            height={56}
+            priority
+            style={{ width: "auto", height: "46px" }}
+          />
         </Link>
         <div className="nav-public-desktop">
           {navItems.slice(0, 4).map((item) => (
