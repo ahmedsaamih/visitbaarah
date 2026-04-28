@@ -10,6 +10,10 @@ export default function AdminSettings() {
   const [telegramChatIdInput, setTelegramChatIdInput] = useState("");
   const [telegramEnabledInput, setTelegramEnabledInput] = useState("false");
   const [telegramFailureEmailInput, setTelegramFailureEmailInput] = useState("");
+  const [instagramUrlInput, setInstagramUrlInput] = useState("");
+  const [facebookUrlInput, setFacebookUrlInput] = useState("");
+  const [tiktokUrlInput, setTiktokUrlInput] = useState("");
+  const [vkUrlInput, setVkUrlInput] = useState("");
   const [uploadState, setUploadState] = useState<Record<string, "idle" | "optimizing" | "uploading" | "done">>({
     hero_image_url: "idle",
     about_image_url: "idle",
@@ -105,12 +109,20 @@ export default function AdminSettings() {
   const telegramChatId = items.find(i => i.key === "telegram_chat_id")?.value || "";
   const telegramEnabled = items.find(i => i.key === "telegram_notifications_enabled")?.value || "false";
   const telegramFailureEmail = items.find(i => i.key === "telegram_failure_alert_email")?.value || "";
+  const instagramUrl = items.find(i => i.key === "social_instagram_url")?.value || "";
+  const facebookUrl = items.find(i => i.key === "social_facebook_url")?.value || "";
+  const tiktokUrl = items.find(i => i.key === "social_tiktok_url")?.value || "";
+  const vkUrl = items.find(i => i.key === "social_vk_url")?.value || "";
 
   useEffect(() => {
     setTelegramChatIdInput(telegramChatId);
     setTelegramEnabledInput(telegramEnabled);
     setTelegramFailureEmailInput(telegramFailureEmail);
-  }, [telegramChatId, telegramEnabled, telegramFailureEmail]);
+    setInstagramUrlInput(instagramUrl);
+    setFacebookUrlInput(facebookUrl);
+    setTiktokUrlInput(tiktokUrl);
+    setVkUrlInput(vkUrl);
+  }, [telegramChatId, telegramEnabled, telegramFailureEmail, instagramUrl, facebookUrl, tiktokUrl, vkUrl]);
 
   const handleSendEmailOtp = async () => {
     if (!newEmail) return;
@@ -346,6 +358,39 @@ export default function AdminSettings() {
         >
           {testingTelegram ? "Sending Test..." : "Send Test Telegram"}
         </button>
+      </div>
+
+      {/* Social Links */}
+      <div className="card">
+        <h2 style={{ borderBottom: "1px solid var(--admin-border)", paddingBottom: "12px", marginBottom: "20px" }}>Footer Social Links</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px" }}>
+          {[
+            { key: "social_instagram_url", label: "Instagram URL", value: instagramUrlInput, setValue: setInstagramUrlInput },
+            { key: "social_facebook_url", label: "Facebook URL", value: facebookUrlInput, setValue: setFacebookUrlInput },
+            { key: "social_tiktok_url", label: "TikTok URL", value: tiktokUrlInput, setValue: setTiktokUrlInput },
+            { key: "social_vk_url", label: "VK URL", value: vkUrlInput, setValue: setVkUrlInput },
+          ].map((item) => (
+            <div key={item.key} className="form-group" style={{ marginBottom: 0 }}>
+              <label>{item.label}</label>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={item.value}
+                  onChange={(e) => item.setValue(e.target.value)}
+                  style={{ minWidth: "280px", flex: 1 }}
+                />
+                <button
+                  onClick={() => upsertSetting(item.key, item.value.trim(), "general")}
+                  className="btn btn-outline"
+                  disabled={saving}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Rest of Settings */}

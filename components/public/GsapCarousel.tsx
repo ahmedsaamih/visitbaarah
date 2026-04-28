@@ -24,6 +24,7 @@ export default function GsapCarousel({
   const trackRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchEndXRef = useRef<number | null>(null);
@@ -45,8 +46,15 @@ export default function GsapCarousel({
     const media = window.matchMedia("(max-width: 768px)");
     const onChange = () => setIsMobile(media.matches);
     onChange();
+    const hasSwipedBefore = window.localStorage.getItem("serene_swipe_hint_seen") === "1";
+    const timer = setTimeout(() => {
+      setShowSwipeHint(!hasSwipedBefore && media.matches);
+    }, 0);
     media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
+    return () => {
+      clearTimeout(timer);
+      media.removeEventListener("change", onChange);
+    };
   }, []);
 
   // Auto-play logic
@@ -87,6 +95,12 @@ export default function GsapCarousel({
     const delta = touchStartXRef.current - touchEndXRef.current;
     const threshold = 42;
     if (Math.abs(delta) < threshold) return;
+    if (showSwipeHint) {
+      setShowSwipeHint(false);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("serene_swipe_hint_seen", "1");
+      }
+    }
     if (delta > 0) next();
     else prev();
   };
@@ -190,7 +204,7 @@ export default function GsapCarousel({
         </div>
       )}
 
-      {isMobile && total > 1 && (
+      {isMobile && total > 1 && showSwipeHint && (
         <div
           style={{
             position: "absolute",

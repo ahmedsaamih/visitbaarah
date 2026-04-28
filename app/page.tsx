@@ -65,6 +65,10 @@ export default async function HomePage() {
   const heroImage = settings.find(s => s.key === "hero_image_url")?.value;
   const aboutImage = settings.find(s => s.key === "about_image_url")?.value || "/images/hero.png";
   const diningImage = settings.find(s => s.key === "dining_image_url")?.value || "/images/hero.png";
+  const instagramUrl = settings.find(s => s.key === "social_instagram_url")?.value || "";
+  const facebookUrl = settings.find(s => s.key === "social_facebook_url")?.value || "";
+  const tiktokUrl = settings.find(s => s.key === "social_tiktok_url")?.value || "";
+  const vkUrl = settings.find(s => s.key === "social_vk_url")?.value || "";
 
   return (
     <main>
@@ -205,10 +209,36 @@ export default async function HomePage() {
             <div>
                <h4 style={{ marginBottom: "24px", fontSize: "16px" }}>Follow Us</h4>
                <div style={{ display: "flex", gap: "16px" }}>
-                 {/* Social Icons Placeholder */}
-                 <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%" }} />
-                 <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%" }} />
-                 <div style={{ width: "32px", height: "32px", background: "rgba(255,255,255,0.1)", borderRadius: "50%" }} />
+                 {[
+                   { label: "IG", href: instagramUrl },
+                   { label: "FB", href: facebookUrl },
+                   { label: "TT", href: tiktokUrl },
+                   { label: "VK", href: vkUrl },
+                 ].map((social) => (
+                   <a
+                     key={social.label}
+                     href={social.href || "#"}
+                     target={social.href ? "_blank" : undefined}
+                     rel={social.href ? "noopener noreferrer" : undefined}
+                     aria-label={social.label}
+                     style={{
+                       width: "32px",
+                       height: "32px",
+                       background: "rgba(255,255,255,0.1)",
+                       borderRadius: "50%",
+                       display: "inline-flex",
+                       alignItems: "center",
+                       justifyContent: "center",
+                       color: "#fff",
+                       fontSize: "11px",
+                       fontWeight: 700,
+                       textDecoration: "none",
+                       opacity: social.href ? 1 : 0.5,
+                     }}
+                   >
+                     {social.label}
+                   </a>
+                 ))}
                </div>
             </div>
           </div>
