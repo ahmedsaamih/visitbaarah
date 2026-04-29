@@ -1,9 +1,32 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://example.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "Serene Seaview | Thoddoo Island Bliss",
   description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
+  alternates: {
+    canonical: "/",
+  },
+  icons: {
+    icon: "/images/favicon.ico",
+    shortcut: "/images/favicon.ico",
+    apple: "/images/favicon.ico",
+  },
+  openGraph: {
+    title: "Serene Seaview | Thoddoo Island Bliss",
+    description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
+    url: "/",
+    siteName: "Serene Seaview",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Serene Seaview | Thoddoo Island Bliss",
+    description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
+  },
 };
 
 export default function RootLayout({
