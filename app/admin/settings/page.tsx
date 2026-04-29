@@ -394,7 +394,7 @@ export default function AdminSettings() {
       </div>
 
       {/* Rest of Settings */}
-      {Object.keys(groups).filter(g => g !== "security" && g !== "notifications").sort().map((groupName) => (
+      {Object.keys(groups).filter(g => g !== "security" && g !== "notifications" && g !== "pricing").sort().map((groupName) => (
         <div key={groupName} className="card">
           <h2 style={{ textTransform: "capitalize", borderBottom: "1px solid var(--admin-border)", paddingBottom: "12px", marginBottom: "20px" }}>
             {groupName} Settings
