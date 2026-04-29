@@ -65,10 +65,10 @@ export default async function HomePage() {
   const heroImage = settings.find(s => s.key === "hero_image_url")?.value;
   const aboutImage = settings.find(s => s.key === "about_image_url")?.value || "/images/hero.png";
   const diningImage = settings.find(s => s.key === "dining_image_url")?.value || "/images/hero.png";
-  const instagramUrl = settings.find(s => s.key === "social_instagram_url")?.value || "";
-  const facebookUrl = settings.find(s => s.key === "social_facebook_url")?.value || "";
-  const tiktokUrl = settings.find(s => s.key === "social_tiktok_url")?.value || "";
-  const vkUrl = settings.find(s => s.key === "social_vk_url")?.value || "";
+  const instagramUrl = normalizeExternalUrl(settings.find(s => s.key === "social_instagram_url")?.value || "");
+  const facebookUrl = normalizeExternalUrl(settings.find(s => s.key === "social_facebook_url")?.value || "");
+  const tiktokUrl = normalizeExternalUrl(settings.find(s => s.key === "social_tiktok_url")?.value || "");
+  const vkUrl = normalizeExternalUrl(settings.find(s => s.key === "social_vk_url")?.value || "");
 
   return (
     <main>
@@ -210,10 +210,10 @@ export default async function HomePage() {
                <h4 style={{ marginBottom: "24px", fontSize: "16px" }}>Follow Us</h4>
                <div style={{ display: "flex", gap: "16px" }}>
                  {[
-                   { label: "IG", href: instagramUrl },
-                   { label: "FB", href: facebookUrl },
-                   { label: "TT", href: tiktokUrl },
-                   { label: "VK", href: vkUrl },
+                   { label: "Instagram", href: instagramUrl, icon: "instagram" as const },
+                   { label: "Facebook", href: facebookUrl, icon: "facebook" as const },
+                   { label: "TikTok", href: tiktokUrl, icon: "tiktok" as const },
+                   { label: "VK", href: vkUrl, icon: "vk" as const },
                  ].map((social) => (
                    <a
                      key={social.label}
@@ -230,13 +230,11 @@ export default async function HomePage() {
                        alignItems: "center",
                        justifyContent: "center",
                        color: "#fff",
-                       fontSize: "11px",
-                       fontWeight: 700,
                        textDecoration: "none",
                        opacity: social.href ? 1 : 0.5,
                      }}
                    >
-                     {social.label}
+                     <SocialIcon kind={social.icon} />
                    </a>
                  ))}
                </div>
@@ -271,5 +269,44 @@ export default async function HomePage() {
         });
       `}} />
     </main>
+  );
+}
+
+function normalizeExternalUrl(url: string) {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+function SocialIcon({ kind }: { kind: "instagram" | "facebook" | "tiktok" | "vk" }) {
+  const common = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  if (kind === "instagram") {
+    return (
+      <svg {...common}>
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+      </svg>
+    );
+  }
+  if (kind === "facebook") {
+    return (
+      <svg {...common}>
+        <path d="M14 8h3V4h-3c-2.2 0-4 1.8-4 4v3H7v4h3v5h4v-5h3l1-4h-4V8c0-.6.4-1 1-1z" />
+      </svg>
+    );
+  }
+  if (kind === "tiktok") {
+    return (
+      <svg {...common}>
+        <path d="M14 4c.7 1.8 2.1 3 4 3.5V11c-1.4 0-2.7-.4-4-1.3V16a5 5 0 1 1-5-5c.3 0 .7 0 1 .1V14a2 2 0 1 0 1 1.7V4h3z" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...common}>
+      <path d="M4 6h3l5 7 5-7h3l-6.5 9L20 20h-3l-5-7-5 7H4l6.5-9L4 6z" />
+    </svg>
   );
 }
