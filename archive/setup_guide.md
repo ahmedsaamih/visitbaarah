@@ -169,3 +169,39 @@ This preserves content/media/settings while removing guest operational records.
   - Telegram bot token/chat routing
   - Admin credentials + recovery email
 - After handover, rotate secrets where appropriate and store in a password manager.
+
+---
+
+## 9) `.env.local` Template (Copy/Paste)
+
+Create a `.env.local` in project root and fill values:
+
+```bash
+# Database
+DATABASE_URL=
+
+# Admin Auth
+ADMIN_PASSWORD_HASH=
+ADMIN_SESSION_SECRET=
+ADMIN_EMAIL=
+
+# App URL
+NEXT_PUBLIC_BASE_URL=
+
+# Media storage
+BLOB_READ_WRITE_TOKEN=
+
+# Email (Plunk)
+PLUNK_SECRET_KEY=
+PLUNK_API_KEY=
+PLUNK_FROM_EMAIL=
+
+# Telegram (optional but recommended)
+TELEGRAM_BOT_TOKEN=
+```
+
+### Template notes
+
+- `PLUNK_SECRET_KEY` is preferred; `PLUNK_API_KEY` may be used as alias in parts of code.
+- `ADMIN_EMAIL` is optional fallback for alerting paths.
+- Keep `.env.local` out of version control.
