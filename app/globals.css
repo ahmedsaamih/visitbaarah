@@ -298,15 +298,15 @@ h1, h2, h3, h4, h5 {
 .nav-public.scrolled .nav-link-public { color: var(--text); }
 .nav-public.scrolled .nav-link-public:hover { color: var(--green); }
 .nav-public-desktop { display: flex; align-items: center; }
-.nav-public:not(.scrolled) .nav-brand-logo img { filter: brightness(0) invert(1); }
-.nav-public.scrolled .nav-brand-logo img { height: 40px !important; }
+.nav-public:not(.scrolled) .nav-brand-logo img { filter: drop-shadow(0 1px 6px rgba(0,0,0,0.45)); }
+.nav-public.scrolled .nav-brand-logo img { height: 52px !important; }
 
 /* ── Mobile FAB nav ─────────────────────────────────────── */
 .mobile-fab-nav { display: none; }
 
 @media (max-width: 768px) {
   .nav-public { padding: 16px 0; }
-  .nav-brand-logo img { height: 36px !important; }
+  .nav-brand-logo img { height: 48px !important; }
   .nav-public-desktop { display: none; }
   .mobile-fab-nav {
     position: fixed;

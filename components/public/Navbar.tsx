@@ -38,10 +38,10 @@ export default function Navbar() {
             <Image
               src="/images/logo-visitbaarah.png"
               alt="Visit Baarah"
-              width={160}
-              height={52}
+              width={200}
+              height={200}
               priority
-              style={{ height: "clamp(32px, 4.5vw, 44px)", width: "auto" }}
+              style={{ height: "clamp(48px, 6vw, 64px)", width: "auto" }}
             />
           </Link>
 
