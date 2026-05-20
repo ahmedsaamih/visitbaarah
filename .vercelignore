@@ -1,0 +1,4 @@
+memory
+.playwright-mcp
+.env*.local
+HANDOFF.md
