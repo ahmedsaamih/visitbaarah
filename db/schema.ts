@@ -58,6 +58,20 @@ export const mediaTypeEnum = pgEnum("media_type", ["image", "video"]);
 
 export const otpTypeEnum = pgEnum("otp_type", ["email_change", "forgot_password"]);
 
+export const businessTypeEnum = pgEnum("business_type", [
+  "guesthouse",
+  "restaurant",
+  "cafe",
+  "transport",
+  "tour_guide",
+  "dive_shop",
+  "grocery",
+  "spa",
+  "other",
+]);
+
+export const inquiryStatusEnum = pgEnum("inquiry_status", ["new", "replied", "closed"]);
+
 // ─── Room Types ──────────────────────────────────────────
 
 export const roomTypes = pgTable("room_types", {
@@ -168,13 +182,57 @@ export const services = pgTable("services", {
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
   shortDescription: varchar("short_description", { length: 255 }),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }),
   priceUnit: priceUnitEnum("price_unit").notNull().default("per_session"),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// ─── Businesses ──────────────────────────────────────────
+
+export const businesses = pgTable("businesses", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  businessType: businessTypeEnum("business_type").notNull().default("other"),
+  description: text("description"),
+  shortDescription: varchar("short_description", { length: 255 }),
+  coverPhotoUrl: text("cover_photo_url"),
+  contactEmail: varchar("contact_email", { length: 255 }),
+  contactPhone: varchar("contact_phone", { length: 30 }),
+  address: text("address"),
+  connectLinks: json("connect_links").$type<{ type: string; value: string }[]>().default([]),
+  isFeatured: boolean("is_featured").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("biz_slug_idx").on(table.slug),
+  index("biz_type_idx").on(table.businessType),
+  index("biz_active_idx").on(table.isActive),
+]);
+
+// ─── Business Inquiries ──────────────────────────────────
+
+export const businessInquiries = pgTable("business_inquiries", {
+  id: serial("id").primaryKey(),
+  businessId: integer("business_id")
+    .notNull()
+    .references(() => businesses.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 30 }),
+  message: text("message").notNull(),
+  preferredDate: date("preferred_date"),
+  status: inquiryStatusEnum("status").notNull().default("new"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [
+  index("inq_business_idx").on(table.businessId),
+  index("inq_status_idx").on(table.status),
+]);
 
 // ─── Media ───────────────────────────────────────────────
 
@@ -193,6 +251,7 @@ export const media = pgTable("media", {
   activityId: integer("activity_id").references(() => activities.id, { onDelete: "cascade" }),
   tourId: integer("tour_id").references(() => tours.id, { onDelete: "cascade" }),
   serviceId: integer("service_id").references(() => services.id, { onDelete: "cascade" }),
+  businessId: integer("business_id").references(() => businesses.id, { onDelete: "cascade" }),
 
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -338,6 +397,18 @@ export const servicesRelations = relations(services, ({ many }) => ({
   }),
 }));
 
+export const businessesRelations = relations(businesses, ({ many }) => ({
+  media: many(media, { relationName: "businessMedia" }),
+  inquiries: many(businessInquiries),
+}));
+
+export const businessInquiriesRelations = relations(businessInquiries, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessInquiries.businessId],
+    references: [businesses.id],
+  }),
+}));
+
 export const mediaRelations = relations(media, ({ one }) => ({
   roomType: one(roomTypes, {
     fields: [media.roomTypeId],
@@ -358,6 +429,11 @@ export const mediaRelations = relations(media, ({ one }) => ({
     fields: [media.serviceId],
     references: [services.id],
     relationName: "serviceMedia",
+  }),
+  business: one(businesses, {
+    fields: [media.businessId],
+    references: [businesses.id],
+    relationName: "businessMedia",
   }),
 }));
 

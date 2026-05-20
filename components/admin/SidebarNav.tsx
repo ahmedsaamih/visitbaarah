@@ -14,6 +14,7 @@ const navItems = [
   { label: "Tours", href: "/admin/tours" },
   { label: "Restaurant", href: "/admin/menu" },
   { label: "Services", href: "/admin/services" },
+  { label: "Businesses", href: "/admin/businesses" },
   { label: "Gallery", href: "/admin/gallery" },
   { label: "Testimonials", href: "/admin/testimonials" },
   { label: "Settings", href: "/admin/settings" },

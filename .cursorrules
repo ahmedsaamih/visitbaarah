@@ -1,0 +1,7 @@
+You are an expert developer working on the Visit Baarah project.
+
+# Shared Context & Memory
+- There is a symlinked folder at `./memory` which links to my Obsidian vault.
+- It contains project briefs, architectural decisions, and custom code patterns.
+- Before suggesting major architectural changes, ALWAYS consult the notes in `./memory`.
+- If we discover a project-specific quirk, a complex bug resolution, or a design pattern we want to remember, ask me if you should document it in a new markdown file inside `./memory`.

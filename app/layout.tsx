@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://example.com";
+const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://visitbaarah.mv";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Serene Seaview | Thoddoo Island Bliss",
-  description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
+  title: "Visit Baarah | Discover HA. Baarah, Maldives",
+  description: "Explore the authentic beauty of HA. Baarah — pristine beaches, lush agriculture, rich culture, and the true spirit of the northern Maldives.",
   alternates: {
     canonical: "/",
   },
@@ -16,16 +16,16 @@ export const metadata: Metadata = {
     apple: "/images/favicon.ico",
   },
   openGraph: {
-    title: "Serene Seaview | Thoddoo Island Bliss",
-    description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
+    title: "Visit Baarah | Discover HA. Baarah, Maldives",
+    description: "Explore the authentic beauty of HA. Baarah — pristine beaches, lush agriculture, rich culture, and the true spirit of the northern Maldives.",
     url: "/",
-    siteName: "Serene Seaview",
+    siteName: "Visit Baarah",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Serene Seaview | Thoddoo Island Bliss",
-    description: "Experience the ultimate island getaway at Serene Seaview. Affordable luxury in the heart of AA. Thoddoo, Maldives.",
+    title: "Visit Baarah | Discover HA. Baarah, Maldives",
+    description: "Explore the authentic beauty of HA. Baarah — pristine beaches, lush agriculture, rich culture, and the true spirit of the northern Maldives.",
   },
 };
 
@@ -37,15 +37,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet" />
-        
-        {/* Scripts (CDN) */}
-        <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" defer></script>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body>
         {children}

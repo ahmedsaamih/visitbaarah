@@ -9,6 +9,7 @@ type TelegramEventType =
   | "booking_rejected"
   | "cancellation_request_received"
   | "cancellation_approved"
+  | "inquiry_received"
   | "test";
 
 type TelegramEventPayload = {
@@ -20,6 +21,10 @@ type TelegramEventPayload = {
   checkOut?: string;
   reason?: string;
   adminResponse?: string;
+  businessName?: string;
+  senderName?: string;
+  senderContact?: string;
+  message?: string;
 };
 
 type TelegramConfig = {
@@ -105,6 +110,13 @@ function buildEventMessage(eventType: TelegramEventType, payload: TelegramEventP
       ]
         .filter(Boolean)
         .join("\n");
+    case "inquiry_received":
+      return [
+        "New business inquiry received",
+        `Business: ${payload.businessName || "-"}`,
+        `From: ${payload.senderName || "-"} (${payload.senderContact || "-"})`,
+        payload.message ? `Message: ${payload.message.slice(0, 200)}` : "",
+      ].filter(Boolean).join("\n");
     case "test":
       return "Telegram notification test: configuration appears active.";
     default:

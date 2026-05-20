@@ -2,32 +2,29 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { href: "#about", label: "About" },
-    { href: "#rooms", label: "Rooms" },
-    { href: "#activities", label: "Activities" },
-    { href: "#dining", label: "Dining" },
-    { href: "#booking", label: "Book Now", isPrimary: true },
+    { href: "#discover", label: "Discover" },
+    { href: "#explore", label: "Explore" },
+    { href: "#events", label: "Events" },
+    { href: "/businesses", label: "Directory" },
+    { href: "#transport", label: "Get Around", isPrimary: true },
   ];
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
     const closeOnResize = () => {
-      if (window.innerWidth > 768) {
-        setMobileOpen(false);
-      }
+      if (window.innerWidth > 768) setMobileOpen(false);
     };
     window.addEventListener("resize", closeOnResize);
     return () => window.removeEventListener("resize", closeOnResize);
@@ -36,18 +33,33 @@ export default function Navbar() {
   return (
     <>
       <nav className={`nav-public ${scrolled ? "scrolled" : ""}`}>
-      <div className="container nav-public-inner" style={{ justifyContent: "flex-end" }}>
-        <div className="nav-public-desktop">
-          {navItems.slice(0, 4).map((item) => (
-            <Link key={item.href} href={item.href} className="nav-link-public">
-              {item.label}
-            </Link>
-          ))}
-          <Link href="#booking" className="btn-luxury" style={{ marginLeft: "32px", padding: "10px 24px", fontSize: "12px" }}>
-            Book Now
+        <div className="container nav-public-inner">
+          <Link href="/" className="nav-brand-logo">
+            <Image
+              src="/images/logo-visitbaarah.png"
+              alt="Visit Baarah"
+              width={160}
+              height={52}
+              priority
+              style={{ height: "clamp(32px, 4.5vw, 44px)", width: "auto" }}
+            />
           </Link>
+
+          <div className="nav-public-desktop">
+            {navItems.slice(0, 4).map((item) => (
+              <Link key={item.href} href={item.href} className="nav-link-public">
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="#transport"
+              className="btn-luxury"
+              style={{ marginLeft: "28px", padding: "10px 22px", fontSize: "13px", borderRadius: "8px" }}
+            >
+              Get Around
+            </Link>
+          </div>
         </div>
-      </div>
       </nav>
 
       <div className={`mobile-fab-nav ${mobileOpen ? "open" : ""}`}>

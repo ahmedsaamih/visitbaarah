@@ -46,7 +46,7 @@ export default function GsapCarousel({
     const media = window.matchMedia("(max-width: 768px)");
     const onChange = () => setIsMobile(media.matches);
     onChange();
-    const hasSwipedBefore = window.localStorage.getItem("serene_swipe_hint_seen") === "1";
+    const hasSwipedBefore = window.localStorage.getItem("vb_swipe_hint_seen") === "1";
     const timer = setTimeout(() => {
       setShowSwipeHint(!hasSwipedBefore && media.matches);
     }, 0);
@@ -98,7 +98,7 @@ export default function GsapCarousel({
     if (showSwipeHint) {
       setShowSwipeHint(false);
       if (typeof window !== "undefined") {
-        window.localStorage.setItem("serene_swipe_hint_seen", "1");
+        window.localStorage.setItem("vb_swipe_hint_seen", "1");
       }
     }
     if (delta > 0) next();

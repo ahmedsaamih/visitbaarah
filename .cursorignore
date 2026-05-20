@@ -1,0 +1,9 @@
+# Ignore Obsidian system files
+**/memory/.obsidian/
+**/memory/.trash/
+**/memory/.space/
+
+# Ignore general build artifacts
+node_modules/
+.next/
+dist/
