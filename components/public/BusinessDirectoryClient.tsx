@@ -61,6 +61,7 @@ export default function BusinessDirectoryClient({ businesses }: Props) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
+            className="dir-tab"
             style={{
               padding: "8px 18px",
               borderRadius: "100px",
@@ -72,7 +73,7 @@ export default function BusinessDirectoryClient({ businesses }: Props) {
               fontWeight: 600,
               fontSize: "13px",
               cursor: "pointer",
-              transition: "all 0.2s",
+              transition: "background 160ms cubic-bezier(0.23,1,0.32,1), color 160ms cubic-bezier(0.23,1,0.32,1), border-color 160ms cubic-bezier(0.23,1,0.32,1), transform 100ms cubic-bezier(0.23,1,0.32,1)",
             }}
           >
             {tab.label}
@@ -85,6 +86,10 @@ export default function BusinessDirectoryClient({ businesses }: Props) {
         {filtered.length} {filtered.length === 1 ? "business" : "businesses"}
         {activeTab !== "all" ? ` in ${TABS.find(t => t.id === activeTab)?.label}` : " on Baarah"}
       </p>
+
+      <style>{`
+        .dir-tab:active { transform: scale(0.97) !important; }
+      `}</style>
 
       {filtered.length === 0 ? (
         <div style={{ textAlign: "center", padding: "80px 0", color: "var(--text-light)" }}>

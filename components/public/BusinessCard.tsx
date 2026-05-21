@@ -44,7 +44,6 @@ export default function BusinessCard({
       boxShadow: "0 4px 24px rgba(0,0,0,0.07)",
       display: "flex",
       flexDirection: "column",
-      transition: "transform 0.3s, box-shadow 0.3s",
     }}
       className="biz-card"
     >
@@ -84,7 +83,10 @@ export default function BusinessCard({
       </div>
 
       <style>{`
-        .biz-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
+        .biz-card { transition: transform 240ms cubic-bezier(0.23,1,0.32,1), box-shadow 240ms cubic-bezier(0.23,1,0.32,1); }
+        @media (hover: hover) and (pointer: fine) {
+          .biz-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
+        }
       `}</style>
     </div>
   );

@@ -143,7 +143,8 @@ export default async function BusinessDetailPage({ params }: Props) {
                           src={m.url}
                           alt={biz.name}
                           loading="lazy"
-                          style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.4s", display: "block" }}
+                          className="biz-gallery-img"
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 350ms cubic-bezier(0.23,1,0.32,1)" }}
                         />
                       </div>
                     ))}
@@ -223,6 +224,9 @@ export default async function BusinessDetailPage({ params }: Props) {
       <style>{`
         @media (max-width: 800px) {
           .biz-detail-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .biz-gallery-img:hover { transform: scale(1.04); }
         }
       `}</style>
     </main>

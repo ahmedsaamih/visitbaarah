@@ -77,6 +77,7 @@ export default function ConnectViaButton({ links, className }: ConnectViaButtonP
             href={c.href(link.value)}
             target="_blank"
             rel="noopener noreferrer"
+            className="connect-secondary"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -87,13 +88,19 @@ export default function ConnectViaButton({ links, className }: ConnectViaButtonP
               fontWeight: 600,
               color: "var(--text)",
               textDecoration: "none",
-              transition: "border-color 0.2s, color 0.2s",
+              transition: "border-color 160ms cubic-bezier(0.23,1,0.32,1), color 160ms cubic-bezier(0.23,1,0.32,1), transform 100ms cubic-bezier(0.23,1,0.32,1)",
             }}
           >
             {c.label}
           </a>
         );
       })}
+      <style>{`
+        @media (hover: hover) and (pointer: fine) {
+          .connect-secondary:hover { border-color: var(--green); color: var(--green); }
+        }
+        .connect-secondary:active { transform: scale(0.97); }
+      `}</style>
     </div>
   );
 }
