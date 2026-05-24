@@ -203,12 +203,6 @@ export default function Hero({ imageUrl }: HeroProps) {
         </div>
       </div>
 
-      <style>{`
-        @keyframes scrollDrop {
-          0%   { top: -40%; }
-          100% { top: 140%; }
-        }
-      `}</style>
     </section>
   );
 }

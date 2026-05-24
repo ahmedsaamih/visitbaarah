@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { db } from "@/db";
 import { unstable_cache } from "next/cache";
 
@@ -55,8 +56,6 @@ export default async function HomePage() {
   const facebook    = normalizeUrl(settings.find(s => s.key === "social_facebook_url")?.value  || "");
   const tiktok      = normalizeUrl(settings.find(s => s.key === "social_tiktok_url")?.value    || "");
 
-  /* ─────────────────────────────────────────────────────────── */
-
   return (
     <main style={{ overflowX: "hidden" }}>
       <Navbar />
@@ -64,26 +63,22 @@ export default async function HomePage() {
       <Hero imageUrl={heroImage} />
 
       {/* ══ STATS BAR ══════════════════════════════════════════════ */}
-      <div className="stats-bar" style={{ background: "var(--forest)", color: "#fff" }}>
-        <div className="container" style={{ padding: "clamp(18px, 3vw, 28px) clamp(20px, 4vw, 48px)" }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-            gap: "clamp(16px, 3vw, 0px)",
-          }}>
+      <div className="stats-bar">
+        <div className="container">
+          <div className="stats-bar-row">
             {[
-              { icon: "📍", label: "Atoll",   value: "Haa Alif" },
-              { icon: "🌿", label: "Famous For", value: "Agriculture" },
-              { icon: "🏖️", label: "Coastline", value: "Pristine Beaches" },
-              { icon: "✈️", label: "Airport",  value: "Hanimaadhoo (HAQ)" },
-            ].map(s => (
-              <div key={s.label} className="stats-bar-item" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span style={{ fontSize: "20px" }}>{s.icon}</span>
-                <div>
-                  <div style={{ fontSize: "10px", opacity: 0.5, letterSpacing: "1.5px", textTransform: "uppercase" }}>{s.label}</div>
-                  <div style={{ fontWeight: 600, fontSize: "14px" }}>{s.value}</div>
+              { label: "Atoll",   value: "Haa Alif" },
+              { label: "Known For", value: "Agriculture" },
+              { label: "Coastline", value: "Pristine Beaches" },
+              { label: "Airport", value: "Hanimaadhoo (HAQ)" },
+            ].map((s, i) => (
+              <Fragment key={s.label}>
+                {i > 0 && <div className="stats-divider" aria-hidden="true" />}
+                <div className="stats-bar-item">
+                  <div className="stats-bar-label">{s.label}</div>
+                  <div className="stats-bar-value">{s.value}</div>
                 </div>
-              </div>
+              </Fragment>
             ))}
           </div>
         </div>
@@ -100,25 +95,25 @@ export default async function HomePage() {
           overflow: "hidden",
         }}
       >
-        {/* Ghost background number */}
         <div className="sec-num" style={{
           position: "absolute", top: "-2%", left: "-1%",
-          fontSize: "clamp(140px, 22vw, 280px)",
           color: "rgba(255,255,255,0.03)",
           lineHeight: 1, userSelect: "none", pointerEvents: "none",
-        }}>01</div>
+        }} aria-hidden="true">01</div>
 
-        <div className="container" style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "clamp(40px, 7vw, 96px)",
-          alignItems: "center",
-          position: "relative",
-        }}>
+        <div
+          className="container discover-inner"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "clamp(40px, 7vw, 96px)",
+            alignItems: "center",
+            position: "relative",
+          }}
+        >
           {/* Text side */}
           <div className="slide-in-left">
             <p className="overline" style={{ marginBottom: "20px" }}>The Island</p>
-
             <h2 style={{
               fontSize: "clamp(36px, 5.5vw, 64px)",
               color: "#fff", lineHeight: 1.05, marginBottom: "28px",
@@ -126,18 +121,13 @@ export default async function HomePage() {
             }}>
               Discover the<br />Heart of the North
             </h2>
-
-            <div
-              className="line-expand"
-              style={{ width: "56px", height: "2px", background: "var(--gold)", marginBottom: "28px" }}
-            />
-
+            <div className="line-expand" style={{ width: "48px", height: "2px", background: "var(--gold)", marginBottom: "28px" }} />
             <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "16px", lineHeight: 1.8, marginBottom: "20px" }}>
               Nestled in the northernmost reaches of the Maldives, HA. Baarah is a living tapestry
               of tradition, nature, and warm island hospitality. Far from the resort crowds, this
               is the Maldives as it has always been.
             </p>
-            <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "15px", lineHeight: 1.8, marginBottom: "48px" }}>
+            <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", lineHeight: 1.8, marginBottom: "48px" }}>
               The island is renowned throughout the archipelago for its rich agricultural heritage —
               fertile soil yields fresh watermelons, papayas, and tropical fruit. Baarah&apos;s
               lagoon is a mirror of turquoise tranquillity.
@@ -160,7 +150,7 @@ export default async function HomePage() {
                   <div style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 800, color: "var(--gold-light)" }}>
                     <span data-count={s.value}>0</span>{s.suffix}
                   </div>
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginTop: "4px", letterSpacing: "0.5px" }}>
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", marginTop: "4px", letterSpacing: "0.5px" }}>
                     {s.label}
                   </div>
                 </div>
@@ -179,12 +169,9 @@ export default async function HomePage() {
                 boxShadow: "0 32px 80px rgba(0,0,0,0.5)",
               }}
             >
-              <div
-                className="parallax-img"
-                style={{ backgroundImage: `url(${aboutImage})` }}
-              />
+              <div className="parallax-img" style={{ backgroundImage: `url(${aboutImage})` }} />
             </div>
-            {/* Gold accent block */}
+            {/* Gold accent */}
             <div style={{
               position: "absolute",
               bottom: "clamp(-20px, -3vw, -36px)",
@@ -195,42 +182,53 @@ export default async function HomePage() {
               borderRadius: "12px",
               opacity: 0.9,
               zIndex: -1,
-            }} />
+            }} aria-hidden="true" />
           </div>
         </div>
-
-        {/* Responsive stack on mobile */}
-        <style>{`
-          @media (max-width: 760px) {
-            #discover .container { grid-template-columns: 1fr !important; }
-            #discover .slide-in-right { display: none; }
-          }
-        `}</style>
       </section>
 
-      {/* ══ BUSINESSES ON BAARAH ═══════════════════════════════════ */}
+      {/* ══ ISLAND DIRECTORY ═══════════════════════════════════════ */}
       {featuredBusinesses.length > 0 && (
         <section style={{ background: "#fff", padding: "clamp(80px, 12vw, 140px) 0", overflow: "hidden" }}>
           <div className="container">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "clamp(48px, 7vw, 72px)", flexWrap: "wrap", gap: "24px" }}>
+            <div className="sec-head-split">
               <div>
                 <p className="overline s-up" style={{ marginBottom: "14px" }}>Island Directory</p>
-                <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", letterSpacing: "-0.5px" }}>
+                <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px", marginBottom: "12px" }}>
                   Businesses on Baarah
                 </h2>
+                <p className="s-up" style={{ color: "var(--text-light)", fontSize: "15px", maxWidth: "420px", lineHeight: 1.75 }}>
+                  From guesthouses to guided tours — everything the island has to offer, curated.
+                </p>
               </div>
-              <a href="/businesses" className="btn-outline-gold s-up" style={{ padding: "12px 28px", fontSize: "13px" }}>
-                View All →
+              <a href="/businesses" className="link-arrow s-up" style={{ alignSelf: "flex-end", paddingBottom: "4px" }}>
+                Explore full directory
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </a>
             </div>
-            <div className="stagger-row" style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: "clamp(16px, 2.5vw, 24px)",
-            }}>
+
+            {/* Category indicators */}
+            <div className="cat-pills s-up">
+              {["Stay", "Eat & Drink", "Transport", "Guided Tours", "Diving & Water Sports"].map(cat => (
+                <span key={cat} className="cat-pill">{cat}</span>
+              ))}
+              <a href="/businesses" className="cat-pill" style={{ borderColor: "var(--gold)", color: "var(--gold)", cursor: "pointer" }}>
+                + More →
+              </a>
+            </div>
+
+            <div className="biz-grid stagger-row">
               {featuredBusinesses.map(biz => (
                 <BusinessCard key={biz.id} {...biz as any} />
               ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)" }}>
+              <a href="/businesses" className="btn-outline-gold" style={{ padding: "14px 40px", fontSize: "13px" }}>
+                View All Listings
+              </a>
             </div>
           </div>
         </section>
@@ -240,12 +238,11 @@ export default async function HomePage() {
       {tours.length > 0 && (
         <section id="explore" style={{ background: "var(--cream)", padding: "clamp(80px, 12vw, 140px) 0", overflow: "hidden" }}>
           <div className="container">
-            {/* Section header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "clamp(48px, 8vw, 80px)", flexWrap: "wrap", gap: "24px" }}>
               <div>
                 <div className="sec-num sec-num-dark s-up" style={{ marginBottom: "-8px" }}>02</div>
                 <p className="overline s-up" style={{ marginBottom: "14px" }}>Explore</p>
-                <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", letterSpacing: "-0.5px" }}>
+                <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px" }}>
                   Nature &amp; Attractions
                 </h2>
               </div>
@@ -254,13 +251,13 @@ export default async function HomePage() {
               </p>
             </div>
 
-            {/* Tall portrait card grid */}
             <div className="explore-grid stagger-row">
               {tours.map(tour => {
                 const img = tour.media?.[0]?.url || "/images/hero.png";
                 return (
                   <div
                     key={tour.id}
+                    className="parallax-wrap"
                     style={{
                       position: "relative",
                       height: "clamp(380px, 50vw, 520px)",
@@ -268,38 +265,39 @@ export default async function HomePage() {
                       overflow: "hidden",
                       cursor: "pointer",
                     }}
-                    className="parallax-wrap"
                   >
-                    <div
-                      className="parallax-img"
-                      style={{ backgroundImage: `url(${img})` }}
-                    />
-                    {/* Gradient overlay */}
+                    <div className="parallax-img" style={{ backgroundImage: `url(${img})` }} />
                     <div style={{
                       position: "absolute", inset: 0,
-                      background: "linear-gradient(to top, rgba(9,15,10,0.92) 0%, rgba(9,15,10,0.2) 50%, transparent 100%)",
+                      background: "linear-gradient(to top, rgba(9,15,10,0.92) 0%, rgba(9,15,10,0.15) 55%, transparent 100%)",
                     }} />
-                    {/* Text at bottom */}
                     <div style={{
                       position: "absolute", bottom: 0, left: 0, right: 0,
                       padding: "clamp(20px, 3vw, 32px)",
                       color: "#fff",
                     }}>
                       {tour.duration && (
-                        <div style={{ fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.55, marginBottom: "8px" }}>
+                        <div style={{ fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.5, marginBottom: "8px" }}>
                           {tour.duration}
                         </div>
                       )}
-                      <h3 style={{ fontSize: "clamp(18px, 2.5vw, 22px)", marginBottom: "8px", fontWeight: 700 }}>
+                      <h3 style={{ fontSize: "clamp(17px, 2.5vw, 22px)", marginBottom: "8px", fontWeight: 700 }}>
                         {tour.name}
                       </h3>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <p style={{ fontSize: "13px", opacity: 0.6, lineHeight: 1.5, maxWidth: "200px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+                        <p style={{ fontSize: "13px", opacity: 0.55, lineHeight: 1.5, maxWidth: "200px" }}>
                           {tour.shortDescription || (tour.description || "").slice(0, 80)}
                         </p>
-                        <span style={{ fontSize: "16px", fontWeight: 700, color: "var(--gold-light)", whiteSpace: "nowrap", marginLeft: "12px" }}>
-                          ${tour.price}
-                        </span>
+                        {Number(tour.price) > 0 && (
+                          <span style={{ fontSize: "16px", fontWeight: 700, color: "var(--gold-light)", whiteSpace: "nowrap" }}>
+                            ${tour.price}
+                          </span>
+                        )}
+                        {Number(tour.price) === 0 && (
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--gold-light)", whiteSpace: "nowrap", letterSpacing: "0.5px" }}>
+                            Free
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -313,13 +311,12 @@ export default async function HomePage() {
       {/* ══ 03 · EVENTS ════════════════════════════════════════════ */}
       {activities.length > 0 && (
         <section id="events" style={{ background: "#fff" }}>
-          {/* Section heading */}
           <div className="container" style={{ paddingTop: "clamp(80px, 12vw, 140px)", paddingBottom: "clamp(48px, 7vw, 80px)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "24px" }}>
               <div>
                 <div className="sec-num sec-num-dark s-up" style={{ marginBottom: "-8px" }}>03</div>
                 <p className="overline s-up" style={{ marginBottom: "14px" }}>Events</p>
-                <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", letterSpacing: "-0.5px" }}>
+                <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px" }}>
                   What&apos;s On in Baarah
                 </h2>
               </div>
@@ -329,28 +326,22 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Alternating full-width event strips */}
           {activities.map((activity, idx) => {
             const img = activity.media?.[0]?.url || "/images/hero.png";
             const isEven = idx % 2 === 1;
             return (
               <div key={activity.id} className={`event-row${isEven ? " reversed" : ""}`}>
-                {/* Image panel */}
                 <div className="event-img-panel parallax-wrap">
-                  <div
-                    className="parallax-img"
-                    style={{ backgroundImage: `url(${img})` }}
-                  />
+                  <div className="parallax-img" style={{ backgroundImage: `url(${img})` }} />
                 </div>
-                {/* Text panel */}
                 <div className="event-text-panel s-up">
                   <div style={{
                     fontSize: "clamp(48px, 8vw, 80px)",
                     fontWeight: 900,
-                    color: isEven ? "rgba(0,0,0,0.04)" : "rgba(0,0,0,0.04)",
+                    color: "rgba(0,0,0,0.04)",
                     lineHeight: 1,
                     marginBottom: "4px",
-                  }}>
+                  }} aria-hidden="true">
                     {String(idx + 1).padStart(2, "0")}
                   </div>
                   <p className="overline" style={{ marginBottom: "12px" }}>Event</p>
@@ -360,7 +351,7 @@ export default async function HomePage() {
                   <p style={{ color: "var(--text-light)", fontSize: "15px", lineHeight: 1.75, marginBottom: "28px" }}>
                     {activity.shortDescription || activity.description}
                   </p>
-                  {activity.price && (
+                  {Number(activity.price) > 0 && (
                     <div style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -376,6 +367,26 @@ export default async function HomePage() {
                       <span style={{ opacity: 0.65 }}>/ {activity.priceUnit?.replace("_", " ")}</span>
                     </div>
                   )}
+                  {Number(activity.price) === 0 && (
+                    <div style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      background: "transparent",
+                      color: "var(--green)",
+                      padding: "8px 0",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      letterSpacing: "0.3px",
+                    }}>
+                      Free to attend
+                    </div>
+                  )}
+                  {activity.duration && (
+                    <div style={{ marginTop: "12px", fontSize: "12px", color: "var(--text-light)", letterSpacing: "0.5px" }}>
+                      {activity.duration}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -389,22 +400,23 @@ export default async function HomePage() {
           <div className="container">
             <div style={{ textAlign: "center", marginBottom: "clamp(48px, 8vw, 80px)" }}>
               <p className="overline s-up" style={{ marginBottom: "14px" }}>Where to Stay</p>
-              <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", letterSpacing: "-0.5px", marginBottom: "16px" }}>
+              <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px", marginBottom: "16px" }}>
                 Accommodation on Baarah
               </h2>
               <p className="s-up" style={{ color: "var(--text-light)", maxWidth: "480px", margin: "0 auto", fontSize: "15px", lineHeight: 1.75 }}>
                 Cosy guesthouses and beachfront stays — rest well after a day of exploration.
               </p>
             </div>
-            <div className="stagger-row" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "clamp(20px, 2.5vw, 28px)" }}>
+
+            <div
+              className="stay-grid stagger-row"
+              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "clamp(20px, 2.5vw, 28px)" }}
+            >
               {roomTypes.map(rt => {
                 const img = rt.media?.[0]?.url || "/images/hero.png";
                 return (
-                  <div key={rt.id} style={{ borderRadius: "14px", overflow: "hidden", background: "#fff", boxShadow: "0 4px 24px rgba(0,0,0,0.07)" }}>
-                    <div
-                      className="parallax-wrap"
-                      style={{ height: "240px" }}
-                    >
+                  <div key={rt.id} style={{ borderRadius: "14px", overflow: "hidden", background: "#fff", border: "1px solid var(--border)" }}>
+                    <div className="parallax-wrap" style={{ height: "240px" }}>
                       <div className="parallax-img" style={{ backgroundImage: `url(${img})` }} />
                     </div>
                     <div style={{ padding: "clamp(20px, 3vw, 28px)" }}>
@@ -416,13 +428,23 @@ export default async function HomePage() {
                         </div>
                       </div>
                       <p style={{ fontSize: "13px", color: "var(--text-light)", lineHeight: 1.65, marginBottom: "20px" }}>{rt.description}</p>
-                      <a href="mailto:info@visitbaarah.mv" className="btn-luxury" style={{ width: "100%", textAlign: "center", fontSize: "13px", padding: "12px" }}>
+                      <a href="mailto:info@visitbaarah.mv" className="btn-luxury" style={{ width: "100%", justifyContent: "center", fontSize: "13px", padding: "12px" }}>
                         Enquire
                       </a>
                     </div>
                   </div>
                 );
               })}
+            </div>
+
+            <div className="dir-link-bar s-up">
+              <p>Looking for guesthouses and longer stays? Browse all accommodation in the island directory.</p>
+              <a href="/businesses" className="link-arrow">
+                Browse guesthouses
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </a>
             </div>
           </div>
         </section>
@@ -433,27 +455,6 @@ export default async function HomePage() {
 
       {/* ══ 05 · DINING + GALLERY ══════════════════════════════════ */}
       <ExperienceSection menuItems={menuItems} gallery={gallery} diningImageUrl={diningImage} />
-
-      {/* ══ GALLERY (if no dining but gallery exists — fallback) ═══ */}
-      {(!menuItems.length && gallery.length > 0) && (
-        <section id="gallery" style={{ background: "#fff", padding: "clamp(80px, 12vw, 140px) 0" }}>
-          <div className="container">
-            <div style={{ textAlign: "center", marginBottom: "clamp(48px, 8vw, 72px)" }}>
-              <p className="overline s-up" style={{ marginBottom: "14px" }}>Gallery</p>
-              <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", letterSpacing: "-0.5px" }}>
-                Baarah in Photos
-              </h2>
-            </div>
-            <div className="gallery-masonry">
-              {gallery.map(item => (
-                <div key={item.id} className="gallery-masonry-item reveal-img">
-                  <img src={item.url} alt={item.alt || "Baarah"} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ══ REVIEWS ═════════════════════════════════════════════════ */}
       {testimonials.length > 0 && (
@@ -469,7 +470,7 @@ export default async function HomePage() {
           <div className="container">
             <div style={{ textAlign: "center", marginBottom: "clamp(48px, 8vw, 72px)" }}>
               <p className="overline s-up" style={{ marginBottom: "14px" }}>Visitors Say</p>
-              <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", color: "#fff", letterSpacing: "-0.5px" }}>
+              <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", color: "#fff", letterSpacing: "-0.5px" }}>
                 Stories from Baarah
               </h2>
             </div>
@@ -478,7 +479,7 @@ export default async function HomePage() {
               {testimonials.map(item => (
                 <div key={item.id} style={{ padding: "0 clamp(8px, 3vw, 32px)" }}>
                   <div style={{
-                    maxWidth: "820px",
+                    maxWidth: "780px",
                     margin: "0 auto",
                     textAlign: "center",
                     padding: "clamp(32px, 5vw, 64px)",
@@ -486,32 +487,33 @@ export default async function HomePage() {
                     borderRadius: "20px",
                     border: "1px solid rgba(255,255,255,0.07)",
                   }}>
-                    <div style={{ color: "var(--gold)", fontSize: "22px", letterSpacing: "4px", marginBottom: "32px" }}>
+                    <div style={{ color: "var(--gold)", fontSize: "18px", letterSpacing: "4px", marginBottom: "32px" }}>
                       {"★".repeat(item.rating)}{"☆".repeat(5 - item.rating)}
                     </div>
                     <p style={{
-                      fontSize: "clamp(18px, 2.5vw, 24px)",
+                      fontSize: "clamp(17px, 2.5vw, 22px)",
                       fontStyle: "italic",
-                      lineHeight: 1.65,
-                      color: "rgba(255,255,255,0.88)",
+                      lineHeight: 1.7,
+                      color: "rgba(255,255,255,0.85)",
                       marginBottom: "40px",
+                      fontWeight: 300,
                     }}>
                       &ldquo;{item.content}&rdquo;
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
                       <div style={{
-                        width: "48px", height: "48px",
+                        width: "44px", height: "44px",
                         background: "var(--green)",
                         borderRadius: "50%",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        color: "#fff", fontWeight: 700, fontSize: "18px",
+                        color: "#fff", fontWeight: 700, fontSize: "17px",
                       }}>
                         {item.guestName.charAt(0)}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: "15px" }}>{item.guestName}</div>
-                        <div style={{ fontSize: "12px", opacity: 0.45, letterSpacing: "1.5px" }}>
-                          {item.guestCountry?.toUpperCase()}
+                        <div style={{ fontWeight: 700, fontSize: "14px" }}>{item.guestName}</div>
+                        <div style={{ fontSize: "11px", opacity: 0.4, letterSpacing: "2px", textTransform: "uppercase", marginTop: "3px" }}>
+                          {item.guestCountry}
                         </div>
                       </div>
                     </div>
@@ -525,7 +527,6 @@ export default async function HomePage() {
 
       {/* ══ PLAN YOUR VISIT CTA ════════════════════════════════════ */}
       <section style={{ background: "var(--cream)", padding: "clamp(80px, 12vw, 140px) 0", overflow: "hidden", position: "relative" }}>
-        {/* Giant ghost text */}
         <div style={{
           position: "absolute",
           bottom: "-8%",
@@ -538,15 +539,13 @@ export default async function HomePage() {
           userSelect: "none",
           pointerEvents: "none",
           lineHeight: 1,
-        }}>
-          BAARAH
-        </div>
+        }} aria-hidden="true">BAARAH</div>
 
         <div className="container" style={{ textAlign: "center", position: "relative" }}>
           <div className="s-up">
             <p className="overline" style={{ marginBottom: "20px" }}>Ready to Visit?</p>
             <h2 style={{
-              fontSize: "clamp(36px, 6vw, 72px)",
+              fontSize: "clamp(32px, 6vw, 68px)",
               letterSpacing: "-1px",
               marginBottom: "20px",
               lineHeight: 1.05,
@@ -556,7 +555,7 @@ export default async function HomePage() {
             </h2>
             <p style={{
               color: "var(--text-light)",
-              maxWidth: "500px",
+              maxWidth: "480px",
               margin: "0 auto 44px",
               fontSize: "16px",
               lineHeight: 1.75,
@@ -578,21 +577,16 @@ export default async function HomePage() {
       {/* ══ FOOTER ══════════════════════════════════════════════════ */}
       <footer style={{ background: "var(--deep)", color: "#fff", padding: "clamp(64px, 10vw, 96px) 0 36px" }}>
         <div className="container">
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "2fr 1fr 1fr 1fr",
-            gap: "clamp(28px, 4vw, 64px)",
-            marginBottom: "clamp(48px, 8vw, 72px)",
-          }}>
+          <div className="footer-grid" style={{ marginBottom: "clamp(48px, 8vw, 72px)" }}>
             <div>
               <h2 style={{
                 color: "#fff", marginBottom: "16px",
-                fontSize: "clamp(18px, 2.5vw, 24px)",
+                fontSize: "clamp(17px, 2.5vw, 22px)",
                 fontWeight: 900, letterSpacing: "-0.5px",
               }}>
                 VISIT BAARAH
               </h2>
-              <p style={{ opacity: 0.45, fontSize: "14px", lineHeight: 1.8, maxWidth: "280px" }}>
+              <p style={{ opacity: 0.4, fontSize: "14px", lineHeight: 1.8, maxWidth: "260px" }}>
                 Your guide to HA. Baarah — the authentic heart of the northern Maldives.
               </p>
               <div style={{ display: "flex", gap: "10px", marginTop: "24px" }}>
@@ -613,8 +607,8 @@ export default async function HomePage() {
                       borderRadius: "8px",
                       display: "inline-flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", textDecoration: "none",
-                      opacity: s.href ? 1 : 0.3,
-                      transition: "background 0.2s",
+                      opacity: s.href ? 1 : 0.25,
+                      transition: "background 0.2s, opacity 0.2s",
                     }}
                   >
                     <SocialIcon kind={s.icon} />
@@ -624,7 +618,7 @@ export default async function HomePage() {
             </div>
 
             <div>
-              <h4 style={{ marginBottom: "20px", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.35, fontWeight: 700 }}>
+              <h4 style={{ marginBottom: "20px", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.3, fontWeight: 700 }}>
                 Discover
               </h4>
               <nav style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
@@ -634,7 +628,7 @@ export default async function HomePage() {
                   { href: "#events",   label: "Events" },
                   { href: "#dining",   label: "Dining" },
                 ].map(l => (
-                  <a key={l.href} href={l.href} style={{ color: "#fff", opacity: 0.5, textDecoration: "none", transition: "opacity 0.2s" }}>
+                  <a key={l.href} href={l.href} style={{ color: "#fff", opacity: 0.45, textDecoration: "none", transition: "opacity 0.2s" }}>
                     {l.label}
                   </a>
                 ))}
@@ -642,17 +636,17 @@ export default async function HomePage() {
             </div>
 
             <div>
-              <h4 style={{ marginBottom: "20px", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.35, fontWeight: 700 }}>
+              <h4 style={{ marginBottom: "20px", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.3, fontWeight: 700 }}>
                 Visit
               </h4>
               <nav style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
                 {[
-                  { href: "#transport", label: "Getting Around" },
-                  { href: "#stay",      label: "Where to Stay" },
-                  { href: "#gallery",   label: "Gallery" },
-                  { href: "#reviews",   label: "Reviews" },
+                  { href: "#transport",  label: "Getting Around" },
+                  { href: "#stay",       label: "Where to Stay" },
+                  { href: "/businesses", label: "Directory" },
+                  { href: "#reviews",    label: "Reviews" },
                 ].map(l => (
-                  <a key={l.href} href={l.href} style={{ color: "#fff", opacity: 0.5, textDecoration: "none", transition: "opacity 0.2s" }}>
+                  <a key={l.href} href={l.href} style={{ color: "#fff", opacity: 0.45, textDecoration: "none", transition: "opacity 0.2s" }}>
                     {l.label}
                   </a>
                 ))}
@@ -660,14 +654,16 @@ export default async function HomePage() {
             </div>
 
             <div>
-              <h4 style={{ marginBottom: "20px", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.35, fontWeight: 700 }}>
+              <h4 style={{ marginBottom: "20px", fontSize: "10px", letterSpacing: "2px", textTransform: "uppercase", opacity: 0.3, fontWeight: 700 }}>
                 Contact
               </h4>
-              <p style={{ fontSize: "14px", opacity: 0.5, lineHeight: 2 }}>
+              <p style={{ fontSize: "14px", opacity: 0.45, lineHeight: 2 }}>
                 HA. Baarah<br />
                 Haa Alif Atoll<br />
                 Maldives<br />
-                info@visitbaarah.mv
+                <a href="mailto:info@visitbaarah.mv" style={{ color: "#fff", opacity: 1, textDecoration: "none" }}>
+                  info@visitbaarah.mv
+                </a>
               </p>
             </div>
           </div>
@@ -681,25 +677,12 @@ export default async function HomePage() {
             flexWrap: "wrap",
             gap: "12px",
             fontSize: "12px",
-            opacity: 0.3,
+            opacity: 0.28,
           }}>
             <span>&copy; {new Date().getFullYear()} Visit Baarah. All rights reserved.</span>
             <span>HA. Baarah · Haa Alif Atoll · Maldives</span>
           </div>
         </div>
-
-        <style>{`
-          @media (max-width: 760px) {
-            footer .container > div:first-child {
-              grid-template-columns: 1fr 1fr !important;
-            }
-          }
-          @media (max-width: 480px) {
-            footer .container > div:first-child {
-              grid-template-columns: 1fr !important;
-            }
-          }
-        `}</style>
       </footer>
     </main>
   );

@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "npx drizzle-kit push && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "npx tsx scripts/seed.ts",
+    "unseed": "npx tsx scripts/unseed.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -31,6 +33,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
