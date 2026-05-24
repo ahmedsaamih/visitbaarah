@@ -30,27 +30,24 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
       {hasDining && (
         <section id="dining" style={{ background: "var(--cream)", padding: "clamp(80px, 12vw, 140px) 0", overflow: "hidden" }}>
           <div className="container">
-            <div style={{
+            <div className="dining-inner" style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: "clamp(40px, 7vw, 96px)",
               alignItems: "center",
             }}>
               {/* Image side */}
-              <div className="slide-in-left" style={{ position: "relative" }}>
+              <div className="dining-img-side slide-in-left" style={{ position: "relative" }}>
                 <div
                   className="parallax-wrap reveal-img"
                   style={{
                     aspectRatio: "4/5",
                     borderRadius: "16px",
                     overflow: "hidden",
-                    boxShadow: "0 24px 60px rgba(0,0,0,0.12)",
+                    boxShadow: "0 24px 60px rgba(0,0,0,0.1)",
                   }}
                 >
-                  <div
-                    className="parallax-img"
-                    style={{ backgroundImage: `url(${diningImg})` }}
-                  />
+                  <div className="parallax-img" style={{ backgroundImage: `url(${diningImg})` }} />
                 </div>
               </div>
 
@@ -58,7 +55,7 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
               <div className="slide-in-right">
                 <p className="overline" style={{ marginBottom: "20px" }}>Dining</p>
                 <h2 style={{
-                  fontSize: "clamp(32px, 4.5vw, 56px)",
+                  fontSize: "clamp(30px, 4.5vw, 52px)",
                   letterSpacing: "-0.5px",
                   marginBottom: "12px",
                   lineHeight: 1.05,
@@ -70,7 +67,7 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
                   Freshly caught seafood, island-grown produce, and the flavours of traditional Maldivian cooking.
                 </p>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
                   {menuItems.slice(0, 5).map((item, idx) => (
                     <div
                       key={item.id}
@@ -90,7 +87,9 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
                           display: "flex", alignItems: "center", gap: "6px",
                         }}>
                           {item.name}
-                          {item.isVegetarian && <span style={{ fontSize: "11px", color: "var(--green)", fontWeight: 400 }}>veg</span>}
+                          {item.isVegetarian && (
+                            <span style={{ fontSize: "10px", color: "var(--green)", fontWeight: 700, letterSpacing: "0.5px" }}>veg</span>
+                          )}
                         </h4>
                         <p style={{ fontSize: "13px", color: "var(--text-light)", lineHeight: 1.5 }}>{item.description}</p>
                       </div>
@@ -104,20 +103,22 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
                 <button
                   onClick={() => setMenuOpen(true)}
                   className="btn-luxury"
-                  style={{ marginTop: "32px", width: "100%", justifyContent: "center" }}
+                  style={{ marginTop: "28px", width: "100%", justifyContent: "center" }}
                 >
                   View Full Menu
                 </button>
+
+                <div style={{ marginTop: "24px", textAlign: "center" }}>
+                  <a href="/businesses" className="link-arrow" style={{ color: "var(--text-light)", fontSize: "13px" }}>
+                    Browse restaurants in the directory
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-
-          <style>{`
-            @media (max-width: 760px) {
-              #dining .container > div { grid-template-columns: 1fr !important; }
-              #dining .slide-in-left { display: none; }
-            }
-          `}</style>
         </section>
       )}
 
@@ -128,7 +129,7 @@ export default function ExperienceSection({ menuItems, gallery, diningImageUrl }
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "clamp(48px, 8vw, 72px)", flexWrap: "wrap", gap: "24px" }}>
               <div>
                 <p className="overline s-up" style={{ marginBottom: "14px" }}>Gallery</p>
-                <h2 className="s-up" style={{ fontSize: "clamp(36px, 5vw, 60px)", letterSpacing: "-0.5px" }}>
+                <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px" }}>
                   Baarah in Photos
                 </h2>
               </div>
