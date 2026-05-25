@@ -8,13 +8,14 @@ import GsapInit from "@/components/public/GsapInit";
 import GsapCarousel from "@/components/public/GsapCarousel";
 import ExperienceSection from "@/components/public/ExperienceSection";
 import TransportSection from "@/components/public/TransportSection";
+import NatureSection from "@/components/public/NatureSection";
+import HeritageSection from "@/components/public/HeritageSection";
 import BusinessCard from "@/components/public/BusinessCard";
 
 const getHomepageData = unstable_cache(
   async () => {
-    const [roomTypes, activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses] =
+    const [activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses] =
       await Promise.all([
-        db.query.roomTypes.findMany({ with: { media: true } }),
         db.query.activities.findMany({
           where: (t, { eq }) => eq(t.isActive, true),
           with: { media: true },
@@ -39,14 +40,14 @@ const getHomepageData = unstable_cache(
           limit: 6,
         }),
       ]);
-    return { roomTypes, activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses };
+    return { activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses };
   },
   ["homepage-data"],
   { tags: ["homepage"], revalidate: 3600 }
 );
 
 export default async function HomePage() {
-  const { roomTypes, activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses } =
+  const { activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses } =
     await getHomepageData();
 
   const heroImage   = settings.find(s => s.key === "hero_image_url")?.value;
@@ -67,10 +68,10 @@ export default async function HomePage() {
         <div className="container">
           <div className="stats-bar-row">
             {[
-              { label: "Atoll",   value: "Haa Alif" },
-              { label: "Known For", value: "Agriculture" },
-              { label: "Coastline", value: "Pristine Beaches" },
-              { label: "Airport", value: "Hanimaadhoo (HAQ)" },
+              { label: "From Malé",   value: "294 km" },
+              { label: "From HAQ Airport", value: "45 min" },
+              { label: "Mangrove Forest", value: "39 ha" },
+              { label: "Liberation Year", value: "1573" },
             ].map((s, i) => (
               <Fragment key={s.label}>
                 {i > 0 && <div className="stats-divider" aria-hidden="true" />}
@@ -186,6 +187,12 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ══ 02 · NATURAL HERITAGE ══════════════════════════════════ */}
+      <NatureSection />
+
+      {/* ══ 03 · LIVING HISTORY ════════════════════════════════════ */}
+      <HeritageSection />
 
       {/* ══ ISLAND DIRECTORY ═══════════════════════════════════════ */}
       {featuredBusinesses.length > 0 && (
@@ -394,63 +401,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ══ WHERE TO STAY ═══════════════════════════════════════════ */}
-      {roomTypes.length > 0 && (
-        <section id="stay" style={{ background: "var(--cream)", padding: "clamp(80px, 12vw, 140px) 0", overflow: "hidden" }}>
-          <div className="container">
-            <div style={{ textAlign: "center", marginBottom: "clamp(48px, 8vw, 80px)" }}>
-              <p className="overline s-up" style={{ marginBottom: "14px" }}>Where to Stay</p>
-              <h2 className="s-up" style={{ fontSize: "clamp(32px, 5vw, 56px)", letterSpacing: "-0.5px", marginBottom: "16px" }}>
-                Accommodation on Baarah
-              </h2>
-              <p className="s-up" style={{ color: "var(--text-light)", maxWidth: "480px", margin: "0 auto", fontSize: "15px", lineHeight: 1.75 }}>
-                Cosy guesthouses and beachfront stays — rest well after a day of exploration.
-              </p>
-            </div>
-
-            <div
-              className="stay-grid stagger-row"
-              style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "clamp(20px, 2.5vw, 28px)" }}
-            >
-              {roomTypes.map(rt => {
-                const img = rt.media?.[0]?.url || "/images/hero.png";
-                return (
-                  <div key={rt.id} style={{ borderRadius: "14px", overflow: "hidden", background: "#fff", border: "1px solid var(--border)" }}>
-                    <div className="parallax-wrap" style={{ height: "240px" }}>
-                      <div className="parallax-img" style={{ backgroundImage: `url(${img})` }} />
-                    </div>
-                    <div style={{ padding: "clamp(20px, 3vw, 28px)" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "10px" }}>
-                        <h3 style={{ fontSize: "18px", fontWeight: 700 }}>{rt.name}</h3>
-                        <div style={{ textAlign: "right", flexShrink: 0 }}>
-                          <div style={{ fontSize: "20px", fontWeight: 800, color: "var(--green)" }}>${rt.basePrice}</div>
-                          <div style={{ fontSize: "11px", color: "var(--text-light)" }}>/ night</div>
-                        </div>
-                      </div>
-                      <p style={{ fontSize: "13px", color: "var(--text-light)", lineHeight: 1.65, marginBottom: "20px" }}>{rt.description}</p>
-                      <a href="mailto:info@visitbaarah.mv" className="btn-luxury" style={{ width: "100%", justifyContent: "center", fontSize: "13px", padding: "12px" }}>
-                        Enquire
-                      </a>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="dir-link-bar s-up">
-              <p>Looking for guesthouses and longer stays? Browse all accommodation in the island directory.</p>
-              <a href="/businesses" className="link-arrow">
-                Browse guesthouses
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                  <path d="M2.5 7h9M8 3.5l3.5 3.5L8 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </a>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ══ 04 · GETTING AROUND ════════════════════════════════════ */}
+      {/* ══ GETTING AROUND ═════════════════════════════════════════ */}
       <TransportSection services={services} />
 
       {/* ══ 05 · DINING + GALLERY ══════════════════════════════════ */}
@@ -623,10 +574,10 @@ export default async function HomePage() {
               </h4>
               <nav style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
                 {[
-                  { href: "#discover", label: "The Island" },
-                  { href: "#explore",  label: "Nature" },
-                  { href: "#events",   label: "Events" },
-                  { href: "#dining",   label: "Dining" },
+                  { href: "#discover",  label: "The Island" },
+                  { href: "#nature",    label: "Natural Heritage" },
+                  { href: "#heritage",  label: "History" },
+                  { href: "#events",    label: "Events" },
                 ].map(l => (
                   <a key={l.href} href={l.href} style={{ color: "#fff", opacity: 0.45, textDecoration: "none", transition: "opacity 0.2s" }}>
                     {l.label}
@@ -642,8 +593,8 @@ export default async function HomePage() {
               <nav style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px" }}>
                 {[
                   { href: "#transport",  label: "Getting Around" },
-                  { href: "#stay",       label: "Where to Stay" },
-                  { href: "/businesses", label: "Directory" },
+                  { href: "/businesses", label: "Island Directory" },
+                  { href: "#explore",    label: "Tours" },
                   { href: "#reviews",    label: "Reviews" },
                 ].map(l => (
                   <a key={l.href} href={l.href} style={{ color: "#fff", opacity: 0.45, textDecoration: "none", transition: "opacity 0.2s" }}>
