@@ -31,14 +31,14 @@ const TABS: { id: Tab; label: string }[] = [
 
 const TYPE_TO_TAB: Record<string, Tab> = {
   guesthouse: "stay",
-  restaurant:  "eat",
-  cafe:        "eat",
-  transport:   "transport",
-  tour_guide:  "explore",
-  dive_shop:   "explore",
-  grocery:     "other",
-  spa:         "other",
-  other:       "other",
+  restaurant: "eat",
+  cafe:       "eat",
+  transport:  "transport",
+  tour_guide: "explore",
+  dive_shop:  "explore",
+  grocery:    "other",
+  spa:        "other",
+  other:      "other",
 };
 
 export default function BusinessDirectoryClient({ businesses }: Props) {
@@ -50,57 +50,35 @@ export default function BusinessDirectoryClient({ businesses }: Props) {
 
   return (
     <>
-      {/* Category tabs */}
-      <div style={{
-        display: "flex",
-        gap: "8px",
-        flexWrap: "wrap",
-        marginBottom: "clamp(36px, 5vw, 56px)",
-      }}>
+      {/* Category filter */}
+      <div className="dir-tabs">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className="dir-tab"
-            style={{
-              padding: "8px 18px",
-              borderRadius: "100px",
-              border: "1.5px solid",
-              borderColor: activeTab === tab.id ? "var(--green)" : "var(--border)",
-              background: activeTab === tab.id ? "var(--green)" : "#fff",
-              color: activeTab === tab.id ? "#fff" : "var(--text-mid)",
-              fontFamily: "inherit",
-              fontWeight: 600,
-              fontSize: "13px",
-              cursor: "pointer",
-              transition: "background 160ms cubic-bezier(0.23,1,0.32,1), color 160ms cubic-bezier(0.23,1,0.32,1), border-color 160ms cubic-bezier(0.23,1,0.32,1), transform 100ms cubic-bezier(0.23,1,0.32,1)",
-            }}
+            className={`dir-tab-btn${activeTab === tab.id ? " active" : ""}`}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Results count */}
-      <p style={{ color: "var(--text-light)", fontSize: "13px", marginBottom: "24px" }}>
-        {filtered.length} {filtered.length === 1 ? "business" : "businesses"}
-        {activeTab !== "all" ? ` in ${TABS.find(t => t.id === activeTab)?.label}` : " on Baarah"}
+      {/* Count */}
+      <p className="dir-count">
+        {filtered.length} {filtered.length === 1 ? "listing" : "listings"}
+        {activeTab !== "all" && ` in ${TABS.find(t => t.id === activeTab)?.label}`}
       </p>
 
-      <style>{`
-        .dir-tab:active { transform: scale(0.97) !important; }
-      `}</style>
-
+      {/* Grid */}
       {filtered.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "80px 0", color: "var(--text-light)" }}>
-          <p style={{ fontSize: "15px" }}>No listings in this category yet.</p>
+        <div className="dir-empty">
+          <p>No listings in this category yet.</p>
+          <button onClick={() => setActiveTab("all")} className="dir-tab-btn" style={{ marginTop: "20px" }}>
+            View all listings
+          </button>
         </div>
       ) : (
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-          gap: "clamp(16px, 2.5vw, 24px)",
-        }}>
+        <div className="biz-grid">
           {filtered.map((b) => (
             <BusinessCard key={b.id} {...b} />
           ))}

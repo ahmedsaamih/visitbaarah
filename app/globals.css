@@ -658,3 +658,137 @@ h1, h2, h3, h4, h5 {
   0%   { top: -40%; }
   100% { top: 140%; }
 }
+
+/* ════════════════════════════════════════════════════════
+   Businesses directory
+   ════════════════════════════════════════════════════════ */
+
+/* Back navigation link */
+.dir-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 180ms ease;
+}
+.dir-back-link:hover { color: rgba(255,255,255,0.8); }
+
+/* Filter tabs */
+.dir-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.dir-tab-btn {
+  padding: 9px 20px;
+  border-radius: 100px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-mid);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition:
+    background 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out);
+  white-space: nowrap;
+}
+.dir-tab-btn:hover { border-color: var(--text-mid); }
+.dir-tab-btn.active {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+}
+.dir-tab-btn:active { transform: scale(0.97); }
+
+/* Count label */
+.dir-count {
+  color: var(--text-light);
+  font-size: 13px;
+  margin-bottom: 28px;
+  letter-spacing: 0.2px;
+}
+
+/* Empty state */
+.dir-empty {
+  text-align: center;
+  padding: 72px 0;
+  color: var(--text-light);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* ════════════════════════════════════════════════════════
+   Business detail page
+   ════════════════════════════════════════════════════════ */
+
+/* Detail page back link (on dark hero) */
+.biz-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  margin-bottom: 20px;
+  transition: color 180ms ease;
+}
+.biz-detail-back:hover { color: rgba(255,255,255,0.85); }
+
+/* Detail page two-column layout */
+.biz-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: clamp(32px, 6vw, 72px);
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .biz-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card wrapper for contact + form */
+.biz-detail-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: clamp(20px, 3vw, 28px);
+  border: 1px solid var(--border);
+}
+
+/* Contact info rows */
+.biz-contact-row {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  align-items: baseline;
+}
+.biz-contact-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  flex-shrink: 0;
+  width: 68px;
+}
+.biz-contact-value {
+  color: var(--text-mid);
+}
+.biz-contact-link {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 180ms ease;
+}
+.biz-contact-link:hover { color: var(--forest); }
