@@ -232,7 +232,7 @@ export default async function HomePage() {
               ))}
             </div>
 
-            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)" }}>
+            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)", position: "relative", zIndex: 1 }}>
               <a href="/businesses" className="btn-outline-gold" style={{ padding: "14px 40px", fontSize: "13px" }}>
                 View All Listings
               </a>
