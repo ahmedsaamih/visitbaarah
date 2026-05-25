@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     // Pricing: calculate if room type provided, otherwise booking is a request (price TBD by admin)
     let roomTotal = "0.00";
     let totalAmount = "0.00";
-    let roomType: { id: number; name: string } | null = null;
+    let roomType: Awaited<ReturnType<typeof db.query.roomTypes.findFirst>> | null = null;
     const parsedRoomTypeId = roomTypeId ? Number(roomTypeId) : null;
     const parsedBusinessId = businessId ? Number(businessId) : null;
 
