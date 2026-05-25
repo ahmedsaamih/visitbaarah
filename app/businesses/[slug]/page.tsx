@@ -7,6 +7,8 @@ import ConnectViaButton from "@/components/public/ConnectViaButton";
 import InquiryForm from "@/components/public/InquiryForm";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 interface Props { params: Promise<{ slug: string }>; }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -51,10 +53,10 @@ export default async function BusinessDetailPage({ params }: Props) {
     <main style={{ overflowX: "hidden" }}>
       <Navbar />
 
-      {/* Hero */}
+      {/* Hero image */}
       <section style={{
-        height: "55vh",
-        minHeight: "380px",
+        height: "clamp(260px, 45vw, 480px)",
+        minHeight: "260px",
         position: "relative",
         overflow: "hidden",
         color: "#fff",
@@ -67,15 +69,22 @@ export default async function BusinessDetailPage({ params }: Props) {
         }} />
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, rgba(9,15,10,0.35) 0%, rgba(9,15,10,0.7) 100%)",
+          background: "linear-gradient(to bottom, rgba(9,15,10,0.25) 0%, rgba(9,15,10,0.72) 100%)",
         }} />
         <div className="container" style={{
           position: "relative", zIndex: 1,
           height: "100%", display: "flex", flexDirection: "column",
           justifyContent: "flex-end",
-          paddingBottom: "clamp(32px, 5vw, 56px)",
+          paddingBottom: "clamp(28px, 5vw, 52px)",
           paddingTop: "100px",
         }}>
+          {/* Back link */}
+          <a href="/businesses" className="biz-detail-back">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M11.5 7H2.5M6 3.5L2.5 7 6 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Island Directory
+          </a>
           <div style={{
             display: "inline-block",
             background: "var(--gold)",
@@ -84,20 +93,20 @@ export default async function BusinessDetailPage({ params }: Props) {
             fontWeight: 700,
             letterSpacing: "2px",
             textTransform: "uppercase",
-            padding: "5px 12px",
+            padding: "4px 12px",
             borderRadius: "100px",
-            marginBottom: "16px",
+            marginBottom: "14px",
             alignSelf: "flex-start",
           }}>
             {typeLabel}
           </div>
           <h1 style={{
-            fontSize: "clamp(28px, 5vw, 56px)",
+            fontSize: "clamp(26px, 5vw, 52px)",
             fontWeight: 900,
             lineHeight: 1.05,
             letterSpacing: "-0.5px",
-            marginBottom: "16px",
             color: "#fff",
+            marginBottom: connectLinks.length > 0 ? "16px" : "0",
           }}>
             {biz.name}
           </h1>
@@ -106,20 +115,27 @@ export default async function BusinessDetailPage({ params }: Props) {
       </section>
 
       {/* Main content */}
-      <section style={{ background: "var(--cream)", padding: "clamp(48px, 8vw, 96px) 0" }}>
+      <section style={{ background: "var(--cream)", padding: "clamp(40px, 7vw, 80px) 0" }}>
         <div className="container">
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 380px",
-            gap: "clamp(36px, 6vw, 80px)",
-            alignItems: "start",
-          }}>
+          <div className="biz-detail-grid">
+
             {/* Left: about + gallery */}
             <div>
+              {biz.shortDescription && (
+                <p style={{
+                  fontSize: "clamp(16px, 2vw, 18px)",
+                  color: "var(--text-mid)",
+                  lineHeight: 1.8,
+                  marginBottom: "32px",
+                  fontWeight: 400,
+                }}>
+                  {biz.shortDescription}
+                </p>
+              )}
               {biz.description && (
-                <div style={{ marginBottom: "clamp(40px, 6vw, 64px)" }}>
-                  <p className="overline" style={{ marginBottom: "16px" }}>About</p>
-                  <p style={{ fontSize: "16px", color: "var(--text-mid)", lineHeight: 1.8, maxWidth: "600px" }}>
+                <div style={{ marginBottom: "clamp(36px, 6vw, 56px)" }}>
+                  <p className="overline" style={{ marginBottom: "14px" }}>About</p>
+                  <p style={{ fontSize: "15px", color: "var(--text-mid)", lineHeight: 1.85 }}>
                     {biz.description}
                   </p>
                 </div>
@@ -127,24 +143,19 @@ export default async function BusinessDetailPage({ params }: Props) {
 
               {galleryImages.length > 0 && (
                 <div>
-                  <p className="overline" style={{ marginBottom: "20px" }}>Gallery</p>
+                  <p className="overline" style={{ marginBottom: "16px" }}>Gallery</p>
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                    gap: "12px",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+                    gap: "10px",
                   }}>
                     {galleryImages.map((m) => (
-                      <div key={m.url} style={{
-                        aspectRatio: "4/3",
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                      }}>
+                      <div key={m.url} style={{ aspectRatio: "4/3", borderRadius: "8px", overflow: "hidden" }}>
                         <img
                           src={m.url}
                           alt={biz.name}
                           loading="lazy"
-                          className="biz-gallery-img"
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform 350ms cubic-bezier(0.23,1,0.32,1)" }}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         />
                       </div>
                     ))}
@@ -154,35 +165,30 @@ export default async function BusinessDetailPage({ params }: Props) {
             </div>
 
             {/* Right: contact card + inquiry form */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Contact info */}
               {(biz.contactPhone || biz.contactEmail || biz.address) && (
-                <div style={{
-                  background: "#fff",
-                  borderRadius: "14px",
-                  padding: "clamp(20px, 3vw, 28px)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                }}>
+                <div className="biz-detail-card">
                   <p className="overline" style={{ marginBottom: "16px" }}>Contact</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", fontSize: "14px", color: "var(--text-mid)" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                     {biz.address && (
-                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-                        <span style={{ opacity: 0.5, flexShrink: 0 }}>📍</span>
-                        <span>{biz.address}</span>
+                      <div className="biz-contact-row">
+                        <span className="biz-contact-label">Location</span>
+                        <span className="biz-contact-value">{biz.address}</span>
                       </div>
                     )}
                     {biz.contactPhone && (
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                        <span style={{ opacity: 0.5, flexShrink: 0 }}>📞</span>
-                        <a href={`tel:${biz.contactPhone}`} style={{ color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>
+                      <div className="biz-contact-row">
+                        <span className="biz-contact-label">Phone</span>
+                        <a href={`tel:${biz.contactPhone}`} className="biz-contact-link">
                           {biz.contactPhone}
                         </a>
                       </div>
                     )}
                     {biz.contactEmail && (
-                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                        <span style={{ opacity: 0.5, flexShrink: 0 }}>✉️</span>
-                        <a href={`mailto:${biz.contactEmail}`} style={{ color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>
+                      <div className="biz-contact-row">
+                        <span className="biz-contact-label">Email</span>
+                        <a href={`mailto:${biz.contactEmail}`} className="biz-contact-link">
                           {biz.contactEmail}
                         </a>
                       </div>
@@ -197,38 +203,52 @@ export default async function BusinessDetailPage({ params }: Props) {
               )}
 
               {/* Inquiry form */}
-              <div style={{
-                background: "#fff",
-                borderRadius: "14px",
-                padding: "clamp(20px, 3vw, 28px)",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-              }}>
-                <p className="overline" style={{ marginBottom: "8px" }}>Get in touch</p>
-                <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px" }}>
+              <div className="biz-detail-card">
+                <p className="overline" style={{ marginBottom: "8px" }}>Get in Touch</p>
+                <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
                   Send a message
                 </h2>
                 <InquiryForm businessId={biz.id} businessName={biz.name} />
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* Back link */}
-      <div style={{ background: "var(--deep)", padding: "28px 0", textAlign: "center" }}>
-        <a href="/businesses" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", textDecoration: "none" }}>
-          ← Back to Island Directory
-        </a>
+      {/* Footer strip */}
+      <div style={{ background: "var(--deep)", padding: "clamp(40px, 6vw, 64px) 0 28px" }}>
+        <div className="container">
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "16px",
+            paddingBottom: "24px",
+            borderBottom: "1px solid rgba(255,255,255,0.07)",
+            marginBottom: "24px",
+          }}>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: "15px", color: "#fff", letterSpacing: "-0.3px", marginBottom: "4px" }}>
+                VISIT BAARAH
+              </div>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.3)" }}>HA. Baarah · Haa Alif Atoll · Maldives</p>
+            </div>
+            <div style={{ display: "flex", gap: "20px" }}>
+              <a href="/businesses" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", textDecoration: "none" }}>
+                Directory
+              </a>
+              <a href="/" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", textDecoration: "none" }}>
+                Home
+              </a>
+            </div>
+          </div>
+          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)" }}>
+            &copy; {new Date().getFullYear()} Visit Baarah
+          </span>
+        </div>
       </div>
-
-      <style>{`
-        @media (max-width: 800px) {
-          .biz-detail-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (hover: hover) and (pointer: fine) {
-          .biz-gallery-img:hover { transform: scale(1.04); }
-        }
-      `}</style>
     </main>
   );
 }
