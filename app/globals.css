@@ -792,3 +792,152 @@ h1, h2, h3, h4, h5 {
   transition: color 180ms ease;
 }
 .biz-contact-link:hover { color: var(--forest); }
+
+/* ════════════════════════════════════════════════════════
+   Navbar wordmark (transparent state)
+   ════════════════════════════════════════════════════════ */
+
+/* Wordmark: visible only when nav is transparent */
+.nav-wordmark {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+  line-height: 1;
+}
+/* Logo image: hidden in transparent state */
+.nav-logo-img { display: none !important; }
+
+/* Scrolled state: swap wordmark for logo image */
+.nav-public.scrolled .nav-wordmark { display: none !important; }
+.nav-public.scrolled .nav-logo-img {
+  display: block !important;
+  height: clamp(52px, 5vw, 64px) !important;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .nav-wordmark { font-size: 13px; letter-spacing: 2px; }
+}
+
+/* ════════════════════════════════════════════════════════
+   Nature section
+   ════════════════════════════════════════════════════════ */
+
+.nature-features {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.nature-feature {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: clamp(20px, 3vw, 40px);
+  padding: clamp(28px, 4vw, 44px) 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  align-items: center;
+}
+.nature-feature-num {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: var(--gold);
+  align-self: flex-start;
+  padding-top: 4px;
+}
+.nature-feature-title {
+  font-size: clamp(17px, 2.2vw, 22px);
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+.nature-feature-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.42);
+  line-height: 1.75;
+  max-width: 560px;
+}
+.nature-feature-stat {
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+.nature-stat-value {
+  font-size: clamp(24px, 3vw, 38px);
+  font-weight: 900;
+  color: var(--gold-light);
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -1px;
+}
+.nature-stat-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .nature-feature {
+    grid-template-columns: 32px 1fr;
+  }
+  .nature-feature-stat { display: none; }
+}
+
+/* ════════════════════════════════════════════════════════
+   Heritage section
+   ════════════════════════════════════════════════════════ */
+
+.heritage-inner {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: clamp(48px, 7vw, 96px);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .heritage-inner { grid-template-columns: 1fr; }
+  .heritage-quote-side { display: none; }
+}
+
+.heritage-markers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.heritage-marker {
+  padding: clamp(16px, 2.5vw, 22px);
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+.heritage-marker-year {
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 900;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: 5px;
+  letter-spacing: -1px;
+}
+.heritage-marker-label {
+  font-size: 12px;
+  color: var(--text-light);
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.heritage-quote-card {
+  background: var(--forest);
+  border-radius: 16px;
+  padding: clamp(28px, 4vw, 44px);
+  position: sticky;
+  top: 100px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+@media (max-width: 480px) {
+  .heritage-markers { grid-template-columns: 1fr 1fr; }
+}

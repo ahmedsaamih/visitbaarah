@@ -9,11 +9,11 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { href: "#discover", label: "Discover" },
-    { href: "#explore", label: "Explore" },
-    { href: "#events", label: "Events" },
-    { href: "/businesses", label: "Directory" },
-    { href: "#transport", label: "Get Around", isPrimary: true },
+    { href: "#discover",  label: "The Island" },
+    { href: "#nature",    label: "Nature" },
+    { href: "#heritage",  label: "History" },
+    { href: "#events",    label: "Events" },
+    { href: "/businesses", label: "Directory", isPrimary: true },
   ];
 
   useEffect(() => {
@@ -35,13 +35,17 @@ export default function Navbar() {
       <nav className={`nav-public ${scrolled ? "scrolled" : ""}`}>
         <div className="container nav-public-inner">
           <Link href="/" className="nav-brand-logo">
+            {/* Text wordmark: shown when transparent (logo PNG has opaque white bg) */}
+            <span className="nav-wordmark" aria-hidden="false">VISIT BAARAH</span>
+            {/* Logo image: shown only when nav is scrolled (white bg, matches nav bg) */}
             <Image
               src="/images/logo-visitbaarah.png"
               alt="Visit Baarah"
               width={200}
               height={200}
               priority
-              style={{ height: "clamp(48px, 6vw, 64px)", width: "auto" }}
+              className="nav-logo-img"
+              style={{ height: "clamp(52px, 5vw, 64px)", width: "auto" }}
             />
           </Link>
 
@@ -52,11 +56,11 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              href="#transport"
+              href="/businesses"
               className="btn-luxury"
               style={{ marginLeft: "28px", padding: "10px 22px", fontSize: "13px", borderRadius: "8px" }}
             >
-              Get Around
+              Island Directory
             </Link>
           </div>
         </div>
