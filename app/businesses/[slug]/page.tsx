@@ -5,7 +5,10 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/public/Navbar";
 import ConnectViaButton from "@/components/public/ConnectViaButton";
 import InquiryForm from "@/components/public/InquiryForm";
+import GuestHouseBookingForm from "@/components/public/GuestHouseBookingForm";
 import type { Metadata } from "next";
+
+const BOOKABLE_TYPES = ["guesthouse"];
 
 export const dynamic = "force-dynamic";
 
@@ -202,13 +205,25 @@ export default async function BusinessDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Inquiry form */}
+              {/* Booking or inquiry form */}
               <div className="biz-detail-card">
-                <p className="overline" style={{ marginBottom: "8px" }}>Get in Touch</p>
-                <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
-                  Send a message
-                </h2>
-                <InquiryForm businessId={biz.id} businessName={biz.name} />
+                {BOOKABLE_TYPES.includes(biz.businessType) ? (
+                  <>
+                    <p className="overline" style={{ marginBottom: "8px" }}>Book Your Stay</p>
+                    <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
+                      Request a Booking
+                    </h2>
+                    <GuestHouseBookingForm businessId={biz.id} businessName={biz.name} />
+                  </>
+                ) : (
+                  <>
+                    <p className="overline" style={{ marginBottom: "8px" }}>Get in Touch</p>
+                    <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
+                      Send a message
+                    </h2>
+                    <InquiryForm businessId={biz.id} businessName={biz.name} />
+                  </>
+                )}
               </div>
             </div>
 

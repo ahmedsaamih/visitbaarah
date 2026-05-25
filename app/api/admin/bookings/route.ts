@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, rooms, roomAvailability, roomTypes } from "@/db/schema";
+import { bookings, rooms, roomAvailability, roomTypes, businesses } from "@/db/schema";
 import { desc, eq, and, ne, gte, lt, inArray } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { generateReferenceId } from "@/lib/reference";
@@ -20,6 +20,7 @@ export async function GET() {
         roomType: true,
         assignedRoom: true,
         testimonials: true,
+        business: true,
       },
     });
     return NextResponse.json(items);
@@ -46,43 +47,44 @@ export async function POST(request: Request) {
     const specialRequests = typeof data.specialRequests === "string" ? data.specialRequests.trim() : "";
     const totalAmountRaw = data.totalAmount;
     const sendCustomerEmail = data.sendCustomerEmail === true;
-    const roomTypeId = Number(data.roomTypeId);
+    const roomTypeId = data.roomTypeId ? Number(data.roomTypeId) : null;
+    const businessId = data.businessId ? Number(data.businessId) : null;
     const numGuests = Number(data.numGuests) || 1;
     const numRooms = Number(data.numRooms) || 1;
     let assignedRoomId = data.assignedRoomId ? Number(data.assignedRoomId) : null;
 
-    if (!guestName || !guestEmailRaw || !checkIn || !checkOut || !Number.isInteger(roomTypeId)) {
+    if (!guestName || !guestEmailRaw || !checkIn || !checkOut) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
+    }
+    if (!roomTypeId && !businessId) {
+      return NextResponse.json({ error: "Either a room type or business is required." }, { status: 400 });
     }
     if (checkIn >= checkOut) {
       return NextResponse.json({ error: "Check-out must be after check-in." }, { status: 400 });
     }
 
     const totalAmountNumber = Number(totalAmountRaw);
-    if (!Number.isFinite(totalAmountNumber) || totalAmountNumber <= 0) {
-      return NextResponse.json({ error: "Valid total amount is required." }, { status: 400 });
-    }
-    const totalAmount = totalAmountNumber.toFixed(2);
+    const totalAmount = Number.isFinite(totalAmountNumber) && totalAmountNumber >= 0
+      ? totalAmountNumber.toFixed(2)
+      : "0.00";
 
-    if (assignedRoomId) {
-      const room = await db.query.rooms.findFirst({
-        where: and(eq(rooms.id, assignedRoomId), eq(rooms.roomTypeId, roomTypeId)),
-      });
-      if (!room) {
-        return NextResponse.json({ error: "Assigned room does not match selected room type." }, { status: 400 });
-      }
-    } else {
-      assignedRoomId = await findAvailableRoomId({
-        id: -1,
-        roomTypeId,
-        checkIn,
-        checkOut,
-      });
-      if (!assignedRoomId) {
-        return NextResponse.json(
-          { error: "No available room for selected dates. Choose a different date range." },
-          { status: 400 }
-        );
+    // Room assignment only applies when a room type is configured
+    if (roomTypeId) {
+      if (assignedRoomId) {
+        const room = await db.query.rooms.findFirst({
+          where: and(eq(rooms.id, assignedRoomId), eq(rooms.roomTypeId, roomTypeId)),
+        });
+        if (!room) {
+          return NextResponse.json({ error: "Assigned room does not match selected room type." }, { status: 400 });
+        }
+      } else {
+        assignedRoomId = await findAvailableRoomId({ id: -1, roomTypeId, checkIn, checkOut });
+        if (!assignedRoomId) {
+          return NextResponse.json(
+            { error: "No available room for selected dates. Choose a different date range." },
+            { status: 400 }
+          );
+        }
       }
     }
 
@@ -97,6 +99,7 @@ export async function POST(request: Request) {
         guestCountry: guestCountry || null,
         roomTypeId,
         assignedRoomId,
+        businessId,
         checkIn,
         checkOut,
         numGuests,
@@ -112,15 +115,16 @@ export async function POST(request: Request) {
 
     if (sendCustomerEmail) {
       try {
-        const [roomType, assignedRoom] = await Promise.all([
-          db.query.roomTypes.findFirst({ where: eq(roomTypes.id, roomTypeId) }),
-          db.query.rooms.findFirst({ where: eq(rooms.id, assignedRoomId) }),
+        const [roomType, assignedRoom, biz] = await Promise.all([
+          roomTypeId ? db.query.roomTypes.findFirst({ where: eq(roomTypes.id, roomTypeId) }) : Promise.resolve(null),
+          assignedRoomId ? db.query.rooms.findFirst({ where: eq(rooms.id, assignedRoomId) }) : Promise.resolve(null),
+          businessId ? db.query.businesses.findFirst({ where: eq(businesses.id, businessId) }) : Promise.resolve(null),
         ]);
 
         const sent = await sendBookingConfirmedEmail(guestEmailRaw, {
           guestName,
           referenceId,
-          roomType: roomType?.name ?? "Room",
+          roomType: roomType?.name ?? biz?.name ?? "Booking",
           roomNumber: assignedRoom?.roomNumber,
           checkIn,
           checkOut,
@@ -138,14 +142,15 @@ export async function POST(request: Request) {
     }
 
     try {
-      const roomType = await db.query.roomTypes.findFirst({
-        where: eq(roomTypes.id, roomTypeId),
-      });
+      const [telegramRoomType, telegramBiz] = await Promise.all([
+        roomTypeId ? db.query.roomTypes.findFirst({ where: eq(roomTypes.id, roomTypeId) }) : Promise.resolve(null),
+        businessId ? db.query.businesses.findFirst({ where: eq(businesses.id, businessId) }) : Promise.resolve(null),
+      ]);
       await sendTelegramNotification("booking_confirmed", {
         referenceId,
         guestName,
         guestEmail: guestEmailRaw,
-        roomType: roomType?.name ?? "Room",
+        roomType: telegramRoomType?.name ?? telegramBiz?.name ?? "Booking",
         checkIn,
         checkOut,
       });

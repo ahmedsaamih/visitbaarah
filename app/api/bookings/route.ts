@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, roomTypes, bookingAddons } from "@/db/schema";
+import { bookings, roomTypes, bookingAddons, businesses } from "@/db/schema";
 import { generateReferenceId } from "@/lib/reference";
 import { sendBookingReceivedEmail, sendAdminNewBookingEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
       guestCountry,
       nationality,
       roomTypeId,
+      businessId,
       checkIn,
       checkOut,
       numGuests,
@@ -33,8 +34,11 @@ export async function POST(request: Request) {
     } = data;
 
     // 1. Validate required fields
-    if (!guestName || !guestEmail || !roomTypeId || !checkIn || !checkOut) {
+    if (!guestName || !guestEmail || !checkIn || !checkOut) {
       return NextResponse.json({ error: "Missing required booking details" }, { status: 400 });
+    }
+    if (!roomTypeId && !businessId) {
+      return NextResponse.json({ error: "A room type or business is required" }, { status: 400 });
     }
     const normalizedGuestEmail = String(guestEmail).trim().toLowerCase();
 
@@ -43,23 +47,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
     }
 
-    const parsedRoomTypeId = Number(roomTypeId);
-    const roomType = await db.query.roomTypes.findFirst({
-      where: eq(roomTypes.id, parsedRoomTypeId),
-    });
-    if (!roomType) {
-      return NextResponse.json({ error: "Room type not found" }, { status: 404 });
+    // Pricing: calculate if room type provided, otherwise booking is a request (price TBD by admin)
+    let roomTotal = "0.00";
+    let totalAmount = "0.00";
+    let roomType: { id: number; name: string } | null = null;
+    const parsedRoomTypeId = roomTypeId ? Number(roomTypeId) : null;
+    const parsedBusinessId = businessId ? Number(businessId) : null;
+
+    if (parsedRoomTypeId) {
+      roomType = await db.query.roomTypes.findFirst({ where: eq(roomTypes.id, parsedRoomTypeId) }) ?? null;
+      if (!roomType) {
+        return NextResponse.json({ error: "Room type not found" }, { status: 404 });
+      }
+      const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
+      const discountMap = await getMaldivianDiscountMap([parsedRoomTypeId]);
+      const effectiveNationality = typeof nationality === "string" ? nationality : guestCountry;
+      const pricing = calculateRoomPricing(roomType.basePrice, checkIn, checkOut, rateMap.get(parsedRoomTypeId) || [], {
+        applyMaldivianDiscount: isMaldivianNationality(effectiveNationality),
+        maldivianDiscountPercent: discountMap.get(parsedRoomTypeId) || "0.00",
+      });
+      roomTotal = pricing.roomTotal;
+      const addonsTotalValue = Number(addonsTotal || "0");
+      totalAmount = (Number(roomTotal) + (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0)).toFixed(2);
     }
-    const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
-    const discountMap = await getMaldivianDiscountMap([parsedRoomTypeId]);
-    const effectiveNationality = typeof nationality === "string" ? nationality : guestCountry;
-    const pricing = calculateRoomPricing(roomType.basePrice, checkIn, checkOut, rateMap.get(parsedRoomTypeId) || [], {
-      applyMaldivianDiscount: isMaldivianNationality(effectiveNationality),
-      maldivianDiscountPercent: discountMap.get(parsedRoomTypeId) || "0.00",
-    });
-    const roomTotal = pricing.roomTotal;
-    const addonsTotalValue = Number(addonsTotal || "0");
-    const totalAmount = (Number(roomTotal) + (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0)).toFixed(2);
 
     // 2. Generate Reference ID
     const referenceId = await generateReferenceId();
@@ -73,14 +83,15 @@ export async function POST(request: Request) {
           guestName,
           guestEmail: normalizedGuestEmail,
           guestPhone,
-          guestCountry: typeof guestCountry === "string" && guestCountry.trim() ? guestCountry : effectiveNationality,
+          guestCountry: typeof guestCountry === "string" && guestCountry.trim() ? guestCountry : (typeof nationality === "string" ? nationality : guestCountry),
           roomTypeId: parsedRoomTypeId,
+          businessId: parsedBusinessId,
           checkIn,
           checkOut,
           numGuests: parseInt(numGuests) || 1,
           numRooms: parseInt(numRooms) || 1,
           roomTotal,
-          addonsTotal: (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0).toFixed(2),
+          addonsTotal: "0.00",
           totalAmount,
           specialRequests,
           status: "pending",
@@ -115,27 +126,31 @@ export async function POST(request: Request) {
       return newBooking;
     });
 
-    // 4. Fetch Room Type Name for Email
-    // 5. Send Emails (Fire and forget or await?)
-    // Using await for reliability in this context
+    // Resolve display name for emails (business name takes precedence if no room type)
+    let bookingDisplayName = roomType?.name || "Booking";
+    if (!roomType && parsedBusinessId) {
+      const biz = await db.query.businesses.findFirst({ where: eq(businesses.id, parsedBusinessId) });
+      if (biz) bookingDisplayName = biz.name;
+    }
+
     try {
       const guestEmailSent = await sendBookingReceivedEmail(normalizedGuestEmail, {
         guestName,
         referenceId,
-        roomType: roomType?.name || "Room",
+        roomType: bookingDisplayName,
         checkIn,
         checkOut,
-        totalAmount: `$${totalAmount}`,
+        totalAmount: totalAmount !== "0.00" ? `$${totalAmount}` : "TBD",
       });
 
       const adminEmailSent = await sendAdminNewBookingEmail({
         guestName,
         guestEmail: normalizedGuestEmail,
         referenceId,
-        roomType: roomType?.name || "Room",
+        roomType: bookingDisplayName,
         checkIn,
         checkOut,
-        totalAmount: `$${totalAmount}`,
+        totalAmount: totalAmount !== "0.00" ? `$${totalAmount}` : "TBD",
       });
 
       if (!guestEmailSent || !adminEmailSent) {
@@ -154,7 +169,7 @@ export async function POST(request: Request) {
       referenceId,
       guestName,
       guestEmail: normalizedGuestEmail,
-      roomType: roomType?.name || "Room",
+      roomType: bookingDisplayName,
       checkIn,
       checkOut,
     });

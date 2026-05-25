@@ -23,11 +23,12 @@ const emptyForm = {
   isFeatured: false, isActive: true, sortOrder: 0,
 };
 
-type Tab = "listings" | "inquiries";
+type Tab = "listings" | "inquiries" | "bookings";
 
 export default function AdminBusinesses() {
   const [items, setItems]       = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
+  const [bizBookings, setBizBookings] = useState<any[]>([]);
   const [loading, setLoading]   = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [tab, setTab]           = useState<Tab>("listings");
@@ -37,13 +38,20 @@ export default function AdminBusinesses() {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/businesses");
-      const data = res.ok ? await res.json() : [];
+      const [bizRes, bookingsRes] = await Promise.all([
+        fetch("/api/admin/businesses"),
+        fetch("/api/admin/bookings"),
+      ]);
+      const data = bizRes.ok ? await bizRes.json() : [];
       setItems(data);
       const allInquiries = data.flatMap((b: any) =>
         (b.inquiries || []).map((i: any) => ({ ...i, businessName: b.name }))
       );
       setInquiries(allInquiries.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      if (bookingsRes.ok) {
+        const allBookings = await bookingsRes.json();
+        setBizBookings(allBookings.filter((bk: any) => bk.business));
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -131,11 +139,15 @@ export default function AdminBusinesses() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
-        {(["listings", "inquiries"] as Tab[]).map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`btn ${tab === t ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
-            {t === "listings" ? `Listings (${items.length})` : `Inquiries (${inquiries.filter(i => i.status === "new").length} new)`}
-          </button>
-        ))}
+        <button onClick={() => setTab("listings")} className={`btn ${tab === "listings" ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
+          Listings ({items.length})
+        </button>
+        <button onClick={() => setTab("inquiries")} className={`btn ${tab === "inquiries" ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
+          Inquiries ({inquiries.filter(i => i.status === "new").length} new)
+        </button>
+        <button onClick={() => setTab("bookings")} className={`btn ${tab === "bookings" ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
+          Bookings ({bizBookings.length})
+        </button>
       </div>
 
       {/* Form */}
@@ -307,9 +319,7 @@ export default function AdminBusinesses() {
                     <td style={{ maxWidth: "260px", fontSize: "13px", color: "var(--text-light)" }}>
                       {inq.message?.slice(0, 120)}{inq.message?.length > 120 ? "…" : ""}
                     </td>
-                    <td style={{ fontSize: "12px" }}>
-                      {new Date(inq.createdAt).toLocaleDateString()}
-                    </td>
+                    <td style={{ fontSize: "12px" }}>{new Date(inq.createdAt).toLocaleDateString()}</td>
                     <td>
                       <span className={`badge ${inq.status === "new" ? "badge-pending" : inq.status === "replied" ? "badge-confirmed" : "badge-cancelled"}`}>
                         {inq.status}
@@ -319,6 +329,53 @@ export default function AdminBusinesses() {
                 ))}
                 {inquiries.length === 0 && (
                   <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--text-light)" }}>No inquiries yet</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {tab === "bookings" && (
+        <div className="card">
+          <p style={{ fontSize: "13px", color: "var(--admin-text-light)", marginBottom: "16px" }}>
+            Bookings submitted through business pages. Manage and update status in{" "}
+            <a href="/admin/bookings" style={{ color: "var(--admin-accent)" }}>Bookings</a>.
+          </p>
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>REF</th>
+                  <th>Business</th>
+                  <th>Guest</th>
+                  <th>Check-in</th>
+                  <th>Check-out</th>
+                  <th>Guests</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bizBookings.map((bk: any) => (
+                  <tr key={bk.id}>
+                    <td style={{ fontWeight: 600, fontSize: "12px" }}>{bk.referenceId}</td>
+                    <td style={{ fontWeight: 600 }}>{bk.business?.name ?? "—"}</td>
+                    <td>
+                      <div style={{ fontWeight: 600 }}>{bk.guestName}</div>
+                      <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{bk.guestEmail}</div>
+                    </td>
+                    <td>{new Date(bk.checkIn).toLocaleDateString()}</td>
+                    <td>{new Date(bk.checkOut).toLocaleDateString()}</td>
+                    <td>{bk.numGuests}</td>
+                    <td>
+                      <span className={`badge badge-${bk.status}`}>{bk.status}</span>
+                    </td>
+                  </tr>
+                ))}
+                {bizBookings.length === 0 && (
+                  <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--text-light)" }}>
+                    No business bookings yet. They appear here when guests book via a business page.
+                  </td></tr>
                 )}
               </tbody>
             </table>

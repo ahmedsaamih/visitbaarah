@@ -273,6 +273,7 @@ export const bookings = pgTable("bookings", {
   roomTypeId: integer("room_type_id")
     .references(() => roomTypes.id, { onDelete: "set null" }), // Keep booking history but remove type link
   assignedRoomId: integer("assigned_room_id").references(() => rooms.id, { onDelete: "set null" }),
+  businessId: integer("business_id").references(() => businesses.id, { onDelete: "set null" }),
   checkIn: date("check_in").notNull(),
   checkOut: date("check_out").notNull(),
   numGuests: integer("num_guests").notNull().default(1),
@@ -400,6 +401,7 @@ export const servicesRelations = relations(services, ({ many }) => ({
 export const businessesRelations = relations(businesses, ({ many }) => ({
   media: many(media, { relationName: "businessMedia" }),
   inquiries: many(businessInquiries),
+  bookings: many(bookings),
 }));
 
 export const businessInquiriesRelations = relations(businessInquiries, ({ one }) => ({
@@ -463,6 +465,10 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   assignedRoom: one(rooms, {
     fields: [bookings.assignedRoomId],
     references: [rooms.id],
+  }),
+  business: one(businesses, {
+    fields: [bookings.businessId],
+    references: [businesses.id],
   }),
   addons: many(bookingAddons),
   cancellationRequests: many(cancellationRequests),
