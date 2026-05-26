@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { bookings, cancellationRequests, roomTypes, rooms } from "@/db/schema";
+import { bookings, cancellationRequests, rooms } from "@/db/schema";
 import { eq, sql, count } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -22,23 +22,19 @@ export default async function AdminDashboard() {
     .where(eq(cancellationRequests.status, "pending"));
 
   const [totalRooms] = await db.select({ count: count() }).from(rooms);
-  
-  const [totalRoomTypes] = await db.select({ count: count() }).from(roomTypes);
 
   const stats = [
-    { label: "Pending Bookings", value: pendingBookings.count, color: "var(--admin-warning)" },
-    { label: "Confirmed Bookings", value: confirmedBookings.count, color: "var(--admin-success)" },
-    { label: "Pending Cancellations", value: pendingCancellations.count, color: "var(--admin-error)" },
-    { label: "Total Rooms", value: totalRooms.count, color: "var(--admin-accent)" },
+    { label: "Pending Bookings", value: pendingBookings.count, color: "var(--admin-warning)", href: "/admin/bookings" },
+    { label: "Confirmed Bookings", value: confirmedBookings.count, color: "var(--admin-success)", href: "/admin/bookings" },
+    { label: "Pending Cancellations", value: pendingCancellations.count, color: "var(--admin-error)", href: "/admin/cancellations" },
+    { label: "Total Rooms", value: totalRooms.count, color: "var(--admin-accent)", href: "/admin/rooms" },
   ];
 
   // Fetch recent bookings
   const recentBookings = await db.query.bookings.findMany({
     limit: 5,
     orderBy: (bookings, { desc }) => [desc(bookings.createdAt)],
-    with: {
-      roomType: true,
-    },
+    with: { roomType: true, business: true },
   });
 
   return (
@@ -54,19 +50,22 @@ export default async function AdminDashboard() {
         marginBottom: "32px"
       }}>
         {stats.map((stat) => (
-          <div key={stat.label} className="card" style={{ marginBottom: 0 }}>
+          <a key={stat.label} href={stat.href} className="card" style={{ marginBottom: 0, textDecoration: "none", display: "block", transition: "box-shadow 150ms" }}>
             <p style={{ fontSize: "14px", color: "var(--admin-text-light)", marginBottom: "8px" }}>
               {stat.label}
             </p>
-            <p style={{ fontSize: "32px", fontWeight: "700", color: stat.color }}>
+            <p style={{ fontSize: "32px", fontWeight: "700", color: stat.color, margin: 0 }}>
               {stat.value}
             </p>
-          </div>
+          </a>
         ))}
       </div>
 
       <div className="card">
-        <h2>Recent Bookings</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <h2 style={{ margin: 0 }}>Recent Bookings</h2>
+          <a href="/admin/bookings" style={{ fontSize: "13px", color: "var(--admin-accent)", textDecoration: "none", fontWeight: 600 }}>View all →</a>
+        </div>
         <div className="table-wrapper">
           <table>
             <thead>
@@ -85,7 +84,7 @@ export default async function AdminDashboard() {
                     <div style={{ fontWeight: "600" }}>{booking.guestName}</div>
                     <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{booking.referenceId}</div>
                   </td>
-                  <td>{booking.roomType?.name ?? "Deleted room type"}</td>
+                  <td>{booking.roomType?.name ?? booking.business?.name ?? "—"}</td>
                   <td>
                     {new Date(booking.checkIn).toLocaleDateString()} &rarr; {new Date(booking.checkOut).toLocaleDateString()}
                   </td>

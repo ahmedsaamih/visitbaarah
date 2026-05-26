@@ -100,8 +100,22 @@ export default function AdminBusinesses() {
   useEffect(() => { fetchItems(); }, []);
 
   useEffect(() => {
+    if (tab === "rooms") {
+      const guesthouseList = items.filter((b) => b.businessType === "guesthouse");
+      if (!selectedBizId && guesthouseList.length === 1) {
+        setSelectedBizId(guesthouseList[0].id);
+      }
+    }
+  }, [tab, items]);
+
+  useEffect(() => {
     if (tab === "rooms" && selectedBizId) {
       fetchBizRooms(selectedBizId);
+      setIsEditingRoomType(false);
+      setIsEditingRoom(false);
+      setRoomTypeForm({ ...emptyRoomTypeForm });
+      setRoomForm({ ...emptyRoomForm });
+      setRoomSaveError("");
     }
   }, [tab, selectedBizId]);
 
@@ -518,14 +532,14 @@ export default function AdminBusinesses() {
               {/* Sub-tabs */}
               <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
                 <button
-                  onClick={() => { setRoomsSubTab("room-types"); setIsEditingRoomType(false); setIsEditingRoom(false); }}
+                  onClick={() => { setRoomsSubTab("room-types"); setIsEditingRoomType(false); setRoomTypeForm({ ...emptyRoomTypeForm }); setIsEditingRoom(false); setRoomSaveError(""); }}
                   className={`btn ${roomsSubTab === "room-types" ? "btn-primary" : "btn-outline"}`}
                   style={{ padding: "6px 16px" }}
                 >
                   Room Types ({bizRoomTypes.length})
                 </button>
                 <button
-                  onClick={() => { setRoomsSubTab("rooms"); setIsEditingRoomType(false); setIsEditingRoom(false); }}
+                  onClick={() => { setRoomsSubTab("rooms"); setIsEditingRoom(false); setRoomForm({ ...emptyRoomForm }); setIsEditingRoomType(false); setRoomSaveError(""); }}
                   className={`btn ${roomsSubTab === "rooms" ? "btn-primary" : "btn-outline"}`}
                   style={{ padding: "6px 16px" }}
                 >

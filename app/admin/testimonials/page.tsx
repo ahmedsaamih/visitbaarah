@@ -215,7 +215,13 @@ export default function AdminTestimonials() {
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       <button onClick={() => patchItem(item.id, { reviewStatus: "approved", isPublished: true })} className="btn btn-outline" style={{ padding: "4px 8px", borderColor: "var(--admin-success)", color: "var(--admin-success)" }}>Approve</button>
                       <button onClick={() => patchItem(item.id, { reviewStatus: "rejected", isPublished: false, isFeatured: false })} className="btn btn-outline" style={{ padding: "4px 8px", borderColor: "var(--admin-error)", color: "var(--admin-error)" }}>Reject</button>
-                      <button onClick={() => patchItem(item.id, { isFeatured: !item.isFeatured })} className="btn btn-outline" style={{ padding: "4px 8px" }} disabled={!item.isPublished || item.reviewStatus !== "approved"}>
+                      <button
+                        onClick={() => patchItem(item.id, { isFeatured: !item.isFeatured })}
+                        className="btn btn-outline"
+                        style={{ padding: "4px 8px", opacity: (!item.isPublished || item.reviewStatus !== "approved") ? 0.4 : 1 }}
+                        disabled={!item.isPublished || item.reviewStatus !== "approved"}
+                        title={!item.isPublished ? "Publish first" : item.reviewStatus !== "approved" ? "Approve first" : ""}
+                      >
                         {item.isFeatured ? "Unfeature" : "Feature"}
                       </button>
                       <button onClick={() => { setIsEditing(true); setFormData(item); }} className="btn btn-outline" style={{ padding: "4px 8px" }}>Edit</button>

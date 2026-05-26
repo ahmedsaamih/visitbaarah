@@ -143,7 +143,7 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-      {/* Room type selector — only shown when multiple room types exist */}
+      {/* Room type selector — shown when multiple exist; show label when exactly 1 */}
       {roomTypes.length > 1 && (
         <div className="form-group">
           <label>Room Type *</label>
@@ -155,6 +155,13 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
               </option>
             ))}
           </select>
+        </div>
+      )}
+      {roomTypes.length === 1 && (
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 14px", background: "rgba(100,100,100,0.04)", border: "1.5px solid var(--border)", borderRadius: "8px", fontSize: "14px" }}>
+          <span style={{ color: "var(--text-light)", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>Room</span>
+          <span style={{ fontWeight: 600, color: "var(--text)" }}>{roomTypes[0].name}</span>
+          <span style={{ color: "var(--text-light)", marginLeft: "auto" }}>from ${roomTypes[0].basePrice}/night</span>
         </div>
       )}
 
@@ -193,12 +200,12 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
           fontSize: "13px",
           lineHeight: 1.6,
           background: checkingAvail
-            ? "rgba(100,100,100,0.05)"
+            ? "rgba(100,100,100,0.04)"
             : availability?.available
-            ? "rgba(26,92,56,0.06)"
-            : "rgba(220,38,38,0.06)",
-          border: `1px solid ${checkingAvail ? "var(--border)" : availability?.available ? "rgba(26,92,56,0.25)" : "rgba(220,38,38,0.2)"}`,
-          color: checkingAvail ? "var(--text-light)" : availability?.available ? "var(--forest)" : "#dc2626",
+            ? "rgba(26,92,56,0.07)"
+            : "rgba(220,38,38,0.09)",
+          border: `1.5px solid ${checkingAvail ? "var(--border)" : availability?.available ? "rgba(26,92,56,0.3)" : "rgba(220,38,38,0.4)"}`,
+          color: checkingAvail ? "var(--text-light)" : availability?.available ? "var(--forest)" : "#b91c1c",
         }}>
           {checkingAvail && "Checking availability…"}
           {!checkingAvail && availability?.available && (
