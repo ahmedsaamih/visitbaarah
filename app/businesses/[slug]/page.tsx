@@ -1,11 +1,14 @@
 import { db } from "@/db";
-import { businesses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { businesses, roomTypes } from "@/db/schema";
+import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/public/Navbar";
 import ConnectViaButton from "@/components/public/ConnectViaButton";
 import InquiryForm from "@/components/public/InquiryForm";
+import GuestHouseBookingForm from "@/components/public/GuestHouseBookingForm";
 import type { Metadata } from "next";
+
+const BOOKABLE_TYPES = ["guesthouse"];
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +46,13 @@ export default async function BusinessDetailPage({ params }: Props) {
   });
 
   if (!biz || !biz.isActive) notFound();
+
+  const bizRoomTypes = biz.businessType === "guesthouse"
+    ? await db.query.roomTypes.findMany({
+        where: and(eq(roomTypes.businessId, biz.id), eq(roomTypes.isActive, true)),
+        orderBy: [asc(roomTypes.sortOrder)],
+      })
+    : [];
 
   const connectLinks = (biz.connectLinks || []) as { type: string; value: string }[];
   const heroImg = biz.coverPhotoUrl || biz.media?.[0]?.url || "/images/hero.png";
@@ -202,13 +212,38 @@ export default async function BusinessDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Inquiry form */}
+              {/* Booking or inquiry form */}
               <div className="biz-detail-card">
-                <p className="overline" style={{ marginBottom: "8px" }}>Get in Touch</p>
-                <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
-                  Send a message
-                </h2>
-                <InquiryForm businessId={biz.id} businessName={biz.name} />
+                {BOOKABLE_TYPES.includes(biz.businessType) ? (
+                  <>
+                    <p className="overline" style={{ marginBottom: "8px" }}>Book Your Stay</p>
+                    <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
+                      Request a Booking
+                    </h2>
+                    <GuestHouseBookingForm
+                    businessId={biz.id}
+                    businessName={biz.name}
+                    slug={slug}
+                    initialRoomTypes={bizRoomTypes.map((rt) => ({
+                      id: rt.id,
+                      name: rt.name,
+                      description: rt.description,
+                      basePrice: rt.basePrice,
+                      maxGuests: rt.maxGuests,
+                      bedType: rt.bedType,
+                      size: rt.size,
+                    }))}
+                  />
+                  </>
+                ) : (
+                  <>
+                    <p className="overline" style={{ marginBottom: "8px" }}>Get in Touch</p>
+                    <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
+                      Send a message
+                    </h2>
+                    <InquiryForm businessId={biz.id} businessName={biz.name} />
+                  </>
+                )}
               </div>
             </div>
 

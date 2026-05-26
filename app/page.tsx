@@ -124,14 +124,14 @@ export default async function HomePage() {
             </h2>
             <div className="line-expand" style={{ width: "48px", height: "2px", background: "var(--gold)", marginBottom: "28px" }} />
             <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "16px", lineHeight: 1.8, marginBottom: "20px" }}>
-              Nestled in the northernmost reaches of the Maldives, HA. Baarah is a living tapestry
-              of tradition, nature, and warm island hospitality. Far from the resort crowds, this
-              is the Maldives as it has always been.
+              Nestled in the northernmost reaches of the Maldives, HA. Baarah is a place of
+              remarkable nature, deep history, and unhurried island life. Far from the resort
+              crowds, this is the Maldives as it has always been.
             </p>
             <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "15px", lineHeight: 1.8, marginBottom: "48px" }}>
-              The island is renowned throughout the archipelago for its rich agricultural heritage —
-              fertile soil yields fresh watermelons, papayas, and tropical fruit. Baarah&apos;s
-              lagoon is a mirror of turquoise tranquillity.
+              Home to the largest mangrove forest in the Maldives, a world-class reef at Baarah
+              Corner, and the mangroves that sheltered the ship that freed a nation in 1573 —
+              Baarah carries more history and natural wealth than its size suggests.
             </p>
 
             {/* Stats row */}
@@ -232,7 +232,7 @@ export default async function HomePage() {
               ))}
             </div>
 
-            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)" }}>
+            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)", position: "relative", zIndex: 1 }}>
               <a href="/businesses" className="btn-outline-gold" style={{ padding: "14px 40px", fontSize: "13px" }}>
                 View All Listings
               </a>

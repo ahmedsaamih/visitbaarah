@@ -4,20 +4,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { label: "Dashboard", href: "/admin/dashboard" },
-  { label: "Bookings", href: "/admin/bookings" },
+  { label: "Dashboard",    href: "/admin/dashboard" },
+  { label: "Businesses",   href: "/admin/businesses" },
+  { label: "Bookings",     href: "/admin/bookings" },
   { label: "Cancellations", href: "/admin/cancellations" },
-  { label: "Room Types", href: "/admin/room-types" },
-  { label: "Rooms", href: "/admin/rooms" },
-  { label: "Availability", href: "/admin/availability" },
-  { label: "Activities", href: "/admin/activities" },
-  { label: "Tours", href: "/admin/tours" },
-  { label: "Restaurant", href: "/admin/menu" },
-  { label: "Services", href: "/admin/services" },
-  { label: "Businesses", href: "/admin/businesses" },
-  { label: "Gallery", href: "/admin/gallery" },
+  { label: "Gallery",      href: "/admin/gallery" },
   { label: "Testimonials", href: "/admin/testimonials" },
-  { label: "Settings", href: "/admin/settings" },
+  { label: "Settings",     href: "/admin/settings" },
+  // Room management — shown below separator
+  { label: "Room Types",   href: "/admin/room-types",  section: "rooms" },
+  { label: "Rooms",        href: "/admin/rooms",       section: "rooms" },
+  { label: "Availability", href: "/admin/availability", section: "rooms" },
 ];
 
 interface SidebarNavProps {
@@ -27,9 +24,34 @@ interface SidebarNavProps {
 export default function SidebarNav({ onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
 
+  const mainItems = navItems.filter((i) => !i.section);
+  const roomItems = navItems.filter((i) => i.section === "rooms");
+
   return (
     <nav className="sidebar-nav">
-      {navItems.map((item) => (
+      {mainItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`nav-link ${pathname === item.href ? "active" : ""}`}
+          onClick={onNavigate}
+        >
+          {item.label}
+        </Link>
+      ))}
+      <div style={{
+        margin: "12px 0 8px",
+        padding: "0 16px",
+        fontSize: "10px",
+        fontWeight: 700,
+        letterSpacing: "1.5px",
+        textTransform: "uppercase",
+        color: "var(--admin-text-light)",
+        opacity: 0.5,
+      }}>
+        Room Mgmt
+      </div>
+      {roomItems.map((item) => (
         <Link
           key={item.href}
           href={item.href}

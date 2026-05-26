@@ -46,8 +46,12 @@ type AllRoomsPayload = {
   manualBlocks: AllRoomsBlock[];
 };
 
+type BusinessOption = { id: number; name: string };
+
 export default function AdminAvailability() {
   const [rooms, setRooms] = useState<RoomItem[]>([]);
+  const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [availability, setAvailability] = useState<AvailabilityItem[]>([]);
@@ -72,12 +76,22 @@ export default function AdminAvailability() {
     });
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (bizId?: string) => {
     try {
-      const res = await fetch("/api/admin/rooms");
-      const data = await res.json();
-      setRooms(data);
-      if (data.length > 0) setSelectedRoomId(data[0].id.toString());
+      const [roomsRes, bizRes] = await Promise.all([
+        fetch(bizId ? `/api/admin/rooms?businessId=${bizId}` : "/api/admin/rooms"),
+        fetch("/api/admin/businesses"),
+      ]);
+      const roomData = roomsRes.ok ? await roomsRes.json() : [];
+      const bizData = bizRes.ok ? await bizRes.json() : [];
+      setRooms(roomData);
+      setBusinesses(
+        bizData
+          .filter((b: any) => b.businessType === "guesthouse")
+          .map((b: any) => ({ id: b.id, name: b.name }))
+      );
+      if (roomData.length > 0) setSelectedRoomId(roomData[0].id.toString());
+      else setSelectedRoomId("");
     } catch (error) {
       console.error(error);
     } finally {
@@ -104,7 +118,8 @@ export default function AdminAvailability() {
   const fetchAllRoomsData = useCallback(async () => {
     setAllRoomsLoading(true);
     try {
-      const res = await fetch(`/api/admin/availability?view=all-rooms&year=${selectedYear}`, {
+      const bizParam = selectedBusinessId ? `&businessId=${selectedBusinessId}` : "";
+      const res = await fetch(`/api/admin/availability?view=all-rooms&year=${selectedYear}${bizParam}`, {
         cache: "no-store",
       });
       const data = (await res.json()) as AllRoomsPayload;
@@ -120,10 +135,10 @@ export default function AdminAvailability() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      void fetchData();
+      void fetchData(selectedBusinessId || undefined);
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [selectedBusinessId]);
 
   useEffect(() => {
     if (viewMode !== "by-room") return;
@@ -204,6 +219,18 @@ export default function AdminAvailability() {
       <div className="title-row">
         <h1>Room Availability</h1>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {businesses.length > 0 && (
+            <select
+              value={selectedBusinessId}
+              onChange={(e) => setSelectedBusinessId(e.target.value)}
+              className="btn btn-outline"
+            >
+              <option value="">All Properties</option>
+              {businesses.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
           <button
             className={viewMode === "by-room" ? "btn btn-primary" : "btn btn-outline"}
             onClick={() => setViewMode("by-room")}

@@ -169,15 +169,16 @@ export default function AdminRoomTypes() {
                   onChange={(e) => setFormData({ ...formData, maldivianDiscountPercent: e.target.value })}
                 />
               </div>
-              <div style={{ display: "grid", gap: "8px" }}>
+              <div style={{ display: "grid", gap: "8px", overflowX: "auto" }}>
                 {seasonalRates.map((rate, index) => (
                   <div
                     key={`${rate.startDate || "rate"}-${index}`}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "90px minmax(140px,1fr) minmax(140px,1fr) minmax(140px,1fr) minmax(160px,1fr) auto auto auto",
+                      gridTemplateColumns: "90px minmax(130px,1fr) minmax(130px,1fr) minmax(120px,1fr) minmax(140px,1fr) auto auto auto",
                       gap: "8px",
                       alignItems: "center",
+                      minWidth: "760px",
                     }}
                   >
                     <div style={{ fontSize: "12px", color: "var(--admin-text-light)", fontWeight: 600 }}>

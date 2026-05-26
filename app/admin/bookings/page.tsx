@@ -14,6 +14,7 @@ type BookingRow = {
   status: string;
   adminNotes?: string | null;
   roomType?: { name?: string | null } | null;
+  business?: { id: number; name: string } | null;
   testimonials?: ReviewEntry[];
 };
 
@@ -26,6 +27,12 @@ type RoomOption = {
   id: number;
   roomNumber: string;
   roomTypeId: number;
+};
+
+type BusinessOption = {
+  id: number;
+  name: string;
+  businessType: string;
 };
 
 type ReviewEntry = {
@@ -50,6 +57,7 @@ export default function AdminBookings() {
   const [createSuccess, setCreateSuccess] = useState("");
   const [roomTypes, setRoomTypes] = useState<RoomTypeOption[]>([]);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
+  const [businessOptions, setBusinessOptions] = useState<BusinessOption[]>([]);
   const [filterPreset, setFilterPreset] = useState<"all" | "month" | "year" | "custom">("month");
   const [filterStartDate, setFilterStartDate] = useState(() => {
     const now = new Date();
@@ -64,6 +72,7 @@ export default function AdminBookings() {
     guestEmail: "",
     guestPhone: "",
     guestCountry: "",
+    businessId: "",
     roomTypeId: "",
     assignedRoomId: "",
     checkIn: "",
@@ -120,19 +129,14 @@ export default function AdminBookings() {
   useEffect(() => {
     const loadFormData = async () => {
       try {
-        const [roomTypesRes, roomsRes] = await Promise.all([
+        const [roomTypesRes, roomsRes, bizRes] = await Promise.all([
           fetch("/api/admin/room-types", { cache: "no-store" }),
           fetch("/api/admin/rooms", { cache: "no-store" }),
+          fetch("/api/admin/businesses", { cache: "no-store" }),
         ]);
-
-        if (roomTypesRes.ok) {
-          const roomTypesData = await roomTypesRes.json();
-          setRoomTypes(roomTypesData);
-        }
-        if (roomsRes.ok) {
-          const roomsData = await roomsRes.json();
-          setRooms(roomsData);
-        }
+        if (roomTypesRes.ok) setRoomTypes(await roomTypesRes.json());
+        if (roomsRes.ok) setRooms(await roomsRes.json());
+        if (bizRes.ok) setBusinessOptions(await bizRes.json());
       } catch {
         // Keep booking list functional even if these fail.
       }
@@ -203,6 +207,13 @@ export default function AdminBookings() {
       return true;
     });
   }, [bookings, filterStartDate, filterEndDate]);
+  const filteredRoomTypes = useMemo(() => {
+    if (!manualForm.businessId) return roomTypes;
+    return roomTypes.filter(
+      (rt: any) => rt.businessId === Number(manualForm.businessId) || rt.businessId === null
+    );
+  }, [roomTypes, manualForm.businessId]);
+
   const filteredRooms = useMemo(
     () => rooms.filter((room) => String(room.roomTypeId) === manualForm.roomTypeId),
     [rooms, manualForm.roomTypeId]
@@ -217,6 +228,7 @@ export default function AdminBookings() {
     try {
       const payload = {
         ...manualForm,
+        businessId: manualForm.businessId ? Number(manualForm.businessId) : null,
         roomTypeId: manualForm.roomTypeId ? Number(manualForm.roomTypeId) : null,
         assignedRoomId: manualForm.assignedRoomId ? Number(manualForm.assignedRoomId) : null,
         numGuests: Number(manualForm.numGuests) || 1,
@@ -241,6 +253,7 @@ export default function AdminBookings() {
         guestEmail: "",
         guestPhone: "",
         guestCountry: "",
+        businessId: "",
         roomTypeId: "",
         assignedRoomId: "",
         checkIn: "",
@@ -392,16 +405,27 @@ export default function AdminBookings() {
               />
             </div>
             <div className="form-group">
-              <label>Room Type</label>
+              <label>Business</label>
               <select
-                required
+                value={manualForm.businessId}
+                onChange={(e) => setManualForm((prev) => ({ ...prev, businessId: e.target.value }))}
+              >
+                <option value="">No specific business</option>
+                {businessOptions.map((biz) => (
+                  <option key={biz.id} value={biz.id}>{biz.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Room Type (optional)</label>
+              <select
                 value={manualForm.roomTypeId}
                 onChange={(e) =>
                   setManualForm((prev) => ({ ...prev, roomTypeId: e.target.value, assignedRoomId: "" }))
                 }
               >
-                <option value="">Select room type</option>
-                {roomTypes.map((roomType) => (
+                <option value="">No room type</option>
+                {filteredRoomTypes.map((roomType) => (
                   <option key={roomType.id} value={roomType.id}>
                     {roomType.name}
                   </option>
@@ -516,7 +540,7 @@ export default function AdminBookings() {
               <tr>
                 <th>REF ID</th>
                 <th>Guest</th>
-                <th>Room Type</th>
+                <th>Business / Room</th>
                 <th>Check-in</th>
                 <th>Check-out</th>
                 <th>Total</th>
@@ -555,7 +579,17 @@ export default function AdminBookings() {
                       <div style={{ fontWeight: "600" }}>{booking.guestName}</div>
                       <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{booking.guestEmail}</div>
                     </td>
-                    <td>{booking.roomType?.name ?? "Deleted room type"}</td>
+                    <td>
+                      {booking.business?.name && (
+                        <div style={{ fontWeight: 600, fontSize: "13px" }}>{booking.business.name}</div>
+                      )}
+                      {booking.roomType?.name && (
+                        <div style={{ fontSize: "12px", color: "var(--admin-text-light)" }}>{booking.roomType.name}</div>
+                      )}
+                      {!booking.business?.name && !booking.roomType?.name && (
+                        <span style={{ color: "var(--admin-text-light)", fontSize: "12px" }}>—</span>
+                      )}
+                    </td>
                     <td>{new Date(booking.checkIn).toLocaleDateString()}</td>
                     <td>{new Date(booking.checkOut).toLocaleDateString()}</td>
                     <td>${booking.totalAmount}</td>

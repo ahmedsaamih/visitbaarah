@@ -105,12 +105,14 @@ async function getAllRoomsView(searchParams: URLSearchParams) {
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
 
+  const businessIdParam = searchParams.get("businessId");
+  const businessId = businessIdParam ? Number(businessIdParam) : null;
+
   try {
     const roomItems = await db.query.rooms.findMany({
+      where: businessId ? eq(rooms.businessId, businessId) : undefined,
       orderBy: [asc(rooms.roomNumber)],
-      with: {
-        roomType: true,
-      },
+      with: { roomType: true },
     });
 
     const activeBookings = await db.query.bookings.findMany({
