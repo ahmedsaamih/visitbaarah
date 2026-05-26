@@ -34,13 +34,16 @@ export async function POST(request: Request) {
       addons,
     } = data;
 
-    if (!guestName || !guestEmail || !checkIn || !checkOut) {
+    if (!guestName || !checkIn || !checkOut) {
       return NextResponse.json({ error: "Missing required booking details" }, { status: 400 });
+    }
+    if (!guestEmail || typeof guestEmail !== "string" || !guestEmail.trim()) {
+      return NextResponse.json({ error: "Email address is required" }, { status: 400 });
     }
     if (!roomTypeId && !businessId) {
       return NextResponse.json({ error: "A room type or business is required" }, { status: 400 });
     }
-    const normalizedGuestEmail = String(guestEmail).trim().toLowerCase();
+    const normalizedGuestEmail = guestEmail.trim().toLowerCase();
 
     const limit = checkTransactionalRequestLimit("booking_request", normalizedGuestEmail);
     if (!limit.allowed) {
