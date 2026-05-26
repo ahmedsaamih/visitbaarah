@@ -634,7 +634,7 @@ export default async function HomePage() {
             <span>HA. Baarah · Haa Alif Atoll · Maldives</span>
           </div>
           <div style={{ textAlign: "center", marginTop: "16px", fontSize: "10px", opacity: 0.18, letterSpacing: "0.3px" }}>
-            Built & maintained by Ahmed Saamih &middot; <a href="mailto:saamme619@gmail.com" style={{ color: "inherit", textDecoration: "none" }}>saamme619@gmail.com</a>
+            Built & maintained by Ahmed Saamih &middot; <a href="mailto:ahmed.saamih@icloud.com" style={{ color: "inherit", textDecoration: "none" }}>ahmed.saamih@icloud.com</a> &middot; +960 912 4400
           </div>
         </div>
       </footer>
