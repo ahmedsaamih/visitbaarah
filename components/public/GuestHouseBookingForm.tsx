@@ -1,28 +1,77 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type RoomTypeOption = {
+  id: number;
+  name: string;
+  description?: string | null;
+  basePrice: string;
+  maxGuests: number;
+  bedType?: string | null;
+  size?: string | null;
+};
 
 interface Props {
   businessId: number;
   businessName: string;
+  slug: string;
+  initialRoomTypes?: RoomTypeOption[];
 }
 
-export default function GuestHouseBookingForm({ businessId, businessName }: Props) {
+export default function GuestHouseBookingForm({ businessId, businessName, slug, initialRoomTypes = [] }: Props) {
+  const [roomTypes] = useState<RoomTypeOption[]>(initialRoomTypes);
   const [form, setForm] = useState({
     guestName: "",
     guestEmail: "",
     guestPhone: "",
     guestCountry: "",
+    roomTypeId: initialRoomTypes.length === 1 ? String(initialRoomTypes[0].id) : "",
     checkIn: "",
     checkOut: "",
     numGuests: "2",
     specialRequests: "",
   });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [availability, setAvailability] = useState<{ available: boolean; availableCount?: number; pricing?: { roomTotal: string; numNights: number }; checked: boolean } | null>(null);
+  const [checkingAvail, setCheckingAvail] = useState(false);
 
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
-
   const today = new Date().toISOString().split("T")[0];
+  const hasRoomTypes = roomTypes.length > 0;
+
+  // Check availability when dates + room type change
+  useEffect(() => {
+    if (!form.checkIn || !form.checkOut || form.checkIn >= form.checkOut) {
+      setAvailability(null);
+      return;
+    }
+    if (hasRoomTypes && !form.roomTypeId) {
+      setAvailability(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setCheckingAvail(true);
+
+    const params = new URLSearchParams({ checkIn: form.checkIn, checkOut: form.checkOut });
+    if (form.roomTypeId) {
+      params.set("roomTypeId", form.roomTypeId);
+    } else {
+      params.set("businessId", String(businessId));
+    }
+    if (form.guestCountry) params.set("nationality", form.guestCountry);
+
+    fetch(`/api/availability/check?${params.toString()}`, { signal: controller.signal })
+      .then((r) => r.json())
+      .then((data) => {
+        setAvailability({ available: data.available, availableCount: data.availableCount, pricing: data.pricing, checked: true });
+      })
+      .catch(() => {})
+      .finally(() => setCheckingAvail(false));
+
+    return () => controller.abort();
+  }, [form.checkIn, form.checkOut, form.roomTypeId, form.guestCountry, businessId, hasRoomTypes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +83,10 @@ export default function GuestHouseBookingForm({ businessId, businessName }: Prop
       alert("Check-out date must be after check-in.");
       return;
     }
+    if (hasRoomTypes && availability?.available === false) {
+      alert("No rooms available for selected dates. Please choose different dates.");
+      return;
+    }
     setStatus("sending");
     try {
       const res = await fetch("/api/bookings", {
@@ -41,6 +94,7 @@ export default function GuestHouseBookingForm({ businessId, businessName }: Prop
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           businessId,
+          roomTypeId: form.roomTypeId ? Number(form.roomTypeId) : undefined,
           guestName: form.guestName,
           guestEmail: form.guestEmail,
           guestPhone: form.guestPhone,
@@ -54,7 +108,8 @@ export default function GuestHouseBookingForm({ businessId, businessName }: Prop
       });
       if (res.ok) {
         setStatus("sent");
-        setForm({ guestName: "", guestEmail: "", guestPhone: "", guestCountry: "", checkIn: "", checkOut: "", numGuests: "2", specialRequests: "" });
+        setForm({ guestName: "", guestEmail: "", guestPhone: "", guestCountry: "", roomTypeId: "", checkIn: "", checkOut: "", numGuests: "2", specialRequests: "" });
+        setAvailability(null);
       } else {
         const err = await res.json().catch(() => ({}));
         alert((err as { error?: string }).error || "Something went wrong. Please try again.");
@@ -67,31 +122,13 @@ export default function GuestHouseBookingForm({ businessId, businessName }: Prop
 
   if (status === "sent") {
     return (
-      <div style={{
-        background: "rgba(26,92,56,0.07)",
-        border: "1px solid var(--green)",
-        borderRadius: "12px",
-        padding: "36px 28px",
-        textAlign: "center",
-      }}>
-        <div style={{
-          width: "48px", height: "48px",
-          borderRadius: "50%",
-          background: "var(--green)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 16px",
-          color: "#fff", fontSize: "22px",
-        }}>✓</div>
-        <h3 style={{ fontSize: "18px", marginBottom: "8px", color: "var(--green)" }}>
-          Booking request sent!
-        </h3>
+      <div style={{ background: "rgba(26,92,56,0.07)", border: "1px solid var(--green)", borderRadius: "12px", padding: "36px 28px", textAlign: "center" }}>
+        <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--green)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: "#fff", fontSize: "22px" }}>✓</div>
+        <h3 style={{ fontSize: "18px", marginBottom: "8px", color: "var(--green)" }}>Booking request sent!</h3>
         <p style={{ color: "var(--text-light)", fontSize: "14px", lineHeight: 1.7, marginBottom: "20px" }}>
           {businessName} will confirm your booking shortly. Check your email for a reference number.
         </p>
-        <button
-          onClick={() => setStatus("idle")}
-          style={{ fontSize: "13px", color: "var(--text-light)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
-        >
+        <button onClick={() => setStatus("idle")} style={{ fontSize: "13px", color: "var(--text-light)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
           Submit another request
         </button>
       </div>
@@ -99,87 +136,89 @@ export default function GuestHouseBookingForm({ businessId, businessName }: Prop
   }
 
   const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "10px 14px",
-    border: "1.5px solid var(--border)",
-    borderRadius: "8px",
-    fontSize: "14px",
-    fontFamily: "inherit",
-    background: "#fff",
-    color: "var(--text)",
-    outline: "none",
-    transition: "border-color 180ms ease",
+    width: "100%", padding: "10px 14px", border: "1.5px solid var(--border)", borderRadius: "8px",
+    fontSize: "14px", fontFamily: "inherit", background: "#fff", color: "var(--text)", outline: "none", transition: "border-color 180ms ease",
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+      {/* Room type selector — only shown when multiple room types exist */}
+      {roomTypes.length > 1 && (
+        <div className="form-group">
+          <label>Room Type *</label>
+          <select value={form.roomTypeId} onChange={(e) => set("roomTypeId", e.target.value)} required style={inputStyle}>
+            <option value="">— Select room type —</option>
+            {roomTypes.map((rt) => (
+              <option key={rt.id} value={rt.id}>
+                {rt.name} — from ${rt.basePrice}/night{rt.maxGuests ? ` · up to ${rt.maxGuests} guests` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="form-group">
         <label>Full name *</label>
-        <input
-          value={form.guestName}
-          onChange={(e) => set("guestName", e.target.value)}
-          placeholder="Your full name"
-          required
-          style={inputStyle}
-        />
+        <input value={form.guestName} onChange={(e) => set("guestName", e.target.value)} placeholder="Your full name" required style={inputStyle} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
         <div className="form-group">
           <label>Email</label>
-          <input
-            type="email"
-            value={form.guestEmail}
-            onChange={(e) => set("guestEmail", e.target.value)}
-            placeholder="you@email.com"
-            style={inputStyle}
-          />
+          <input type="email" value={form.guestEmail} onChange={(e) => set("guestEmail", e.target.value)} placeholder="you@email.com" style={inputStyle} />
         </div>
         <div className="form-group">
           <label>Phone / WhatsApp</label>
-          <input
-            type="tel"
-            value={form.guestPhone}
-            onChange={(e) => set("guestPhone", e.target.value)}
-            placeholder="+960 xxx xxxx"
-            style={inputStyle}
-          />
+          <input type="tel" value={form.guestPhone} onChange={(e) => set("guestPhone", e.target.value)} placeholder="+960 xxx xxxx" style={inputStyle} />
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
         <div className="form-group">
           <label>Check-in *</label>
-          <input
-            type="date"
-            value={form.checkIn}
-            min={today}
-            onChange={(e) => set("checkIn", e.target.value)}
-            required
-            style={inputStyle}
-          />
+          <input type="date" value={form.checkIn} min={today} onChange={(e) => set("checkIn", e.target.value)} required style={inputStyle} />
         </div>
         <div className="form-group">
           <label>Check-out *</label>
-          <input
-            type="date"
-            value={form.checkOut}
-            min={form.checkIn || today}
-            onChange={(e) => set("checkOut", e.target.value)}
-            required
-            style={inputStyle}
-          />
+          <input type="date" value={form.checkOut} min={form.checkIn || today} onChange={(e) => set("checkOut", e.target.value)} required style={inputStyle} />
         </div>
       </div>
+
+      {/* Live availability + pricing banner */}
+      {hasRoomTypes && form.checkIn && form.checkOut && form.checkIn < form.checkOut && (
+        <div style={{
+          borderRadius: "8px",
+          padding: "12px 14px",
+          fontSize: "13px",
+          lineHeight: 1.6,
+          background: checkingAvail
+            ? "rgba(100,100,100,0.05)"
+            : availability?.available
+            ? "rgba(26,92,56,0.06)"
+            : "rgba(220,38,38,0.06)",
+          border: `1px solid ${checkingAvail ? "var(--border)" : availability?.available ? "rgba(26,92,56,0.25)" : "rgba(220,38,38,0.2)"}`,
+          color: checkingAvail ? "var(--text-light)" : availability?.available ? "var(--forest)" : "#dc2626",
+        }}>
+          {checkingAvail && "Checking availability…"}
+          {!checkingAvail && availability?.available && (
+            <>
+              <strong>Available</strong>
+              {availability.pricing && (
+                <span> — ${availability.pricing.roomTotal} total for {availability.pricing.numNights} night{availability.pricing.numNights !== 1 ? "s" : ""}</span>
+              )}
+            </>
+          )}
+          {!checkingAvail && availability?.checked && !availability?.available && (
+            <strong>No rooms available for these dates. Please try different dates.</strong>
+          )}
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
         <div className="form-group">
           <label>Guests</label>
-          <select
-            value={form.numGuests}
-            onChange={(e) => set("numGuests", e.target.value)}
-            style={inputStyle}
-          >
+          <select value={form.numGuests} onChange={(e) => set("numGuests", e.target.value)} style={inputStyle}>
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <option key={n} value={n}>{n} {n === 1 ? "guest" : "guests"}</option>
             ))}
@@ -187,44 +226,22 @@ export default function GuestHouseBookingForm({ businessId, businessName }: Prop
         </div>
         <div className="form-group">
           <label>Country</label>
-          <input
-            value={form.guestCountry}
-            onChange={(e) => set("guestCountry", e.target.value)}
-            placeholder="e.g. United Kingdom"
-            style={inputStyle}
-          />
+          <input value={form.guestCountry} onChange={(e) => set("guestCountry", e.target.value)} placeholder="e.g. United Kingdom" style={inputStyle} />
         </div>
       </div>
 
       <div className="form-group">
         <label>Special requests</label>
-        <textarea
-          value={form.specialRequests}
-          onChange={(e) => set("specialRequests", e.target.value)}
-          placeholder="Dietary requirements, arrival time, room preferences…"
-          rows={3}
-          style={{ ...inputStyle, resize: "vertical" }}
-        />
+        <textarea value={form.specialRequests} onChange={(e) => set("specialRequests", e.target.value)} placeholder="Dietary requirements, arrival time, room preferences…" rows={3} style={{ ...inputStyle, resize: "vertical" }} />
       </div>
 
-      <div style={{
-        background: "rgba(200,120,32,0.06)",
-        border: "1px solid rgba(200,120,32,0.2)",
-        borderRadius: "8px",
-        padding: "12px 14px",
-        fontSize: "12px",
-        color: "var(--text-light)",
-        lineHeight: 1.6,
-      }}>
-        Your booking request will be reviewed by {businessName}. Pricing and availability will be confirmed directly with you.
-      </div>
+      {!hasRoomTypes && (
+        <div style={{ background: "rgba(200,120,32,0.06)", border: "1px solid rgba(200,120,32,0.2)", borderRadius: "8px", padding: "12px 14px", fontSize: "12px", color: "var(--text-light)", lineHeight: 1.6 }}>
+          Your booking request will be reviewed by {businessName}. Pricing and availability will be confirmed directly with you.
+        </div>
+      )}
 
-      <button
-        type="submit"
-        className="btn-luxury"
-        disabled={status === "sending"}
-        style={{ alignSelf: "flex-start" }}
-      >
+      <button type="submit" className="btn-luxury" disabled={status === "sending" || (!hasRoomTypes ? false : availability?.available === false)} style={{ alignSelf: "flex-start" }}>
         {status === "sending" ? "Sending…" : "Request Booking"}
       </button>
     </form>

@@ -23,7 +23,17 @@ const emptyForm = {
   isFeatured: false, isActive: true, sortOrder: 0,
 };
 
-type Tab = "listings" | "inquiries" | "bookings";
+const emptyRoomTypeForm = {
+  name: "", slug: "", description: "", shortDescription: "",
+  basePrice: "", maxGuests: 2, bedType: "", size: "", isActive: true, sortOrder: 0,
+};
+
+const emptyRoomForm = {
+  roomNumber: "", roomTypeId: "", floor: "", status: "available", notes: "",
+};
+
+type Tab = "listings" | "inquiries" | "bookings" | "rooms";
+type RoomsSubTab = "room-types" | "rooms";
 
 export default function AdminBusinesses() {
   const [items, setItems]       = useState<any[]>([]);
@@ -34,6 +44,18 @@ export default function AdminBusinesses() {
   const [tab, setTab]           = useState<Tab>("listings");
   const [formData, setFormData] = useState<any>({ ...emptyForm });
   const [uploading, setUploading] = useState(false);
+
+  // Rooms tab state
+  const [selectedBizId, setSelectedBizId] = useState<number | null>(null);
+  const [roomsSubTab, setRoomsSubTab] = useState<RoomsSubTab>("room-types");
+  const [bizRoomTypes, setBizRoomTypes] = useState<any[]>([]);
+  const [bizRooms, setBizRooms] = useState<any[]>([]);
+  const [roomsLoading, setRoomsLoading] = useState(false);
+  const [isEditingRoomType, setIsEditingRoomType] = useState(false);
+  const [roomTypeForm, setRoomTypeForm] = useState<any>({ ...emptyRoomTypeForm });
+  const [isEditingRoom, setIsEditingRoom] = useState(false);
+  const [roomForm, setRoomForm] = useState<any>({ ...emptyRoomForm });
+  const [roomSaveError, setRoomSaveError] = useState("");
 
   const fetchItems = async () => {
     setLoading(true);
@@ -59,9 +81,33 @@ export default function AdminBusinesses() {
     }
   };
 
+  const fetchBizRooms = async (bizId: number) => {
+    setRoomsLoading(true);
+    try {
+      const [rtRes, rRes] = await Promise.all([
+        fetch(`/api/admin/businesses/${bizId}/room-types`),
+        fetch(`/api/admin/businesses/${bizId}/rooms`),
+      ]);
+      setBizRoomTypes(rtRes.ok ? await rtRes.json() : []);
+      setBizRooms(rRes.ok ? await rRes.json() : []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRoomsLoading(false);
+    }
+  };
+
   useEffect(() => { fetchItems(); }, []);
 
+  useEffect(() => {
+    if (tab === "rooms" && selectedBizId) {
+      fetchBizRooms(selectedBizId);
+    }
+  }, [tab, selectedBizId]);
+
   const set = (k: string, v: any) => setFormData((f: any) => ({ ...f, [k]: v }));
+  const setRt = (k: string, v: any) => setRoomTypeForm((f: any) => ({ ...f, [k]: v }));
+  const setR = (k: string, v: any) => setRoomForm((f: any) => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +169,74 @@ export default function AdminBusinesses() {
   };
   const removeLink = (i: number) => set("connectLinks", (formData.connectLinks || []).filter((_: any, idx: number) => idx !== i));
 
+  // Room type CRUD
+  const saveRoomType = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBizId) return;
+    setRoomSaveError("");
+    const method = roomTypeForm.id ? "PATCH" : "POST";
+    const url = roomTypeForm.id
+      ? `/api/admin/room-types/${roomTypeForm.id}`
+      : `/api/admin/businesses/${selectedBizId}/room-types`;
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...roomTypeForm, basePrice: String(roomTypeForm.basePrice) }),
+      });
+      if (res.ok) {
+        setIsEditingRoomType(false);
+        setRoomTypeForm({ ...emptyRoomTypeForm });
+        fetchBizRooms(selectedBizId);
+      } else {
+        const err = await res.json();
+        setRoomSaveError(err.error || "Save failed");
+      }
+    } catch { setRoomSaveError("Save failed"); }
+  };
+
+  const deleteRoomType = async (id: number) => {
+    if (!selectedBizId) return;
+    if (!confirm("Delete this room type? All associated rooms will also be removed.")) return;
+    await fetch(`/api/admin/room-types/${id}`, { method: "DELETE" });
+    fetchBizRooms(selectedBizId);
+  };
+
+  // Room CRUD
+  const saveRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBizId) return;
+    setRoomSaveError("");
+    const method = roomForm.id ? "PATCH" : "POST";
+    const url = roomForm.id
+      ? `/api/admin/rooms/${roomForm.id}`
+      : `/api/admin/businesses/${selectedBizId}/rooms`;
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...roomForm, roomTypeId: Number(roomForm.roomTypeId), floor: roomForm.floor ? Number(roomForm.floor) : null }),
+      });
+      if (res.ok) {
+        setIsEditingRoom(false);
+        setRoomForm({ ...emptyRoomForm });
+        fetchBizRooms(selectedBizId);
+      } else {
+        const err = await res.json();
+        setRoomSaveError(err.error || "Save failed");
+      }
+    } catch { setRoomSaveError("Save failed"); }
+  };
+
+  const deleteRoom = async (id: number) => {
+    if (!selectedBizId) return;
+    if (!confirm("Delete this room?")) return;
+    await fetch(`/api/admin/rooms/${id}`, { method: "DELETE" });
+    fetchBizRooms(selectedBizId);
+  };
+
+  const guesthouses = items.filter((b) => b.businessType === "guesthouse");
+
   if (loading) return <div>Loading…</div>;
 
   return (
@@ -138,7 +252,7 @@ export default function AdminBusinesses() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "24px" }}>
+      <div style={{ display: "flex", gap: "8px", marginBottom: "24px", flexWrap: "wrap" }}>
         <button onClick={() => setTab("listings")} className={`btn ${tab === "listings" ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
           Listings ({items.length})
         </button>
@@ -148,9 +262,12 @@ export default function AdminBusinesses() {
         <button onClick={() => setTab("bookings")} className={`btn ${tab === "bookings" ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
           Bookings ({bizBookings.length})
         </button>
+        <button onClick={() => setTab("rooms")} className={`btn ${tab === "rooms" ? "btn-primary" : "btn-outline"}`} style={{ padding: "6px 16px" }}>
+          Rooms
+        </button>
       </div>
 
-      {/* Form */}
+      {/* Business form */}
       {isEditing && (
         <div className="card">
           <h2 style={{ marginBottom: "20px" }}>{formData.id ? "Edit" : "Add"} Business</h2>
@@ -187,17 +304,14 @@ export default function AdminBusinesses() {
                 <input type="number" value={formData.sortOrder} onChange={e => set("sortOrder", Number(e.target.value))} />
               </div>
             </div>
-
             <div className="form-group">
               <label>Address</label>
               <input value={formData.address} onChange={e => set("address", e.target.value)} />
             </div>
-
             <div className="form-group">
               <label>Description</label>
               <textarea value={formData.description} onChange={e => set("description", e.target.value)} rows={4} />
             </div>
-
             <div className="form-group">
               <label>Cover Photo</label>
               {formData.coverPhotoUrl && (
@@ -210,8 +324,6 @@ export default function AdminBusinesses() {
                 <input value={formData.coverPhotoUrl} onChange={e => set("coverPhotoUrl", e.target.value)} placeholder="https://…" style={{ marginTop: "4px" }} />
               </div>
             </div>
-
-            {/* Connect Links */}
             <div className="form-group">
               <label>Connect Links</label>
               {(formData.connectLinks || []).map((link: any, i: number) => (
@@ -225,7 +337,6 @@ export default function AdminBusinesses() {
               ))}
               <button type="button" onClick={addLink} className="btn btn-outline" style={{ padding: "4px 12px", fontSize: "12px" }}>+ Add link</button>
             </div>
-
             <div style={{ display: "flex", gap: "24px", marginBottom: "20px" }}>
               <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: 600, fontSize: "14px" }}>
                 <input type="checkbox" checked={formData.isActive} onChange={e => set("isActive", e.target.checked)} />
@@ -236,7 +347,6 @@ export default function AdminBusinesses() {
                 Featured on homepage
               </label>
             </div>
-
             <div style={{ display: "flex", gap: "12px" }}>
               <button type="submit" className="btn btn-primary">Save</button>
               <button type="button" onClick={() => setIsEditing(false)} className="btn btn-outline">Cancel</button>
@@ -275,9 +385,18 @@ export default function AdminBusinesses() {
                       </button>
                     </td>
                     <td>
-                      <div style={{ display: "flex", gap: "8px" }}>
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                         <button onClick={() => { setIsEditing(true); setFormData({ ...item }); }} className="btn btn-outline" style={{ padding: "4px 8px" }}>Edit</button>
                         <a href={`/businesses/${item.slug}`} target="_blank" className="btn btn-outline" style={{ padding: "4px 8px" }}>View</a>
+                        {item.businessType === "guesthouse" && (
+                          <button
+                            onClick={() => { setSelectedBizId(item.id); setTab("rooms"); }}
+                            className="btn btn-outline"
+                            style={{ padding: "4px 8px" }}
+                          >
+                            Rooms
+                          </button>
+                        )}
                         <button onClick={() => deleteItem(item.id)} className="btn btn-outline" style={{ padding: "4px 8px", color: "var(--admin-error)" }}>Delete</button>
                       </div>
                     </td>
@@ -299,12 +418,7 @@ export default function AdminBusinesses() {
             <table>
               <thead>
                 <tr>
-                  <th>Business</th>
-                  <th>From</th>
-                  <th>Contact</th>
-                  <th>Message</th>
-                  <th>Date</th>
-                  <th>Status</th>
+                  <th>Business</th><th>From</th><th>Contact</th><th>Message</th><th>Date</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -336,6 +450,7 @@ export default function AdminBusinesses() {
         </div>
       )}
 
+      {/* Bookings tab */}
       {tab === "bookings" && (
         <div className="card">
           <p style={{ fontSize: "13px", color: "var(--admin-text-light)", marginBottom: "16px" }}>
@@ -346,13 +461,7 @@ export default function AdminBusinesses() {
             <table>
               <thead>
                 <tr>
-                  <th>REF</th>
-                  <th>Business</th>
-                  <th>Guest</th>
-                  <th>Check-in</th>
-                  <th>Check-out</th>
-                  <th>Guests</th>
-                  <th>Status</th>
+                  <th>REF</th><th>Business</th><th>Guest</th><th>Check-in</th><th>Check-out</th><th>Guests</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -367,19 +476,282 @@ export default function AdminBusinesses() {
                     <td>{new Date(bk.checkIn).toLocaleDateString()}</td>
                     <td>{new Date(bk.checkOut).toLocaleDateString()}</td>
                     <td>{bk.numGuests}</td>
-                    <td>
-                      <span className={`badge badge-${bk.status}`}>{bk.status}</span>
-                    </td>
+                    <td><span className={`badge badge-${bk.status}`}>{bk.status}</span></td>
                   </tr>
                 ))}
                 {bizBookings.length === 0 && (
-                  <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--text-light)" }}>
-                    No business bookings yet. They appear here when guests book via a business page.
-                  </td></tr>
+                  <tr><td colSpan={7} style={{ textAlign: "center", color: "var(--text-light)" }}>No business bookings yet.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Rooms tab */}
+      {tab === "rooms" && (
+        <div>
+          {/* Property selector */}
+          <div className="card" style={{ marginBottom: "16px" }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+              <label style={{ fontWeight: 600, fontSize: "14px" }}>Property:</label>
+              <select
+                value={selectedBizId ?? ""}
+                onChange={(e) => setSelectedBizId(e.target.value ? Number(e.target.value) : null)}
+                style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid var(--admin-border)", fontSize: "14px" }}
+              >
+                <option value="">— Select a guesthouse —</option>
+                {guesthouses.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+              {guesthouses.length === 0 && (
+                <span style={{ fontSize: "13px", color: "var(--admin-text-light)" }}>
+                  No guesthouses yet. Add one in Listings first.
+                </span>
+              )}
+            </div>
+          </div>
+
+          {selectedBizId && (
+            <>
+              {/* Sub-tabs */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                <button
+                  onClick={() => { setRoomsSubTab("room-types"); setIsEditingRoomType(false); setIsEditingRoom(false); }}
+                  className={`btn ${roomsSubTab === "room-types" ? "btn-primary" : "btn-outline"}`}
+                  style={{ padding: "6px 16px" }}
+                >
+                  Room Types ({bizRoomTypes.length})
+                </button>
+                <button
+                  onClick={() => { setRoomsSubTab("rooms"); setIsEditingRoomType(false); setIsEditingRoom(false); }}
+                  className={`btn ${roomsSubTab === "rooms" ? "btn-primary" : "btn-outline"}`}
+                  style={{ padding: "6px 16px" }}
+                >
+                  Physical Rooms ({bizRooms.length})
+                </button>
+              </div>
+
+              {roomSaveError && (
+                <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px", padding: "10px 14px", marginBottom: "12px", color: "#dc2626", fontSize: "13px" }}>
+                  {roomSaveError}
+                </div>
+              )}
+
+              {/* Room Types sub-tab */}
+              {roomsSubTab === "room-types" && (
+                <div>
+                  {isEditingRoomType && (
+                    <div className="card" style={{ marginBottom: "16px" }}>
+                      <h3 style={{ marginBottom: "16px" }}>{roomTypeForm.id ? "Edit" : "Add"} Room Type</h3>
+                      <form onSubmit={saveRoomType}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                          <div className="form-group">
+                            <label>Name *</label>
+                            <input value={roomTypeForm.name} onChange={e => setRt("name", e.target.value)} required />
+                          </div>
+                          <div className="form-group">
+                            <label>Base Price ($/night) *</label>
+                            <input type="number" step="0.01" value={roomTypeForm.basePrice} onChange={e => setRt("basePrice", e.target.value)} required />
+                          </div>
+                          <div className="form-group">
+                            <label>Max Guests</label>
+                            <input type="number" value={roomTypeForm.maxGuests} onChange={e => setRt("maxGuests", Number(e.target.value))} min={1} max={10} />
+                          </div>
+                          <div className="form-group">
+                            <label>Bed Type</label>
+                            <input value={roomTypeForm.bedType} onChange={e => setRt("bedType", e.target.value)} placeholder="e.g. King, Twin" />
+                          </div>
+                          <div className="form-group">
+                            <label>Size</label>
+                            <input value={roomTypeForm.size} onChange={e => setRt("size", e.target.value)} placeholder="e.g. 28 sqm" />
+                          </div>
+                          <div className="form-group">
+                            <label>Sort Order</label>
+                            <input type="number" value={roomTypeForm.sortOrder} onChange={e => setRt("sortOrder", Number(e.target.value))} />
+                          </div>
+                        </div>
+                        <div className="form-group">
+                          <label>Short Description</label>
+                          <input value={roomTypeForm.shortDescription} onChange={e => setRt("shortDescription", e.target.value)} maxLength={255} />
+                        </div>
+                        <div className="form-group">
+                          <label>Description</label>
+                          <textarea value={roomTypeForm.description} onChange={e => setRt("description", e.target.value)} rows={3} />
+                        </div>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", cursor: "pointer", fontSize: "14px", fontWeight: 600 }}>
+                          <input type="checkbox" checked={roomTypeForm.isActive} onChange={e => setRt("isActive", e.target.checked)} />
+                          Active
+                        </label>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <button type="submit" className="btn btn-primary">Save</button>
+                          <button type="button" className="btn btn-outline" onClick={() => { setIsEditingRoomType(false); setRoomTypeForm({ ...emptyRoomTypeForm }); setRoomSaveError(""); }}>Cancel</button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  <div className="card">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                      <h3>Room Types</h3>
+                      {!isEditingRoomType && (
+                        <button className="btn btn-primary" onClick={() => { setIsEditingRoomType(true); setRoomTypeForm({ ...emptyRoomTypeForm }); }}>
+                          + Add Room Type
+                        </button>
+                      )}
+                    </div>
+                    {roomsLoading ? (
+                      <div>Loading…</div>
+                    ) : (
+                      <div className="table-wrapper">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Name</th>
+                              <th>Base Price</th>
+                              <th>Max Guests</th>
+                              <th>Bed Type</th>
+                              <th>Active</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bizRoomTypes.map((rt: any) => (
+                              <tr key={rt.id}>
+                                <td style={{ fontWeight: 600 }}>{rt.name}</td>
+                                <td>${rt.basePrice}/night</td>
+                                <td>{rt.maxGuests}</td>
+                                <td>{rt.bedType || "—"}</td>
+                                <td>
+                                  <span className={`badge ${rt.isActive ? "badge-confirmed" : "badge-cancelled"}`}>
+                                    {rt.isActive ? "Active" : "Inactive"}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", gap: "8px" }}>
+                                    <button className="btn btn-outline" style={{ padding: "4px 8px" }} onClick={() => { setIsEditingRoomType(true); setRoomTypeForm({ ...rt }); }}>Edit</button>
+                                    <button className="btn btn-outline" style={{ padding: "4px 8px", color: "var(--admin-error)" }} onClick={() => deleteRoomType(rt.id)}>Delete</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {bizRoomTypes.length === 0 && (
+                              <tr><td colSpan={6} style={{ textAlign: "center", color: "var(--text-light)" }}>No room types yet. Add one to enable full availability tracking.</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Physical Rooms sub-tab */}
+              {roomsSubTab === "rooms" && (
+                <div>
+                  {isEditingRoom && (
+                    <div className="card" style={{ marginBottom: "16px" }}>
+                      <h3 style={{ marginBottom: "16px" }}>{roomForm.id ? "Edit" : "Add"} Room</h3>
+                      <form onSubmit={saveRoom}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                          <div className="form-group">
+                            <label>Room Number *</label>
+                            <input value={roomForm.roomNumber} onChange={e => setR("roomNumber", e.target.value)} required placeholder="e.g. 101, A1" />
+                          </div>
+                          <div className="form-group">
+                            <label>Room Type *</label>
+                            <select value={roomForm.roomTypeId} onChange={e => setR("roomTypeId", e.target.value)} required>
+                              <option value="">— Select —</option>
+                              {bizRoomTypes.map((rt: any) => (
+                                <option key={rt.id} value={rt.id}>{rt.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label>Floor</label>
+                            <input type="number" value={roomForm.floor} onChange={e => setR("floor", e.target.value)} placeholder="e.g. 1" />
+                          </div>
+                          <div className="form-group">
+                            <label>Status</label>
+                            <select value={roomForm.status} onChange={e => setR("status", e.target.value)}>
+                              <option value="available">Available</option>
+                              <option value="occupied">Occupied</option>
+                              <option value="maintenance">Maintenance</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="form-group">
+                          <label>Notes</label>
+                          <textarea value={roomForm.notes} onChange={e => setR("notes", e.target.value)} rows={2} />
+                        </div>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <button type="submit" className="btn btn-primary">Save</button>
+                          <button type="button" className="btn btn-outline" onClick={() => { setIsEditingRoom(false); setRoomForm({ ...emptyRoomForm }); setRoomSaveError(""); }}>Cancel</button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  <div className="card">
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                      <h3>Physical Rooms</h3>
+                      {!isEditingRoom && (
+                        <button className="btn btn-primary" onClick={() => { setIsEditingRoom(true); setRoomForm({ ...emptyRoomForm }); }} disabled={bizRoomTypes.length === 0}>
+                          + Add Room
+                        </button>
+                      )}
+                    </div>
+                    {bizRoomTypes.length === 0 && !isEditingRoom && (
+                      <p style={{ fontSize: "13px", color: "var(--admin-text-light)", marginBottom: "12px" }}>
+                        Add room types first before adding physical rooms.
+                      </p>
+                    )}
+                    {roomsLoading ? (
+                      <div>Loading…</div>
+                    ) : (
+                      <div className="table-wrapper">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Room #</th>
+                              <th>Type</th>
+                              <th>Floor</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bizRooms.map((room: any) => (
+                              <tr key={room.id}>
+                                <td style={{ fontWeight: 600 }}>Room {room.roomNumber}</td>
+                                <td>{room.roomType?.name || "—"}</td>
+                                <td>{room.floor ?? "—"}</td>
+                                <td>
+                                  <span className={`badge ${room.status === "available" ? "badge-confirmed" : room.status === "maintenance" ? "badge-pending" : "badge-cancelled"}`}>
+                                    {room.status}
+                                  </span>
+                                </td>
+                                <td>
+                                  <div style={{ display: "flex", gap: "8px" }}>
+                                    <button className="btn btn-outline" style={{ padding: "4px 8px" }} onClick={() => { setIsEditingRoom(true); setRoomForm({ ...room, roomTypeId: String(room.roomTypeId), floor: room.floor ? String(room.floor) : "" }); }}>Edit</button>
+                                    <button className="btn btn-outline" style={{ padding: "4px 8px", color: "var(--admin-error)" }} onClick={() => deleteRoom(room.id)}>Delete</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                            {bizRooms.length === 0 && (
+                              <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--text-light)" }}>No rooms yet.</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </div>

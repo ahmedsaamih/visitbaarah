@@ -207,6 +207,13 @@ export default function AdminBookings() {
       return true;
     });
   }, [bookings, filterStartDate, filterEndDate]);
+  const filteredRoomTypes = useMemo(() => {
+    if (!manualForm.businessId) return roomTypes;
+    return roomTypes.filter(
+      (rt: any) => rt.businessId === Number(manualForm.businessId) || rt.businessId === null
+    );
+  }, [roomTypes, manualForm.businessId]);
+
   const filteredRooms = useMemo(
     () => rooms.filter((room) => String(room.roomTypeId) === manualForm.roomTypeId),
     [rooms, manualForm.roomTypeId]
@@ -418,7 +425,7 @@ export default function AdminBookings() {
                 }
               >
                 <option value="">No room type</option>
-                {roomTypes.map((roomType) => (
+                {filteredRoomTypes.map((roomType) => (
                   <option key={roomType.id} value={roomType.id}>
                     {roomType.name}
                   </option>

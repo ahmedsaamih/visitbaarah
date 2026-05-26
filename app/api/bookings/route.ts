@@ -5,13 +5,14 @@ import { generateReferenceId } from "@/lib/reference";
 import { sendBookingReceivedEmail, sendAdminNewBookingEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 import { sendTelegramNotification } from "@/lib/telegram";
-import { eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import {
   calculateRoomPricing,
   getMaldivianDiscountMap,
   getSeasonalRatesMap,
   isMaldivianNationality,
 } from "@/lib/room-pricing";
+import { findAvailableRoomId } from "@/lib/room-assignment";
 
 export async function POST(request: Request) {
   try {
@@ -30,10 +31,9 @@ export async function POST(request: Request) {
       numRooms,
       addonsTotal,
       specialRequests,
-      addons // Array of { addonType, addonId, addonName, quantity, unitPrice, totalPrice, date }
+      addons,
     } = data;
 
-    // 1. Validate required fields
     if (!guestName || !guestEmail || !checkIn || !checkOut) {
       return NextResponse.json({ error: "Missing required booking details" }, { status: 400 });
     }
@@ -47,34 +47,74 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: getTransactionalRetryMessage() }, { status: 429 });
     }
 
-    // Pricing: calculate if room type provided, otherwise booking is a request (price TBD by admin)
     let roomTotal = "0.00";
     let totalAmount = "0.00";
     let roomType: Awaited<ReturnType<typeof db.query.roomTypes.findFirst>> | null = null;
-    const parsedRoomTypeId = roomTypeId ? Number(roomTypeId) : null;
+    let resolvedRoomTypeId: number | null = roomTypeId ? Number(roomTypeId) : null;
+    let assignedRoomId: number | null = null;
     const parsedBusinessId = businessId ? Number(businessId) : null;
+    const effectiveNationality = typeof nationality === "string" ? nationality : guestCountry;
 
-    if (parsedRoomTypeId) {
-      roomType = await db.query.roomTypes.findFirst({ where: eq(roomTypes.id, parsedRoomTypeId) }) ?? null;
+    // If only businessId provided, try to auto-assign from the business's room types
+    if (!resolvedRoomTypeId && parsedBusinessId) {
+      const biz = await db.query.businesses.findFirst({ where: eq(businesses.id, parsedBusinessId) });
+      if (biz?.businessType === "guesthouse") {
+        const bizRoomTypes = await db.query.roomTypes.findMany({
+          where: and(eq(roomTypes.businessId, parsedBusinessId), eq(roomTypes.isActive, true)),
+          orderBy: [asc(roomTypes.sortOrder)],
+        });
+        for (const rt of bizRoomTypes) {
+          const roomId = await findAvailableRoomId({
+            excludeBookingId: -1,
+            roomTypeId: rt.id,
+            checkIn,
+            checkOut,
+          });
+          if (roomId !== null) {
+            resolvedRoomTypeId = rt.id;
+            assignedRoomId = roomId;
+            break;
+          }
+        }
+        if (!resolvedRoomTypeId && bizRoomTypes.length > 0) {
+          return NextResponse.json({ error: "No rooms available for selected dates" }, { status: 400 });
+        }
+      }
+    }
+
+    if (resolvedRoomTypeId) {
+      roomType = await db.query.roomTypes.findFirst({ where: eq(roomTypes.id, resolvedRoomTypeId) }) ?? null;
       if (!roomType) {
         return NextResponse.json({ error: "Room type not found" }, { status: 404 });
       }
-      const rateMap = await getSeasonalRatesMap([parsedRoomTypeId]);
-      const discountMap = await getMaldivianDiscountMap([parsedRoomTypeId]);
-      const effectiveNationality = typeof nationality === "string" ? nationality : guestCountry;
-      const pricing = calculateRoomPricing(roomType.basePrice, checkIn, checkOut, rateMap.get(parsedRoomTypeId) || [], {
-        applyMaldivianDiscount: isMaldivianNationality(effectiveNationality),
-        maldivianDiscountPercent: discountMap.get(parsedRoomTypeId) || "0.00",
-      });
+      // Assign a room if not already found above
+      if (!assignedRoomId) {
+        assignedRoomId = await findAvailableRoomId({
+          excludeBookingId: -1,
+          roomTypeId: resolvedRoomTypeId,
+          checkIn,
+          checkOut,
+        });
+      }
+      const rateMap = await getSeasonalRatesMap([resolvedRoomTypeId]);
+      const discountMap = await getMaldivianDiscountMap([resolvedRoomTypeId]);
+      const pricing = calculateRoomPricing(
+        roomType.basePrice,
+        checkIn,
+        checkOut,
+        rateMap.get(resolvedRoomTypeId) || [],
+        {
+          applyMaldivianDiscount: isMaldivianNationality(effectiveNationality),
+          maldivianDiscountPercent: discountMap.get(resolvedRoomTypeId) || "0.00",
+        }
+      );
       roomTotal = pricing.roomTotal;
       const addonsTotalValue = Number(addonsTotal || "0");
       totalAmount = (Number(roomTotal) + (Number.isFinite(addonsTotalValue) ? addonsTotalValue : 0)).toFixed(2);
     }
 
-    // 2. Generate Reference ID
     const referenceId = await generateReferenceId();
 
-    // 3. Create Booking in Transaction
     const booking = await db.transaction(async (tx) => {
       const [newBooking] = await tx
         .insert(bookings)
@@ -83,8 +123,14 @@ export async function POST(request: Request) {
           guestName,
           guestEmail: normalizedGuestEmail,
           guestPhone,
-          guestCountry: typeof guestCountry === "string" && guestCountry.trim() ? guestCountry : (typeof nationality === "string" ? nationality : guestCountry),
-          roomTypeId: parsedRoomTypeId,
+          guestCountry:
+            typeof guestCountry === "string" && guestCountry.trim()
+              ? guestCountry
+              : typeof nationality === "string"
+              ? nationality
+              : guestCountry,
+          roomTypeId: resolvedRoomTypeId,
+          assignedRoomId,
           businessId: parsedBusinessId,
           checkIn,
           checkOut,
@@ -98,7 +144,6 @@ export async function POST(request: Request) {
         })
         .returning();
 
-      // Addons if any
       if (addons && Array.isArray(addons) && addons.length > 0) {
         type BookingAddonInput = {
           addonType: string;
@@ -126,7 +171,7 @@ export async function POST(request: Request) {
       return newBooking;
     });
 
-    // Resolve display name for emails (business name takes precedence if no room type)
+    // Resolve display name for emails
     let bookingDisplayName = roomType?.name || "Booking";
     if (!roomType && parsedBusinessId) {
       const biz = await db.query.businesses.findFirst({ where: eq(businesses.id, parsedBusinessId) });
@@ -154,15 +199,10 @@ export async function POST(request: Request) {
       });
 
       if (!guestEmailSent || !adminEmailSent) {
-        console.error("[Booking API] One or more transactional emails failed to send.", {
-          referenceId,
-          guestEmailSent,
-          adminEmailSent,
-        });
+        console.error("[Booking API] One or more emails failed.", { referenceId, guestEmailSent, adminEmailSent });
       }
     } catch (emailError) {
       console.error("[Booking API] Email sending failed:", emailError);
-      // Don't fail the booking if email fails
     }
 
     await sendTelegramNotification("booking_request_received", {

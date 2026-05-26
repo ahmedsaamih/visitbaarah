@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { businesses } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { businesses, roomTypes } from "@/db/schema";
+import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/public/Navbar";
 import ConnectViaButton from "@/components/public/ConnectViaButton";
@@ -46,6 +46,13 @@ export default async function BusinessDetailPage({ params }: Props) {
   });
 
   if (!biz || !biz.isActive) notFound();
+
+  const bizRoomTypes = biz.businessType === "guesthouse"
+    ? await db.query.roomTypes.findMany({
+        where: and(eq(roomTypes.businessId, biz.id), eq(roomTypes.isActive, true)),
+        orderBy: [asc(roomTypes.sortOrder)],
+      })
+    : [];
 
   const connectLinks = (biz.connectLinks || []) as { type: string; value: string }[];
   const heroImg = biz.coverPhotoUrl || biz.media?.[0]?.url || "/images/hero.png";
@@ -213,7 +220,20 @@ export default async function BusinessDetailPage({ params }: Props) {
                     <h2 style={{ fontSize: "20px", marginBottom: "24px", letterSpacing: "-0.3px", fontWeight: 700 }}>
                       Request a Booking
                     </h2>
-                    <GuestHouseBookingForm businessId={biz.id} businessName={biz.name} />
+                    <GuestHouseBookingForm
+                    businessId={biz.id}
+                    businessName={biz.name}
+                    slug={slug}
+                    initialRoomTypes={bizRoomTypes.map((rt) => ({
+                      id: rt.id,
+                      name: rt.name,
+                      description: rt.description,
+                      basePrice: rt.basePrice,
+                      maxGuests: rt.maxGuests,
+                      bedType: rt.bedType,
+                      size: rt.size,
+                    }))}
+                  />
                   </>
                 ) : (
                   <>

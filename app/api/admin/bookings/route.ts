@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, rooms, roomAvailability, roomTypes, businesses } from "@/db/schema";
-import { desc, eq, and, ne, gte, lt, inArray } from "drizzle-orm";
+import { bookings, rooms, roomTypes, businesses } from "@/db/schema";
+import { and, desc, eq } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { generateReferenceId } from "@/lib/reference";
 import { sendBookingConfirmedEmail } from "@/lib/plunk";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { findAvailableRoomId } from "@/lib/room-assignment";
 
 export async function GET() {
   const isAdmin = await verifySession();
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: "Assigned room does not match selected room type." }, { status: 400 });
         }
       } else {
-        assignedRoomId = await findAvailableRoomId({ id: -1, roomTypeId, checkIn, checkOut });
+        assignedRoomId = await findAvailableRoomId({ excludeBookingId: -1, roomTypeId, checkIn, checkOut });
         if (!assignedRoomId) {
           return NextResponse.json(
             { error: "No available room for selected dates. Choose a different date range." },
@@ -165,50 +166,3 @@ export async function POST(request: Request) {
   }
 }
 
-async function findAvailableRoomId(booking: {
-  id: number;
-  roomTypeId: number;
-  checkIn: string;
-  checkOut: string;
-}) {
-  const candidateRooms = await db.query.rooms.findMany({
-    where: eq(rooms.roomTypeId, booking.roomTypeId),
-  });
-  if (candidateRooms.length === 0) return null;
-
-  const roomIds = candidateRooms.map((room) => room.id);
-  const blockedRows = await db.query.roomAvailability.findMany({
-    where: and(
-      inArray(roomAvailability.roomId, roomIds),
-      eq(roomAvailability.isBlocked, true),
-      gte(roomAvailability.date, booking.checkIn),
-      lt(roomAvailability.date, booking.checkOut)
-    ),
-  });
-  const blockedRoomIds = new Set(blockedRows.map((row) => row.roomId));
-
-  for (const room of candidateRooms) {
-    if (blockedRoomIds.has(room.id)) continue;
-
-    const overlap = await db.query.bookings.findFirst({
-      where: and(
-        eq(bookings.assignedRoomId, room.id),
-        ne(bookings.id, booking.id),
-        ne(bookings.status, "cancelled"),
-        ne(bookings.status, "rejected"),
-        ne(bookings.status, "checked_out"),
-        lt(bookings.checkIn, booking.checkOut),
-        gte(bookings.checkOut, incrementDateString(booking.checkIn))
-      ),
-    });
-    if (!overlap) return room.id;
-  }
-
-  return null;
-}
-
-function incrementDateString(dateStr: string) {
-  const date = new Date(dateStr);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().split("T")[0];
-}

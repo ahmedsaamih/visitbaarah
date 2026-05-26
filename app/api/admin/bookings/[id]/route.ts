@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { bookings, rooms, roomAvailability, testimonials } from "@/db/schema";
-import { eq, and, ne, gte, lt, inArray } from "drizzle-orm";
+import { bookings, rooms, testimonials } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { verifySession } from "@/lib/auth";
 import { sendBookingConfirmedEmail, sendBookingRejectedEmail, sendCheckoutReviewRequestEmail } from "@/lib/plunk";
 import { checkTransactionalRequestLimit, getTransactionalRetryMessage } from "@/lib/transactional-rate-limit";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { findAvailableRoomId } from "@/lib/room-assignment";
 
 export async function PATCH(
   request: Request,
@@ -23,10 +24,9 @@ export async function PATCH(
     const data = await request.json();
     const { status, assignedRoomId, rejectionReason, adminNotes } = data;
 
-    // 1. Get current booking
     const booking = await db.query.bookings.findFirst({
       where: eq(bookings.id, bookingId),
-      with: { roomType: true },
+      with: { roomType: true, business: true },
     });
 
     if (!booking) {
@@ -44,17 +44,18 @@ export async function PATCH(
     }
 
     let nextAssignedRoomId = assignedRoomId === undefined ? booking.assignedRoomId : assignedRoomId;
-    if (status === "confirmed" && !nextAssignedRoomId) {
-      if (!booking.roomTypeId) {
-        return NextResponse.json({ error: "Booking has no room type and cannot be confirmed." }, { status: 400 });
-      }
-      nextAssignedRoomId = await findAvailableRoomId(booking);
+    if (status === "confirmed" && !nextAssignedRoomId && booking.roomTypeId) {
+      nextAssignedRoomId = await findAvailableRoomId({
+        excludeBookingId: booking.id,
+        roomTypeId: booking.roomTypeId,
+        checkIn: booking.checkIn,
+        checkOut: booking.checkOut,
+      });
       if (!nextAssignedRoomId) {
         return NextResponse.json({ error: "No available room for selected dates. Please block/adjust booking dates." }, { status: 400 });
       }
     }
 
-    // 2. Update Booking
     const [updatedBooking] = await db
       .update(bookings)
       .set({
@@ -67,52 +68,43 @@ export async function PATCH(
       .where(eq(bookings.id, bookingId))
       .returning();
 
-    // 3. Side effects (Emails + Room Status)
+    const displayName = booking.roomType?.name ?? booking.business?.name ?? "Booking";
+
     if (status === "confirmed" && booking.status !== "confirmed") {
-      // Send confirmation email
       let roomNumber;
       if (nextAssignedRoomId) {
-        const room = await db.query.rooms.findFirst({
-          where: eq(rooms.id, nextAssignedRoomId),
-        });
+        const room = await db.query.rooms.findFirst({ where: eq(rooms.id, nextAssignedRoomId) });
         roomNumber = room?.roomNumber;
       }
 
       const sent = await sendBookingConfirmedEmail(booking.guestEmail, {
         guestName: booking.guestName,
         referenceId: booking.referenceId,
-        roomType: booking.roomType?.name ?? "Room",
+        roomType: displayName,
         roomNumber,
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,
       });
       if (!sent) {
-        console.error("[Admin Booking Update API] Confirmation email failed to send.", {
-          bookingId,
-          referenceId: booking.referenceId,
-        });
+        console.error("[Admin Booking Update API] Confirmation email failed.", { bookingId, referenceId: booking.referenceId });
       }
 
       await sendTelegramNotification("booking_confirmed", {
         referenceId: booking.referenceId,
         guestName: booking.guestName,
         guestEmail: booking.guestEmail,
-        roomType: booking.roomType?.name ?? "Room",
+        roomType: displayName,
         checkIn: booking.checkIn,
         checkOut: booking.checkOut,
       });
     } else if (status === "rejected" && booking.status !== "rejected") {
-      // Send rejection email
       const sent = await sendBookingRejectedEmail(booking.guestEmail, {
         guestName: booking.guestName,
         referenceId: booking.referenceId,
         reason: rejectionReason,
       });
       if (!sent) {
-        console.error("[Admin Booking Update API] Rejection email failed to send.", {
-          bookingId,
-          referenceId: booking.referenceId,
-        });
+        console.error("[Admin Booking Update API] Rejection email failed.", { bookingId, referenceId: booking.referenceId });
       }
 
       await sendTelegramNotification("booking_rejected", {
@@ -171,16 +163,12 @@ export async function PATCH(
           guestName: booking.guestName,
           referenceId: booking.referenceId,
           reviewToken,
-          roomType: booking.roomType?.name ?? "Room",
+          roomType: displayName,
           checkIn: booking.checkIn,
           checkOut: booking.checkOut,
         });
-
         if (!sent) {
-          console.error("[Admin Booking Update API] Review invitation email failed to send.", {
-            bookingId,
-            referenceId: booking.referenceId,
-          });
+          console.error("[Admin Booking Update API] Review invitation email failed.", { bookingId, referenceId: booking.referenceId });
         }
       }
     }
@@ -190,55 +178,4 @@ export async function PATCH(
     console.error("[Admin Booking Update API] Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}
-
-async function findAvailableRoomId(booking: {
-  id: number;
-  roomTypeId: number | null;
-  checkIn: string;
-  checkOut: string;
-}) {
-  if (!booking.roomTypeId) return null;
-
-  const candidateRooms = await db.query.rooms.findMany({
-    where: eq(rooms.roomTypeId, booking.roomTypeId),
-  });
-  if (candidateRooms.length === 0) return null;
-
-  const roomIds = candidateRooms.map((room) => room.id);
-
-  const blockedRows = await db.query.roomAvailability.findMany({
-    where: and(
-      inArray(roomAvailability.roomId, roomIds),
-      eq(roomAvailability.isBlocked, true),
-      gte(roomAvailability.date, booking.checkIn),
-      lt(roomAvailability.date, booking.checkOut)
-    ),
-  });
-  const blockedRoomIds = new Set(blockedRows.map((row) => row.roomId));
-
-  for (const room of candidateRooms) {
-    if (blockedRoomIds.has(room.id)) continue;
-
-    const overlap = await db.query.bookings.findFirst({
-      where: and(
-        eq(bookings.assignedRoomId, room.id),
-        ne(bookings.id, booking.id),
-        ne(bookings.status, "cancelled"),
-        ne(bookings.status, "rejected"),
-        ne(bookings.status, "checked_out"),
-        lt(bookings.checkIn, booking.checkOut),
-        gte(bookings.checkOut, incrementDateString(booking.checkIn))
-      ),
-    });
-    if (!overlap) return room.id;
-  }
-
-  return null;
-}
-
-function incrementDateString(dateStr: string) {
-  const date = new Date(dateStr);
-  date.setUTCDate(date.getUTCDate() + 1);
-  return date.toISOString().split("T")[0];
 }

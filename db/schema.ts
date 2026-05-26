@@ -76,6 +76,8 @@ export const inquiryStatusEnum = pgEnum("inquiry_status", ["new", "replied", "cl
 
 export const roomTypes = pgTable("room_types", {
   id: serial("id").primaryKey(),
+  businessId: integer("business_id")
+    .references(() => businesses.id, { onDelete: "set null" }),
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   description: text("description"),
@@ -92,12 +94,15 @@ export const roomTypes = pgTable("room_types", {
 }, (table) => [
   index("rt_slug_idx").on(table.slug),
   index("rt_active_idx").on(table.isActive),
+  index("rt_business_idx").on(table.businessId),
 ]);
 
 // ─── Rooms ───────────────────────────────────────────────
 
 export const rooms = pgTable("rooms", {
   id: serial("id").primaryKey(),
+  businessId: integer("business_id")
+    .references(() => businesses.id, { onDelete: "set null" }),
   roomNumber: varchar("room_number", { length: 20 }).notNull().unique(),
   roomTypeId: integer("room_type_id")
     .notNull()
@@ -372,7 +377,11 @@ export const otps = pgTable("otps", {
 
 // ─── Relations ───────────────────────────────────────────
 
-export const roomTypesRelations = relations(roomTypes, ({ many }) => ({
+export const roomTypesRelations = relations(roomTypes, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [roomTypes.businessId],
+    references: [businesses.id],
+  }),
   rooms: many(rooms),
   bookings: many(bookings),
   media: many(media, {
@@ -402,6 +411,8 @@ export const businessesRelations = relations(businesses, ({ many }) => ({
   media: many(media, { relationName: "businessMedia" }),
   inquiries: many(businessInquiries),
   bookings: many(bookings),
+  roomTypes: many(roomTypes),
+  rooms: many(rooms),
 }));
 
 export const businessInquiriesRelations = relations(businessInquiries, ({ one }) => ({
@@ -440,6 +451,10 @@ export const mediaRelations = relations(media, ({ one }) => ({
 }));
 
 export const roomsRelations = relations(rooms, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [rooms.businessId],
+    references: [businesses.id],
+  }),
   roomType: one(roomTypes, {
     fields: [rooms.roomTypeId],
     references: [roomTypes.id],
