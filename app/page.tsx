@@ -226,13 +226,13 @@ export default async function HomePage() {
               </a>
             </div>
 
-            <div className="biz-grid stagger-row">
+            <div className="biz-grid stagger-row" style={{ isolation: "isolate" }}>
               {featuredBusinesses.map(biz => (
                 <BusinessCard key={biz.id} {...biz as any} />
               ))}
             </div>
 
-            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)", position: "relative", zIndex: 1 }}>
+            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)" }}>
               <a href="/businesses" className="btn-outline-gold" style={{ padding: "14px 40px", fontSize: "13px" }}>
                 View All Listings
               </a>
