@@ -282,6 +282,9 @@ export default async function BusinessDetailPage({ params }: Props) {
           <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.2)" }}>
             &copy; {new Date().getFullYear()} Visit Baarah
           </span>
+          <div style={{ marginTop: "12px", fontSize: "10px", color: "rgba(255,255,255,0.15)", letterSpacing: "0.3px" }}>
+            Built & maintained by Ahmed Saamih &middot; <a href="mailto:ahmed.saamih@icloud.com" style={{ color: "inherit", textDecoration: "none" }}>ahmed.saamih@icloud.com</a> &middot; +960 912 4400
+          </div>
         </div>
       </div>
     </main>

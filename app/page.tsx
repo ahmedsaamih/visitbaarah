@@ -226,13 +226,13 @@ export default async function HomePage() {
               </a>
             </div>
 
-            <div className="biz-grid stagger-row">
+            <div className="biz-grid stagger-row" style={{ isolation: "isolate" }}>
               {featuredBusinesses.map(biz => (
                 <BusinessCard key={biz.id} {...biz as any} />
               ))}
             </div>
 
-            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)", position: "relative", zIndex: 1 }}>
+            <div style={{ textAlign: "center", marginTop: "clamp(40px, 6vw, 64px)" }}>
               <a href="/businesses" className="btn-outline-gold" style={{ padding: "14px 40px", fontSize: "13px" }}>
                 View All Listings
               </a>
@@ -632,6 +632,9 @@ export default async function HomePage() {
           }}>
             <span>&copy; {new Date().getFullYear()} Visit Baarah. All rights reserved.</span>
             <span>HA. Baarah · Haa Alif Atoll · Maldives</span>
+          </div>
+          <div style={{ textAlign: "center", marginTop: "16px", fontSize: "10px", opacity: 0.18, letterSpacing: "0.3px" }}>
+            Built & maintained by Ahmed Saamih &middot; <a href="mailto:ahmed.saamih@icloud.com" style={{ color: "inherit", textDecoration: "none" }}>ahmed.saamih@icloud.com</a> &middot; +960 912 4400
           </div>
         </div>
       </footer>

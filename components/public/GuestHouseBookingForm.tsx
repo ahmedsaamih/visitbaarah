@@ -75,12 +75,12 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.guestEmail.trim() && !form.guestPhone.trim()) {
-      alert("Please provide an email address or phone number.");
-      return;
-    }
     if (form.checkIn && form.checkOut && form.checkIn >= form.checkOut) {
       alert("Check-out date must be after check-in.");
+      return;
+    }
+    if (hasRoomTypes && checkingAvail) {
+      alert("Please wait while we check availability.");
       return;
     }
     if (hasRoomTypes && availability?.available === false) {
@@ -108,7 +108,7 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
       });
       if (res.ok) {
         setStatus("sent");
-        setForm({ guestName: "", guestEmail: "", guestPhone: "", guestCountry: "", roomTypeId: "", checkIn: "", checkOut: "", numGuests: "2", specialRequests: "" });
+        setForm({ guestName: "", guestEmail: "", guestPhone: "", guestCountry: "", roomTypeId: initialRoomTypes.length === 1 ? String(initialRoomTypes[0].id) : "", checkIn: "", checkOut: "", numGuests: "2", specialRequests: "" });
         setAvailability(null);
       } else {
         const err = await res.json().catch(() => ({}));
@@ -172,8 +172,8 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
         <div className="form-group">
-          <label>Email</label>
-          <input type="email" value={form.guestEmail} onChange={(e) => set("guestEmail", e.target.value)} placeholder="you@email.com" style={inputStyle} />
+          <label>Email *</label>
+          <input type="email" value={form.guestEmail} onChange={(e) => set("guestEmail", e.target.value)} placeholder="you@email.com" required style={inputStyle} />
         </div>
         <div className="form-group">
           <label>Phone / WhatsApp</label>
@@ -248,7 +248,7 @@ export default function GuestHouseBookingForm({ businessId, businessName, slug, 
         </div>
       )}
 
-      <button type="submit" className="btn-luxury" disabled={status === "sending" || (!hasRoomTypes ? false : availability?.available === false)} style={{ alignSelf: "flex-start" }}>
+      <button type="submit" className="btn-luxury" disabled={status === "sending" || checkingAvail || (!hasRoomTypes ? false : availability?.available === false)} style={{ alignSelf: "flex-start" }}>
         {status === "sending" ? "Sending…" : "Request Booking"}
       </button>
     </form>
