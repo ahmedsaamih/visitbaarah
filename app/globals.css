@@ -941,3 +941,87 @@ h1, h2, h3, h4, h5 {
 @media (max-width: 480px) {
   .heritage-markers { grid-template-columns: 1fr 1fr; }
 }
+
+/* ════════════════════════════════════════════════════════
+   Festivals / Culture section
+   ════════════════════════════════════════════════════════ */
+
+.festival-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 5vw, 72px);
+  align-items: end;
+  margin-bottom: clamp(48px, 7vw, 80px);
+}
+
+.festival-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.festival-card {
+  background: var(--forest);
+  padding: clamp(24px, 3.5vw, 40px);
+  display: flex;
+  flex-direction: column;
+  transition: background 200ms ease;
+}
+
+.festival-card:hover {
+  background: rgba(255,255,255,0.035);
+}
+
+.festival-card-title {
+  font-size: clamp(16px, 1.9vw, 20px);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+
+.festival-card-body {
+  font-size: 13.5px;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.78;
+  flex: 1;
+  margin: 0;
+}
+
+.festival-card-when {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.18);
+  text-transform: uppercase;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.festival-cta {
+  margin-top: clamp(40px, 6vw, 64px);
+  padding: clamp(28px, 4vw, 44px);
+  background: rgba(200,120,32,0.07);
+  border: 1px solid rgba(200,120,32,0.18);
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+@media (max-width: 900px) {
+  .festival-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .festival-header { grid-template-columns: 1fr; }
+  .festival-grid { grid-template-columns: 1fr; }
+}
+}
