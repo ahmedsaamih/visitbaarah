@@ -15,7 +15,7 @@ import BusinessCard from "@/components/public/BusinessCard";
 
 const getHomepageData = unstable_cache(
   async () => {
-    const [activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses] =
+    const [activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses, culturalEvents] =
       await Promise.all([
         db.query.activities.findMany({
           where: (t, { eq }) => eq(t.isActive, true),
@@ -40,15 +40,20 @@ const getHomepageData = unstable_cache(
           with: { media: true },
           limit: 6,
         }),
+        db.query.culturalEvents.findMany({
+          where: (t, { eq }) => eq(t.isActive, true),
+          orderBy: (t, { asc }) => [asc(t.sortOrder)],
+          with: { media: true },
+        }),
       ]);
-    return { activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses };
+    return { activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses, culturalEvents };
   },
   ["homepage-data"],
   { tags: ["homepage"], revalidate: 3600 }
 );
 
 export default async function HomePage() {
-  const { activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses } =
+  const { activities, tours, services, menuItems, gallery, testimonials, settings, featuredBusinesses, culturalEvents } =
     await getHomepageData();
 
   const heroImage   = settings.find(s => s.key === "hero_image_url")?.value;
@@ -196,7 +201,7 @@ export default async function HomePage() {
       <HeritageSection />
 
       {/* ══ 04 · FESTIVALS & CULTURE ══════════════════════════════ */}
-      <FestivalsSection />
+      <FestivalsSection events={culturalEvents} />
 
       {/* ══ ISLAND DIRECTORY ═══════════════════════════════════════ */}
       {featuredBusinesses.length > 0 && (

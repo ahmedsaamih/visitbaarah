@@ -9,7 +9,7 @@ interface MediaItem {
 }
 
 interface MediaManagerProps {
-  entityType: "room_type" | "activity" | "tour" | "service" | "gallery" | "menu";
+  entityType: "room_type" | "activity" | "tour" | "service" | "gallery" | "menu" | "cultural_event";
   entityId: number;
 }
 

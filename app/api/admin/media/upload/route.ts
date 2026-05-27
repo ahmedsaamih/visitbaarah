@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       else if (entityType === "activity") mediaValues.activityId = id;
       else if (entityType === "tour") mediaValues.tourId = id;
       else if (entityType === "service") mediaValues.serviceId = id;
+      else if (entityType === "cultural_event") mediaValues.culturalEventId = id;
     }
 
     const [newMedia] = await db
