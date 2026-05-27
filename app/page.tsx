@@ -10,6 +10,7 @@ import ExperienceSection from "@/components/public/ExperienceSection";
 import TransportSection from "@/components/public/TransportSection";
 import NatureSection from "@/components/public/NatureSection";
 import HeritageSection from "@/components/public/HeritageSection";
+import FestivalsSection from "@/components/public/FestivalsSection";
 import BusinessCard from "@/components/public/BusinessCard";
 
 const getHomepageData = unstable_cache(
@@ -193,6 +194,9 @@ export default async function HomePage() {
 
       {/* ══ 03 · LIVING HISTORY ════════════════════════════════════ */}
       <HeritageSection />
+
+      {/* ══ 04 · FESTIVALS & CULTURE ══════════════════════════════ */}
+      <FestivalsSection />
 
       {/* ══ ISLAND DIRECTORY ═══════════════════════════════════════ */}
       {featuredBusinesses.length > 0 && (
