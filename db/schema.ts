@@ -257,6 +257,7 @@ export const media = pgTable("media", {
   tourId: integer("tour_id").references(() => tours.id, { onDelete: "cascade" }),
   serviceId: integer("service_id").references(() => services.id, { onDelete: "cascade" }),
   businessId: integer("business_id").references(() => businesses.id, { onDelete: "cascade" }),
+  culturalEventId: integer("cultural_event_id").references(() => culturalEvents.id, { onDelete: "cascade" }),
 
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -375,6 +376,25 @@ export const otps = pgTable("otps", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// ─── Cultural Events ────────────────────────────────────
+
+export const culturalEvents = pgTable("cultural_events", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  category: varchar("category", { length: 50 }),
+  description: text("description"),
+  shortDescription: varchar("short_description", { length: 255 }),
+  period: varchar("period", { length: 100 }),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [
+  index("ce_active_idx").on(table.isActive),
+  index("ce_sort_idx").on(table.sortOrder),
+]);
+
 // ─── Relations ───────────────────────────────────────────
 
 export const roomTypesRelations = relations(roomTypes, ({ one, many }) => ({
@@ -448,6 +468,15 @@ export const mediaRelations = relations(media, ({ one }) => ({
     references: [businesses.id],
     relationName: "businessMedia",
   }),
+  culturalEvent: one(culturalEvents, {
+    fields: [media.culturalEventId],
+    references: [culturalEvents.id],
+    relationName: "culturalEventMedia",
+  }),
+}));
+
+export const culturalEventsRelations = relations(culturalEvents, ({ many }) => ({
+  media: many(media, { relationName: "culturalEventMedia" }),
 }));
 
 export const roomsRelations = relations(rooms, ({ one, many }) => ({

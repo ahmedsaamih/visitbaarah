@@ -966,10 +966,10 @@ h1, h2, h3, h4, h5 {
 
 .festival-card {
   background: var(--forest);
-  padding: clamp(24px, 3.5vw, 40px);
   display: flex;
   flex-direction: column;
   transition: background 200ms ease;
+  overflow: hidden;
 }
 
 .festival-card:hover {

@@ -10,6 +10,7 @@ const navItems = [
   { label: "Cancellations", href: "/admin/cancellations" },
   { label: "Gallery",      href: "/admin/gallery" },
   { label: "Testimonials", href: "/admin/testimonials" },
+  { label: "Cultural Events", href: "/admin/cultural-events" },
   { label: "Settings",     href: "/admin/settings" },
   // Room management — shown below separator
   { label: "Room Types",   href: "/admin/room-types",  section: "rooms" },

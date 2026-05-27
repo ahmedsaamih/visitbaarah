@@ -1,49 +1,18 @@
-const traditions = [
-  {
-    num: "01",
-    category: "Rites",
-    title: "Bodu Mas & the Ghost Dance",
-    body: "On Bodu Eid, islanders weave a giant fish from coconut palm leaves and reenact its capture from the sea — a ritual rooted in ancient Maldivian legend. Then the Maali arrive: performers painted black, costumed in coconut-leaf skirts and carved masks, parading through the streets to the thunder of Bodu Beru drums. Equal parts folklore, theatre, and living community ritual.",
-    when: "Eid al-Adha · Bodu Eid",
-  },
-  {
-    num: "02",
-    category: "Music",
-    title: "Bodu Beru Nights",
-    body: "Twenty performers. Coconut-wood drums with goatskin stretched over the heads. The rhythm begins slow and meditative, then builds — faster, louder — until dancers break into uncontrolled, trance-like movement and anyone standing nearby finds themselves drawn in. Rooted in ancient African musical traditions, Bodu Beru has been the sound of Baarah's celebrations for centuries.",
-    when: "All festive occasions",
-  },
-  {
-    num: "03",
-    category: "Kuda Eid",
-    title: "The Open-Door Feast",
-    body: "Eid al-Fitr begins with communal prayer at sunrise, then every door on the island opens. Eid boakibaa, gulha, kulhi boakibaa, huni hakuru folhi, bondi bai — households prepare all morning and neighbours move freely between homes sharing food throughout the day. The entire island becomes one long, open table.",
-    when: "Eid al-Fitr · Kuda Eid",
-  },
-  {
-    num: "04",
-    category: "Sport",
-    title: "Bashi & the Games of Eid",
-    body: "Bashi — the traditional Maldivian women's sport, played on sand — goes to tournament mode during Eid. Also look for Kodi Jehun, Eid Vedhumaa Dhiun, and Baibalaa competitions. These are not organised events for spectators; they are community sport played under open sky, watched and cheered by everyone on the island.",
-    when: "Eid holidays & National Days",
-  },
-  {
-    num: "05",
-    category: "History",
-    title: "National Day — Liberation's Island",
-    body: "The first day of the third Islamic month marks Maldivian National Day — the liberation from Portuguese rule in 1573, a campaign prepared and launched from Baarah's shores. The day is celebrated here with processions and cultural performances that carry the rare weight of happening on the island where history was actually made.",
-    when: "1st Rabī' al-Awwal",
-  },
-  {
-    num: "06",
-    category: "Evening",
-    title: "Undhoali & the Festive Evening",
-    body: "As festive evenings cool, the carved wooden Undhoali swings come alive across the island. Families gather around these communal hanging chairs — a tradition older than anyone can trace, unchanged, still anchoring the social heart of Baarah's festival nights after the drumming quietens.",
-    when: "Festive evenings",
-  },
-];
+type CulturalEvent = {
+  id: number;
+  name: string;
+  category: string | null;
+  description: string | null;
+  shortDescription: string | null;
+  period: string | null;
+  media: { url: string; alt: string | null }[];
+};
 
-export default function FestivalsSection() {
+interface Props {
+  events: CulturalEvent[];
+}
+
+export default function FestivalsSection({ events }: Props) {
   return (
     <section
       id="festivals"
@@ -109,29 +78,52 @@ export default function FestivalsSection() {
           </div>
         </div>
 
-        {/* Traditions grid */}
-        <div className="festival-grid">
-          {traditions.map((t) => (
-            <div key={t.num} className="festival-card s-up">
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "2.5px", color: "var(--gold)", textTransform: "uppercase" }}>
-                  {t.category}
-                </span>
-                <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.14)", fontWeight: 700 }}>
-                  {t.num}
-                </span>
-              </div>
-              <h3 className="festival-card-title">{t.title}</h3>
-              <p className="festival-card-body">{t.body}</p>
-              <div className="festival-card-when">{t.when}</div>
-            </div>
-          ))}
-        </div>
+        {/* Events grid — only rendered when DB has events */}
+        {events.length > 0 && (
+          <div className="festival-grid">
+            {events.map((event) => {
+              const img = event.media?.[0]?.url;
+              return (
+                <div key={event.id} className="festival-card s-up">
+                  {img && (
+                    <div style={{
+                      width: "100%",
+                      aspectRatio: "16/9",
+                      overflow: "hidden",
+                      borderRadius: "0",
+                      marginBottom: "0",
+                      flexShrink: 0,
+                    }}>
+                      <img
+                        src={img}
+                        alt={event.name}
+                        loading="lazy"
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    </div>
+                  )}
+                  <div style={{ padding: "clamp(18px, 2.5vw, 28px)", display: "flex", flexDirection: "column", flex: 1 }}>
+                    {event.category && (
+                      <span style={{ fontSize: "9px", fontWeight: 800, letterSpacing: "2.5px", color: "var(--gold)", textTransform: "uppercase", marginBottom: "8px", display: "block" }}>
+                        {event.category}
+                      </span>
+                    )}
+                    <h3 className="festival-card-title">{event.name}</h3>
+                    <p className="festival-card-body">
+                      {event.shortDescription || event.description}
+                    </p>
+                    {event.period && (
+                      <div className="festival-card-when">{event.period}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* CTA strip */}
-        <div
-          className="festival-cta s-up"
-        >
+        <div className="festival-cta s-up">
           <div>
             <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", color: "var(--gold)", marginBottom: "8px" }}>
               Plan your visit
