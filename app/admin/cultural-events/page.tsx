@@ -56,8 +56,11 @@ export default function AdminCulturalEvents() {
     return () => clearTimeout(t);
   }, []);
 
+  const [savedNew, setSavedNew] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isNew = !formData.id;
     const method = formData.id ? "PATCH" : "POST";
     const url = formData.id
       ? `/api/admin/cultural-events/${formData.id}`
@@ -70,8 +73,16 @@ export default function AdminCulturalEvents() {
         body: JSON.stringify(formData),
       });
       if (res.ok) {
-        setIsEditing(false);
-        setFormData(emptyForm());
+        const saved = await res.json();
+        if (isNew) {
+          // Keep form open with the new id so MediaManager appears for image uploads
+          setFormData((f) => ({ ...f, id: saved.id }));
+          setSavedNew(true);
+        } else {
+          setIsEditing(false);
+          setFormData(emptyForm());
+          setSavedNew(false);
+        }
         fetchItems();
       } else {
         const err = await res.json().catch(() => ({}));
@@ -190,14 +201,26 @@ export default function AdminCulturalEvents() {
               />
             </div>
 
+            {savedNew && (
+              <div style={{ background: "rgba(26,92,56,0.08)", border: "1px solid rgba(26,92,56,0.25)", borderRadius: "8px", padding: "12px 16px", fontSize: "13px", color: "var(--admin-success)", marginTop: "8px" }}>
+                Event saved. Upload images below, then click Done when finished.
+              </div>
+            )}
+
             {formData.id && (
               <MediaManager entityType="cultural_event" entityId={formData.id} />
             )}
 
             <div style={{ display: "flex", gap: "12px", marginTop: "24px" }}>
-              <button type="submit" className="btn btn-primary">Save</button>
-              <button type="button" onClick={() => setIsEditing(false)} className="btn btn-outline">
-                Cancel
+              <button type="submit" className="btn btn-primary">
+                {savedNew ? "Update Details" : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsEditing(false); setFormData(emptyForm()); setSavedNew(false); }}
+                className="btn btn-outline"
+              >
+                {savedNew ? "Done" : "Cancel"}
               </button>
             </div>
           </form>
